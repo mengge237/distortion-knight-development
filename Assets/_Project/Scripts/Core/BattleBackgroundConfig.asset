@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a62978c0a9663c42abd359b3b42b4ff, type: 3}
+  m_Name: BattleBackgroundConfig
+  m_EditorClassIdentifier: 
+  mappings:
+  - enemyType: 0
+    enemyName: 0
+    background: {fileID: 21300000, guid: 04413f4dbb430ed45aaa03f9c0e2cc9b, type: 3}
+  - enemyType: 0
+    enemyName: 1
+    background: {fileID: 21300000, guid: 04413f4dbb430ed45aaa03f9c0e2cc9b, type: 3}
+  - enemyType: 0
+    enemyName: 2
+    background: {fileID: 21300000, guid: 04413f4dbb430ed45aaa03f9c0e2cc9b, type: 3}
+  - enemyType: 0
+    enemyName: 3
+    background: {fileID: 21300000, guid: 04413f4dbb430ed45aaa03f9c0e2cc9b, type: 3}
+  - enemyType: 1
+    enemyName: 4
+    background: {fileID: 21300000, guid: 88fa5da9813da9a4db8cf4a45c007ff6, type: 3}
+  - enemyType: 1
+    enemyName: 5
+    background: {fileID: 21300000, guid: 88fa5da9813da9a4db8cf4a45c007ff6, type: 3}
+  - enemyType: 1
+    enemyName: 6
+    background: {fileID: 21300000, guid: 88fa5da9813da9a4db8cf4a45c007ff6, type: 3}
+  - enemyType: 1
+    enemyName: 7
+    background: {fileID: 21300000, guid: 88fa5da9813da9a4db8cf4a45c007ff6, type: 3}
+  - enemyType: 2
+    enemyName: 8
+    background: {fileID: 21300000, guid: c3e4f2fc7e7dce34984ccd371e5a8cb0, type: 3}
+  - enemyType: 2
+    enemyName: 9
+    background: {fileID: 21300000, guid: c3e4f2fc7e7dce34984ccd371e5a8cb0, type: 3}

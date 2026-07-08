@@ -1,0 +1,16 @@
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/*.csproj
+/*.unityproj
+/*.sln
+/*.userprefs
+/[Dd]evelopment.md
+/[Mm]ind[Mm]ap.md
+/[Aa]gents.md
+.vs/
+.uploads/
