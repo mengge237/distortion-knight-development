@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Map
@@ -6,15 +6,15 @@ namespace MutationChess.Map
     [System.Serializable]
     public partial class MapNode
     {
-        public Vector2Int point;              // Íø¸ñ×ø±ê (x, y) ¶ÔÓ¦ (col, row)
+        public Vector2Int point;              // ç½‘æ ¼åæ ‡ (x, y) å¯¹åº” (col, row)
         public NodeType nodeType;
         public bool isVisited = false;
         public bool isReachable = false;
 
-        [System.NonSerialized] public List<MapNode> connections = new List<MapNode>(); // ³ö±ßÁ¬½Ó
-        [System.NonSerialized] public List<MapNode> incoming = new List<MapNode>();    // Èë±ßÁ¬½Ó
+        [System.NonSerialized] public List<MapNode> connections = new List<MapNode>(); // å‡ºè¾¹è¿æ¥
+        [System.NonSerialized] public List<MapNode> incoming = new List<MapNode>();    // å…¥è¾¹è¿æ¥
 
-        // ¿ÉÊÓ»¯ÒıÓÃ£¨ÔËĞĞÊ±¸³Öµ£¬²»ĞòÁĞ»¯£©
+        // å¯è§†åŒ–å¼•ç”¨ï¼ˆè¿è¡Œæ—¶èµ‹å€¼ï¼Œä¸åºåˆ—åŒ–ï¼‰
         [System.NonSerialized] public GameObject nodeObject;
         [System.NonSerialized] public Vector3 position;
 

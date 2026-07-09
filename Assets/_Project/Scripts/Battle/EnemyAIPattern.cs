@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -84,10 +84,10 @@ namespace MutationChess.Battle
 
         private static void InitializePatterns()
         {
-            // ==================== ÆÕÍ¨µĞÈË ====================
+            // ==================== æ™®é€šæ•Œäºº ====================
 
             patterns["CorruptedSoldier"] = new EnemyAIPattern(
-                "¸¯»¯Ê¿±ø",
+                "è…åŒ–å£«å…µ",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -99,7 +99,7 @@ namespace MutationChess.Battle
             );
 
             patterns["MutantHound"] = new EnemyAIPattern(
-                "»û±äÁÔÈ®",
+                "ç•¸å˜çŒçŠ¬",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -111,7 +111,7 @@ namespace MutationChess.Battle
             );
 
             patterns["PlagueAcolyte"] = new EnemyAIPattern(
-                "ÎÁÒßÊÌÉ®",
+                "ç˜Ÿç–«ä¾åƒ§",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -123,7 +123,7 @@ namespace MutationChess.Battle
             );
 
             patterns["AbyssGrub"] = new EnemyAIPattern(
-                "ÉîÔ¨Çù³æ",
+                "æ·±æ¸Šè›†è™«",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -134,10 +134,10 @@ namespace MutationChess.Battle
                 false, -1, true
             );
 
-            // ==================== ¾«Ó¢µĞÈË ====================
+            // ==================== ç²¾è‹±æ•Œäºº ====================
 
             patterns["CorruptedKnight"] = new EnemyAIPattern(
-                "¸¯Ê´ÆïÊ¿",
+                "è…èš€éª‘å£«",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -151,7 +151,7 @@ namespace MutationChess.Battle
             );
 
             patterns["HellInquisitor"] = new EnemyAIPattern(
-                "µØÓüÉóÅĞ¹Ù",
+                "åœ°ç‹±å®¡åˆ¤å®˜",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -164,7 +164,7 @@ namespace MutationChess.Battle
             );
 
             patterns["VoidWizard"] = new EnemyAIPattern(
-                "Ğé¿ÕÎ×Ê¦",
+                "è™šç©ºå·«å¸ˆ",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -178,7 +178,7 @@ namespace MutationChess.Battle
             );
 
             patterns["CorruptedGolem"] = new EnemyAIPattern(
-                "¸¯»¯¾ŞÊŞ",
+                "è…åŒ–å·¨å…½",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -191,11 +191,11 @@ namespace MutationChess.Battle
                 false, -1, true
             );
 
-            // ==================== BossµĞÈË ====================
+            // ==================== Bossæ•Œäºº ====================
 
-            // ÉîÔ¨Ö®Ö÷£ºÁ½¸öĞÎÌ¬
+            // æ·±æ¸Šä¹‹ä¸»ï¼šä¸¤ä¸ªå½¢æ€
             patterns["AbyssLord"] = new EnemyAIPattern(
-                "ÉîÔ¨Ö®Ö÷¡¤¿ËËÕÂ³Ö®Ó°",
+                "æ·±æ¸Šä¹‹ä¸»Â·å…‹è‹é²ä¹‹å½±",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -205,19 +205,19 @@ namespace MutationChess.Battle
                     new EnemyAction(EnemyIntentType.Special, 25, 5),
                     new EnemyAction(EnemyIntentType.Attack, 22, 4),
                     new EnemyAction(EnemyIntentType.Buff, 3, 0),
-                    // ÑªÁ¿µÍÓÚ50%£ºÇĞ»»µ½µÚ¶şĞÎÌ¬
+                    // è¡€é‡ä½äº50%ï¼šåˆ‡æ¢åˆ°ç¬¬äºŒå½¢æ€
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 50),
                     new EnemyAction(EnemyIntentType.Special, 35, 5, ConditionType.EnemyHealthBelow, 50),
-                    // ÑªÁ¿µÍÓÚ30%£ºÇ¿»¯¹¥»÷
+                    // è¡€é‡ä½äº30%ï¼šå¼ºåŒ–æ”»å‡»
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 30),
                     new EnemyAction(EnemyIntentType.Special, 45, 5, ConditionType.EnemyHealthBelow, 30),
                 },
                 false, -1, true
             );
 
-            // ¸¯»¯¾ıÍõ£ºÑªÁ¿Ô½ÉÙÔ½Ç¿
+            // è…åŒ–å›ç‹ï¼šè¡€é‡è¶Šå°‘è¶Šå¼º
             patterns["CorruptedKing"] = new EnemyAIPattern(
-                "¸¯»¯¾ıÍõ¡¤×îºóµÄ°§Ãù",
+                "è…åŒ–å›ç‹Â·æœ€åçš„å“€é¸£",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -227,7 +227,7 @@ namespace MutationChess.Battle
                     new EnemyAction(EnemyIntentType.Attack, 22, 4),
                     new EnemyAction(EnemyIntentType.Special, 20, 5),
                     new EnemyAction(EnemyIntentType.Buff, 2, 0),
-                    // ÑªÁ¿Ô½µÍ¹¥»÷Ô½Ç¿£¨Í¨¹ıÌõ¼ş´¥·¢ÊµÏÖ£©
+                    // è¡€é‡è¶Šä½æ”»å‡»è¶Šå¼ºï¼ˆé€šè¿‡æ¡ä»¶è§¦å‘å®ç°ï¼‰
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 70),
                     new EnemyAction(EnemyIntentType.Attack, 28, 4, ConditionType.EnemyHealthBelow, 70),
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 50),
@@ -285,7 +285,7 @@ namespace MutationChess.Battle
         private static EnemyAIPattern GetDefaultPattern()
         {
             return new EnemyAIPattern(
-                "Ä¬ÈÏÄ£Ê½",
+                "é»˜è®¤æ¨¡å¼",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),

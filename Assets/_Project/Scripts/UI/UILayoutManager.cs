@@ -1,12 +1,12 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 namespace MutationChess.UI
 {
     /// <summary>
-    /// UI²¼¾Ö¹ÜÀíÆ÷ - ´¿¹ÜÀí°æ±¾
-    /// Ö»¸ºÔğÌá¹©³¡¾°ÖĞËùÓĞTMP_TextµÄÒıÓÃ£¬²»¿ØÖÆÈÎºÎUIÊôĞÔ
+    /// UIå¸ƒå±€ç®¡ç†å™¨ - çº¯ç®¡ç†ç‰ˆæœ¬
+    /// åªè´Ÿè´£æä¾›åœºæ™¯ä¸­æ‰€æœ‰TMP_Textçš„å¼•ç”¨ï¼Œä¸æ§åˆ¶ä»»ä½•UIå±æ€§
     /// </summary>
     [ExecuteAlways]
     public class UILayoutManager : MonoBehaviour
@@ -22,7 +22,7 @@ namespace MutationChess.UI
         }
 
         /// <summary>
-        /// »ñÈ¡³¡¾°ÖĞËùÓĞTMP_Text
+        /// è·å–åœºæ™¯ä¸­æ‰€æœ‰TMP_Text
         /// </summary>
         public TMP_Text[] GetAllTexts()
         {
@@ -30,7 +30,7 @@ namespace MutationChess.UI
         }
 
         /// <summary>
-        /// »ñÈ¡³¡¾°ÖĞËùÓĞÖ¸¶¨Ãû³ÆµÄTMP_Text
+        /// è·å–åœºæ™¯ä¸­æ‰€æœ‰æŒ‡å®šåç§°çš„TMP_Text
         /// </summary>
         public TMP_Text FindTextByName(string name)
         {
@@ -44,7 +44,7 @@ namespace MutationChess.UI
         }
 
         /// <summary>
-        /// »ñÈ¡³¡¾°ÖĞËùÓĞ°üº¬Ö¸¶¨Ãû³ÆµÄTMP_Text
+        /// è·å–åœºæ™¯ä¸­æ‰€æœ‰åŒ…å«æŒ‡å®šåç§°çš„TMP_Text
         /// </summary>
         public TMP_Text[] FindTextsContaining(string name)
         {

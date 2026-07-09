@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Map
@@ -6,28 +6,28 @@ namespace MutationChess.Map
     [CreateAssetMenu(fileName = "MapConfig", menuName = "MutationChess/Map Config")]
     public class MapConfig : ScriptableObject
     {
-        [Header("²ãÊı")]
+        [Header("å±‚æ•°")]
         public int rows = 8;
 
-        [Header("½ÚµãÊıÁ¿·¶Î§")]
+        [Header("èŠ‚ç‚¹æ•°é‡èŒƒå›´")]
         public Vector2Int startNodesRange = new Vector2Int(2, 3);
         public Vector2Int midNodesRange = new Vector2Int(2, 4);
         public Vector2Int extraPathsRange = new Vector2Int(0, 2);
 
-        [Header("¼ä¾à")]
+        [Header("é—´è·")]
         public float horizontalSpacing = 3.0f;
         public float verticalSpacing = 4.0f;
         public float nodeYOffset = -0.5f;
 
-        [Header("Ëæ»úÆ«ÒÆ")]
+        [Header("éšæœºåç§»")]
         public float positionOffsetX = 0.8f;
         public float positionOffsetY = 0.3f;
 
-        [Header("ÌØÊâ²ã")]
+        [Header("ç‰¹æ®Šå±‚")]
         public int treasureLayerIndex = 6;
         public bool bossLayerHasRestBefore = true;
 
-        [Header("½ÚµãÀ¶Í¼")]
+        [Header("èŠ‚ç‚¹è“å›¾")]
         public List<NodeBlueprint> nodeBlueprints = new List<NodeBlueprint>();
     }
 }

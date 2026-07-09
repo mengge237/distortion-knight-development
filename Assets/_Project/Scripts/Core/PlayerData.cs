@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Core
@@ -10,7 +10,7 @@ namespace MutationChess.Core
         public int currentHealth = 100;
         public int gold = 200;
 
-        // Ìí¼ÓÊôÐÔÒÔ±ãÍâ²¿·ÃÎÊ
+        // æ·»åŠ å±žæ€§ä»¥ä¾¿å¤–éƒ¨è®¿é—®
         public int Health => currentHealth;
         public int Gold => gold;
 

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MutationChess.Map
 {
@@ -7,7 +7,7 @@ namespace MutationChess.Map
     {
         public NodeType nodeType;
         public Color color = Color.white;
-        public string displayName = "�ڵ�";
+        public string displayName = "节点";
         public GameObject prefab;
         public Material material;
     }

@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -11,7 +11,7 @@ namespace MutationChess.Core
             if (context.targetPlayer != null && context.sourceCard != null)
             {
                 int amount = context.sourceCard.magicNumber > 0 ? context.sourceCard.magicNumber : 3;
-                // 需要对玩家添加 Buff 系统（后续扩展）
+                // 闇�瑕佸鐜╁娣诲姞 Buff 绯荤粺锛堝悗缁墿灞曪級
             }
             else if (context.targetEnemy != null)
             {

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 
 namespace MutationChess.Core
@@ -6,14 +6,14 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "DeckData", menuName = "MutationChess/Deck Data")]
     public class DeckData : ScriptableObject
     {
-        [Header("=== ¿¨×éÃû³Æ ===")]
-        public string deckName = "³õÊ¼¿¨×é";
+        [Header("=== å¡ç»„åç§° ===")]
+        public string deckName = "åˆå§‹å¡ç»„";
 
-        [Header("=== ¿¨ÅÆÁĞ±í£¨µã»÷ÏÂÀ­Ñ¡Ôñ£© ===")]
-        [Tooltip("´ÓÏÂÀ­²Ëµ¥ÖĞÑ¡Ôñ¿¨ÅÆÃû³Æ")]
+        [Header("=== å¡ç‰Œåˆ—è¡¨ï¼ˆç‚¹å‡»ä¸‹æ‹‰é€‰æ‹©ï¼‰ ===")]
+        [Tooltip("ä»ä¸‹æ‹‰èœå•ä¸­é€‰æ‹©å¡ç‰Œåç§°")]
         public List<CardName> cardNames = new List<CardName>();
 
-        [Header("=== ¿¨×éÍ³¼Æ£¨Ö»¶Á£© ===")]
+        [Header("=== å¡ç»„ç»Ÿè®¡ï¼ˆåªè¯»ï¼‰ ===")]
         [SerializeField] private int totalCards;
 
         public List<Card> GetAllCards()

@@ -1,10 +1,10 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Core
 {
-    // ==================== ¿¨ÅÆÀàĞÍÃ¶¾Ù ====================
+    // ==================== å¡ç‰Œç±»å‹æšä¸¾ ====================
     public enum CardType
     {
         Attack,
@@ -13,20 +13,20 @@ namespace MutationChess.Core
         Power
     }
 
-    // ==================== ¿¨ÅÆÏ¡ÓĞ¶ÈÃ¶¾Ù ====================
+    // ==================== å¡ç‰Œç¨€æœ‰åº¦æšä¸¾ ====================
     public enum CardRarity
     {
-        Common,     // ÆÕÍ¨ - »ÒÉ«
-        Uncommon,   // º±¼û - À¶É«
-        Rare,       // Ï¡ÓĞ - ½ğÉ«
-        Mythic      // Éñ»° - ×ÏÉ«
+        Common,     // æ™®é€š - ç°è‰²
+        Uncommon,   // ç½•è§ - è“è‰²
+        Rare,       // ç¨€æœ‰ - é‡‘è‰²
+        Mythic      // ç¥è¯ - ç´«è‰²
     }
 
-    // ==================== ¿¨ÅÆÊı¾İÀà ====================
+    // ==================== å¡ç‰Œæ•°æ®ç±» ====================
     [Serializable]
     public class Card
     {
-        // ===== ºËĞÄÊı¾İ =====
+        // ===== æ ¸å¿ƒæ•°æ® =====
         public string cardId;
         public string cardName;
         public int cost;
@@ -40,11 +40,11 @@ namespace MutationChess.Core
         public string upgradeDescription;
         public bool isUpgraded = false;
 
-        // ===== Ğ§¹ûÁĞ±í =====
+        // ===== æ•ˆæœåˆ—è¡¨ =====
         [NonSerialized]
         public List<CardEffect> effects = new List<CardEffect>();
 
-        // ===== ¹¹Ôìº¯Êı =====
+        // ===== æ„é€ å‡½æ•° =====
 
         public Card()
         {
@@ -74,7 +74,7 @@ namespace MutationChess.Core
             GenerateDescription();
         }
 
-        // ===== ¿¨ÅÆÉı¼¶ =====
+        // ===== å¡ç‰Œå‡çº§ =====
 
         public void Upgrade()
         {
@@ -93,7 +93,7 @@ namespace MutationChess.Core
             GenerateDescription();
         }
 
-        // ===== ÃèÊöÉú³É =====
+        // ===== æè¿°ç”Ÿæˆ =====
 
         public void GenerateDescription()
         {
@@ -101,18 +101,18 @@ namespace MutationChess.Core
             switch (cardType)
             {
                 case CardType.Attack:
-                    desc = $"Ôì³É {damage} µãÉËº¦";
-                    if (magicNumber > 0) desc += $"£¬³é {magicNumber} ÕÅÅÆ";
+                    desc = $"é€ æˆ {damage} ç‚¹ä¼¤å®³";
+                    if (magicNumber > 0) desc += $"ï¼ŒæŠ½ {magicNumber} å¼ ç‰Œ";
                     break;
                 case CardType.Defense:
-                    desc = $"»ñµÃ {block} µã¸ñµ²";
-                    if (magicNumber > 0) desc += $"£¬³é {magicNumber} ÕÅÅÆ";
+                    desc = $"è·å¾— {block} ç‚¹æ ¼æŒ¡";
+                    if (magicNumber > 0) desc += $"ï¼ŒæŠ½ {magicNumber} å¼ ç‰Œ";
                     break;
                 case CardType.Skill:
-                    desc = magicNumber > 0 ? $"³é {magicNumber} ÕÅÅÆ" : "Ğ§¹ûÎ´Öª";
+                    desc = magicNumber > 0 ? $"æŠ½ {magicNumber} å¼ ç‰Œ" : "æ•ˆæœæœªçŸ¥";
                     break;
                 case CardType.Power:
-                    desc = magicNumber > 0 ? $"»ñµÃ {magicNumber} ²ãÄÜÁ¦" : "»ñµÃÄÜÁ¦";
+                    desc = magicNumber > 0 ? $"è·å¾— {magicNumber} å±‚èƒ½åŠ›" : "è·å¾—èƒ½åŠ›";
                     break;
             }
 
@@ -126,7 +126,7 @@ namespace MutationChess.Core
             }
 
             if (isUpgraded)
-                desc += " (Éı¼¶)";
+                desc += " (å‡çº§)";
 
             description = desc;
         }
@@ -139,22 +139,22 @@ namespace MutationChess.Core
         {
             switch (rarity)
             {
-                case CardRarity.Common: return "ÆÕÍ¨";
-                case CardRarity.Uncommon: return "º±¼û";
-                case CardRarity.Rare: return "Ï¡ÓĞ";
-                case CardRarity.Mythic: return "ÄÑÑ°";
-                default: return "Î´Öª";
+                case CardRarity.Common: return "æ™®é€š";
+                case CardRarity.Uncommon: return "ç½•è§";
+                case CardRarity.Rare: return "ç¨€æœ‰";
+                case CardRarity.Mythic: return "éš¾å¯»";
+                default: return "æœªçŸ¥";
             }
         }
 
-        // ===== Ö´ĞĞĞ§¹û =====
+        // ===== æ‰§è¡Œæ•ˆæœ =====
 
         public void ExecuteEffects(CombatContext context)
         {
 
             if (effects.Count == 0)
             {
-                Debug.LogWarning($"¿¨ÅÆ {cardName} Ã»ÓĞĞ§¹û£¡Çë¼ì²é CardData.CreateCard ÊÇ·ñÕıÈ·¼ÓÔØÁËĞ§¹û¡£");
+                Debug.LogWarning($"å¡ç‰Œ {cardName} æ²¡æœ‰æ•ˆæœï¼è¯·æ£€æŸ¥ CardData.CreateCard æ˜¯å¦æ­£ç¡®åŠ è½½äº†æ•ˆæœã€‚");
                 return;
             }
 
@@ -166,7 +166,7 @@ namespace MutationChess.Core
                 }
                 else
                 {
-                    Debug.LogWarning("¿¨ÅÆĞ§¹ûÎª¿Õ£¡");
+                    Debug.LogWarning("å¡ç‰Œæ•ˆæœä¸ºç©ºï¼");
                 }
             }
         }

@@ -1,13 +1,13 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace MutationChess.UI
 {
     public enum RewardPoolType
     {
-        Common,     // ÆÕÍ¨µÐÈË
-        Elite,      // ¾«Ó¢µÐÈË
-        Boss,       // BossµÐÈË
-        Shop,       // ÉÌµê£¨Ô¤Áô£©
-        Event       // ÊÂ¼þ£¨Ô¤Áô£©
+        Common,     // æ™®é€šæ•Œäºº
+        Elite,      // ç²¾è‹±æ•Œäºº
+        Boss,       // Bossæ•Œäºº
+        Shop,       // å•†åº—ï¼ˆé¢„ç•™ï¼‰
+        Event       // äº‹ä»¶ï¼ˆé¢„ç•™ï¼‰
     }
 }

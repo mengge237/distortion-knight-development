@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Map
 {
     public class MapView : MonoBehaviour
     {
-        [Header("½ÚµãÀàĞÍÑÕÉ«")]
+        [Header("èŠ‚ç‚¹ç±»å‹é¢œè‰²")]
         [SerializeField] private Color startColor = new Color(0.6f, 0.2f, 0.8f);
         [SerializeField] private Color normalMonsterColor = new Color(0.7f, 0.7f, 0.7f, 1f);
         [SerializeField] private Color eliteMonsterColor = new Color(1f, 0.4f, 0.1f, 1f);
@@ -15,7 +15,7 @@ namespace MutationChess.Map
         [SerializeField] private Color restColor = new Color(0.2f, 0.7f, 1f, 1f);
         [SerializeField] private Color bossColor = new Color(1f, 0.1f, 0.1f, 1f);
 
-        [Header("×´Ì¬ÑÕÉ«")]
+        [Header("çŠ¶æ€é¢œè‰²")]
         [SerializeField] private Color visitedColor = new Color(0.3f, 0.3f, 0.35f, 1f);
 
         private MapGenerator mapGenerator;
@@ -25,7 +25,7 @@ namespace MutationChess.Map
             mapGenerator = FindObjectOfType<MapGenerator>();
             if (mapGenerator == null)
             {
-                Debug.LogError("ÕÒ²»µ½ MapGenerator£¡");
+                Debug.LogError("æ‰¾ä¸åˆ° MapGeneratorï¼");
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace MutationChess.Map
             }
             else
             {
-                Debug.LogError("MapGenerator Î´ÕÒµ½£¡");
+                Debug.LogError("MapGenerator æœªæ‰¾åˆ°ï¼");
             }
         }
     }

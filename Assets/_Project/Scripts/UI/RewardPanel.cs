@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using MutationChess.Core;
@@ -8,34 +8,34 @@ namespace MutationChess.UI
 {
     public class RewardPanel : MonoBehaviour
     {
-        [Header("=== Ãæ°åÒıÓÃ ===")]
+        [Header("=== é¢æ¿å¼•ç”¨ ===")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private GameObject rewardOverview;
         [SerializeField] private GameObject cardSelectionPanel;
 
-        [Header("=== ½±ÀøÏÔÊ¾£¨¸ÅÀÀ²ã£© ===")]
+        [Header("=== å¥–åŠ±æ˜¾ç¤ºï¼ˆæ¦‚è§ˆå±‚ï¼‰ ===")]
         [SerializeField] private TMP_Text goldAmountText;
         [SerializeField] private Button cardRewardButton;
         [SerializeField] private TMP_Text cardRewardLabel;
 
-        [Header("=== ¿¨ÅÆÑ¡Ôñ²ã ===")]
+        [Header("=== å¡ç‰Œé€‰æ‹©å±‚ ===")]
         [SerializeField] private Transform cardContainer;
         [SerializeField] private GameObject cardPrefab;
         [SerializeField] private Button skipCardButton;
 
-        [Header("=== ¸ÅÀÀ²ãÌø¹ı ===")]
+        [Header("=== æ¦‚è§ˆå±‚è·³è¿‡ ===")]
         [SerializeField] private Button skipOverviewButton;
 
-        [Header("=== ±êÌâ ===")]
+        [Header("=== æ ‡é¢˜ ===")]
         [SerializeField] private TMP_Text titleText;
 
-        [Header("=== ½±Àø¶ÔÏó£¨ÓÃÓÚÏÔÊ¾/Òş²Ø£© ===")]
+        [Header("=== å¥–åŠ±å¯¹è±¡ï¼ˆç”¨äºæ˜¾ç¤º/éšè—ï¼‰ ===")]
         [SerializeField] private GameObject goldRewardObject;
         [SerializeField] private GameObject relicRewardObject;
         [SerializeField] private GameObject potionRewardObject;
         [SerializeField] private GameObject cardRewardObject;
 
-        [Header("=== ¿¨ÅÆÈİÆ÷ÉèÖÃ ===")]
+        [Header("=== å¡ç‰Œå®¹å™¨è®¾ç½® ===")]
         [SerializeField] private Vector2 cardContainerOffset = new Vector2(0, -50);
 
         private Card selectedCard = null;
@@ -57,7 +57,7 @@ namespace MutationChess.UI
             }
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "¿¨ÅÆ½±Àø";
+                cardRewardLabel.text = "å¡ç‰Œå¥–åŠ±";
 
             if (goldAmountText != null)
             {
@@ -134,7 +134,7 @@ namespace MutationChess.UI
                 goldAmountText.text = goldReward.ToString();
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "¿¨ÅÆ½±Àø";
+                cardRewardLabel.text = "å¡ç‰Œå¥–åŠ±";
 
             HideAllRewardObjects();
 
@@ -257,7 +257,7 @@ namespace MutationChess.UI
         {
             if (panelRoot == null)
             {
-                Debug.LogError("RewardPanel: panelRoot Îª¿Õ£¡");
+                Debug.LogError("RewardPanel: panelRoot ä¸ºç©ºï¼");
                 return;
             }
 
@@ -337,19 +337,19 @@ namespace MutationChess.UI
         {
             if (cardContainer == null)
             {
-                Debug.LogError("RewardPanel: cardContainer Îª¿Õ£¡");
+                Debug.LogError("RewardPanel: cardContainer ä¸ºç©ºï¼");
                 return;
             }
 
             if (rewards == null || rewards.Count == 0)
             {
-                Debug.LogWarning("RewardPanel: Ã»ÓĞ¿¨ÅÆ½±Àø");
+                Debug.LogWarning("RewardPanel: æ²¡æœ‰å¡ç‰Œå¥–åŠ±");
                 return;
             }
 
             if (cardPrefab == null)
             {
-                Debug.LogError("RewardPanel: cardPrefab Îª¿Õ£¡");
+                Debug.LogError("RewardPanel: cardPrefab ä¸ºç©ºï¼");
                 return;
             }
 
@@ -381,7 +381,7 @@ namespace MutationChess.UI
                 }
                 else
                 {
-                    Debug.LogError("RewardPanel: CardUI ×é¼şÎª¿Õ£¡");
+                    Debug.LogError("RewardPanel: CardUI ç»„ä»¶ä¸ºç©ºï¼");
                 }
             }
         }
@@ -396,7 +396,7 @@ namespace MutationChess.UI
 
             if (goldRewardObject != null)
             {
-                // ²¥·ÅÏûÊ§¶¯»­»òÖ±½ÓÒş²Ø
+                // æ’­æ”¾æ¶ˆå¤±åŠ¨ç”»æˆ–ç›´æ¥éšè—
                 goldRewardObject.SetActive(false);
             }
 
@@ -443,7 +443,7 @@ namespace MutationChess.UI
             ArrangeRewards();
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "¿¨ÅÆÒÑÑ¡ ?";
+                cardRewardLabel.text = "å¡ç‰Œå·²é€‰ ?";
         }
 
         public void ShowOverview()
@@ -455,7 +455,7 @@ namespace MutationChess.UI
                 cardSelectionPanel.SetActive(false);
 
             if (titleText != null)
-                titleText.text = "Õ½¶·½±Àø";
+                titleText.text = "æˆ˜æ–—å¥–åŠ±";
 
             isCardSelectionActive = false;
             ArrangeRewards();
@@ -468,7 +468,7 @@ namespace MutationChess.UI
                 cardSelectionPanel.SetActive(true);
 
             if (titleText != null)
-                titleText.text = "Ñ¡ÔñÒ»ÕÅ¿¨ÅÆ";
+                titleText.text = "é€‰æ‹©ä¸€å¼ å¡ç‰Œ";
 
             isCardSelectionActive = true;
         }

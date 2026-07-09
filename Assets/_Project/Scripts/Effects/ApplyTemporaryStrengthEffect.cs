@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -10,9 +10,9 @@ namespace MutationChess.Core
         {
             if (context.targetPlayer != null && context.sourceCard != null)
             {
-                int amount = 2; // ¹Ì¶¨»ñµÃ 2 ²ãÁ¦Á¿
+                int amount = 2; // å›ºå®šè·å¾— 2 å±‚åŠ›é‡
                 int duration = context.sourceCard.magicNumber > 0 ? context.sourceCard.magicNumber : 3;
-                // ĞèÒª¶ÔÍæ¼ÒÌí¼Ó Buff ÏµÍ³£¨ºóĞøÀ©Õ¹£©
+                // éœ€è¦å¯¹ç©å®¶æ·»åŠ  Buff ç³»ç»Ÿï¼ˆåç»­æ‰©å±•ï¼‰
             }
             else if (context.targetEnemy != null)
             {

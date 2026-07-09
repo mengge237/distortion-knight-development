@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace MutationChess.Map
 {
@@ -28,12 +28,12 @@ namespace MutationChess.Map
                 MapGenerator gen = FindObjectOfType<MapGenerator>();
                 if (gen != null)
                 {
-                    // µÈ´ıÒ»Ö¡ÈÃ MapGenerator Íê³É³õÊ¼»¯
+                    // ç­‰å¾…ä¸€å¸§è®© MapGenerator å®Œæˆåˆå§‹åŒ–
                     StartCoroutine(InitializeAfterGenerator());
                 }
                 else
                 {
-                    Debug.LogError("ÕÒ²»µ½ MapGenerator£¡");
+                    Debug.LogError("æ‰¾ä¸åˆ° MapGeneratorï¼");
                 }
             }
         }

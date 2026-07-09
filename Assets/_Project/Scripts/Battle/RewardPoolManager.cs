@@ -1,4 +1,4 @@
-using MutationChess.Core;
+ï»¿using MutationChess.Core;
 using MutationChess.UI;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,52 +6,52 @@ using UnityEngine;
 namespace MutationChess.Battle
 {
     /// <summary>
-    /// ½±Àø³Ø¹ÜÀíÆ÷ - Í³Ò»¹ÜÀíËùÓĞ½±Àø³ØµÄÅäÖÃ
+    /// å¥–åŠ±æ± ç®¡ç†å™¨ - ç»Ÿä¸€ç®¡ç†æ‰€æœ‰å¥–åŠ±æ± çš„é…ç½®
     /// </summary>
     public static class RewardPoolManager
     {
-        // ===== ¿¨ÅÆÏ¡ÓĞ¶È·Ö×é =====
+        // ===== å¡ç‰Œç¨€æœ‰åº¦åˆ†ç»„ =====
 
         private static readonly List<CardName> CommonCards = new List<CardName>
         {
-            CardName.¹¥»÷,
-            CardName.·ÀÓù,
-            CardName.Í´»÷,
+            CardName.æ”»å‡»,
+            CardName.é˜²å¾¡,
+            CardName.ç—›å‡»,
         };
 
         private static readonly List<CardName> UncommonCards = new List<CardName>
         {
-            CardName.ºó·¢ÖÆÈË,
-            CardName.Ô¤ÖªÒÇÊ½,
-            CardName.¼Ó¹Ì,
+            CardName.åå‘åˆ¶äºº,
+            CardName.é¢„çŸ¥ä»ªå¼,
+            CardName.åŠ å›º,
         };
 
         private static readonly List<CardName> RareCards = new List<CardName>
         {
-            CardName.Äº¹âÒÇÊ½,
+            CardName.æš®å…‰ä»ªå¼,
         };
 
-        // ===== ¸÷½ÇÉ«×¨Êô¿¨ÅÆ£¨À©Õ¹Ô¤Áô£© =====
+        // ===== å„è§’è‰²ä¸“å±å¡ç‰Œï¼ˆæ‰©å±•é¢„ç•™ï¼‰ =====
 
         private static readonly List<CardName> IroncladCards = new List<CardName>
         {
-            // Õ½Ê¿×¨Êô¿¨£¨Ô¤Áô£©
+            // æˆ˜å£«ä¸“å±å¡ï¼ˆé¢„ç•™ï¼‰
         };
 
         private static readonly List<CardName> SilentCards = new List<CardName>
         {
-            // ÁÔÊÖ×¨Êô¿¨£¨Ô¤Áô£©
+            // çŒæ‰‹ä¸“å±å¡ï¼ˆé¢„ç•™ï¼‰
         };
 
         private static readonly List<CardName> DefectCards = new List<CardName>
         {
-            // »úÆ÷ÈË×¨Êô¿¨£¨Ô¤Áô£©
+            // æœºå™¨äººä¸“å±å¡ï¼ˆé¢„ç•™ï¼‰
         };
 
-        // ===== ¹«¹²½Ó¿Ú =====
+        // ===== å…¬å…±æ¥å£ =====
 
         /// <summary>
-        /// »ñÈ¡ÆÕÍ¨Õ½¶·½±Àø³Ø
+        /// è·å–æ™®é€šæˆ˜æ–—å¥–åŠ±æ± 
         /// </summary>
         public static List<CardName> GetCommonPool()
         {
@@ -62,7 +62,7 @@ namespace MutationChess.Battle
         }
 
         /// <summary>
-        /// »ñÈ¡¾«Ó¢Õ½¶·½±Àø³Ø
+        /// è·å–ç²¾è‹±æˆ˜æ–—å¥–åŠ±æ± 
         /// </summary>
         public static List<CardName> GetElitePool()
         {
@@ -74,7 +74,7 @@ namespace MutationChess.Battle
         }
 
         /// <summary>
-        /// »ñÈ¡ Boss Õ½¶·½±Àø³Ø
+        /// è·å– Boss æˆ˜æ–—å¥–åŠ±æ± 
         /// </summary>
         public static List<CardName> GetBossPool()
         {
@@ -85,7 +85,7 @@ namespace MutationChess.Battle
         }
 
         /// <summary>
-        /// ¸ù¾İÀàĞÍ»ñÈ¡½±Àø³Ø
+        /// æ ¹æ®ç±»å‹è·å–å¥–åŠ±æ± 
         /// </summary>
         public static List<CardName> GetPoolByType(RewardPoolType type)
         {
@@ -107,7 +107,7 @@ namespace MutationChess.Battle
         }
 
         /// <summary>
-        /// ³õÊ¼»¯ RewardPool ×Ê²ú£¨ÔÚ±à¼­Æ÷»òÔËĞĞÊ±µ÷ÓÃ£©
+        /// åˆå§‹åŒ– RewardPool èµ„äº§ï¼ˆåœ¨ç¼–è¾‘å™¨æˆ–è¿è¡Œæ—¶è°ƒç”¨ï¼‰
         /// </summary>
         public static void InitializeRewardPool(RewardPool rewardPool)
         {
@@ -119,7 +119,7 @@ namespace MutationChess.Battle
         }
 
         /// <summary>
-        /// ³õÊ¼»¯ËùÓĞ½±Àø³Ø
+        /// åˆå§‹åŒ–æ‰€æœ‰å¥–åŠ±æ± 
         /// </summary>
         public static void InitializeAllPools(RewardPool common, RewardPool elite, RewardPool boss)
         {
@@ -128,7 +128,7 @@ namespace MutationChess.Battle
             if (boss != null) InitializeRewardPool(boss);
         }
 
-        // ===== À©Õ¹³Ø£¨Ô¤Áô£© =====
+        // ===== æ‰©å±•æ± ï¼ˆé¢„ç•™ï¼‰ =====
 
         private static List<CardName> GetShopPool()
         {
@@ -148,7 +148,7 @@ namespace MutationChess.Battle
         }
 
         /// <summary>
-        /// »ñÈ¡½ÇÉ«µÄ×¨Êô¿¨ÅÆ£¨À©Õ¹£©
+        /// è·å–è§’è‰²çš„ä¸“å±å¡ç‰Œï¼ˆæ‰©å±•ï¼‰
         /// </summary>
         public static List<CardName> GetCharacterCards(string characterId)
         {

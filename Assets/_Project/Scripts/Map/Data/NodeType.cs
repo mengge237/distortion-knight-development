@@ -1,14 +1,14 @@
-namespace MutationChess.Map
+ï»¿namespace MutationChess.Map
 {
     public enum NodeType
     {
-        Start,          // Æğµã
-        NormalMonster,  // ÆÕÍ¨¹ÖÎï
-        EliteMonster,   // ¾«Ó¢¹ÖÎï
-        MysteryEvent,   // ÉñÃØÊÂ¼ş
-        Shop,           // ÉÌµê
-        Treasure,       // ±¦Ïä
-        Rest,           // ĞİÏ¢µã
+        Start,          // èµ·ç‚¹
+        NormalMonster,  // æ™®é€šæ€ªç‰©
+        EliteMonster,   // ç²¾è‹±æ€ªç‰©
+        MysteryEvent,   // ç¥ç§˜äº‹ä»¶
+        Shop,           // å•†åº—
+        Treasure,       // å®ç®±
+        Rest,           // ä¼‘æ¯ç‚¹
         Boss            // Boss
     }
 }

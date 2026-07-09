@@ -1,21 +1,21 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    [Header("Ëõ·Å")]
+    [Header("ç¼©æ”¾")]
     [SerializeField] private float minZoom = 3f;
     [SerializeField] private float maxZoom = 15f;
     [SerializeField] private float zoomSpeed = 2f;
 
-    [Header("Ğı×ª£¨ÏñÈË×ªÍ·Ò»Ñù£©")]
+    [Header("æ—‹è½¬ï¼ˆåƒäººè½¬å¤´ä¸€æ ·ï¼‰")]
     [SerializeField] private float rotateSpeed = 2f;
-    [SerializeField] private float minAngle = -60f;   // ×ó×ª×î´ó½Ç¶È
-    [SerializeField] private float maxAngle = 60f;    // ÓÒ×ª×î´ó½Ç¶È
+    [SerializeField] private float minAngle = -60f;   // å·¦è½¬æœ€å¤§è§’åº¦
+    [SerializeField] private float maxAngle = 60f;    // å³è½¬æœ€å¤§è§’åº¦
 
-    [Header("ÍÏ×§Æ½ÒÆ")]
+    [Header("æ‹–æ‹½å¹³ç§»")]
     [SerializeField] private float dragSpeed = 0.5f;
 
-    [Header("Æ½»¬»ØÕı")]
+    [Header("å¹³æ»‘å›æ­£")]
     [SerializeField] private bool enableSmoothReturn = true;
     [SerializeField] private float returnSpeed = 3f;
 
@@ -30,7 +30,7 @@ public class CameraController : MonoBehaviour
     private Vector3 originalPosition;
     private Quaternion originalRotation;
 
-    // µ±Ç°ÉãÏñ»ú¾àÀëµØÃæµÄ¸ß¶È£¨ÓÃÓÚ±£³ÖÊÓ½Ç¸ß¶È²»±ä£©
+    // å½“å‰æ‘„åƒæœºè·ç¦»åœ°é¢çš„é«˜åº¦ï¼ˆç”¨äºä¿æŒè§†è§’é«˜åº¦ä¸å˜ï¼‰
     private float fixedHeight;
 
     void Start()
@@ -51,7 +51,7 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        // --- ¹öÂÖËõ·Å ---
+        // --- æ»šè½®ç¼©æ”¾ ---
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0f && cam != null)
         {
@@ -62,7 +62,7 @@ public class CameraController : MonoBehaviour
             }
             else
             {
-                // Í¸ÊÓÏà»ú£ºÑØÊÓÏß·½ÏòÒÆ¶¯
+                // é€è§†ç›¸æœºï¼šæ²¿è§†çº¿æ–¹å‘ç§»åŠ¨
                 Vector3 forward = transform.forward;
                 float distance = Vector3.Distance(transform.position, GetLookAtPoint());
                 float newDistance = distance - scroll * zoomSpeed;
@@ -71,7 +71,7 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        // --- Êó±ê×ó¼üĞı×ªÊÓ½Ç£¨ÏñÈË×ªÍ·£© ---
+        // --- é¼ æ ‡å·¦é”®æ—‹è½¬è§†è§’ï¼ˆåƒäººè½¬å¤´ï¼‰ ---
         if (Input.GetMouseButtonDown(0))
         {
             if (UnityEngine.EventSystems.EventSystem.current != null &&
@@ -101,7 +101,7 @@ public class CameraController : MonoBehaviour
             isRotating = false;
         }
 
-        // --- Êó±êÖĞ¼üÍÏ×§Æ½ÒÆ ---
+        // --- é¼ æ ‡ä¸­é”®æ‹–æ‹½å¹³ç§» ---
         if (Input.GetMouseButtonDown(2))
         {
             dragOrigin = GetMouseWorldPosition();
@@ -120,13 +120,13 @@ public class CameraController : MonoBehaviour
             isDragging = false;
         }
 
-        // --- ¿Õ¸ñ¼ü»ØÕı ---
+        // --- ç©ºæ ¼é”®å›æ­£ ---
         if (Input.GetKeyDown(KeyCode.Space))
         {
             ResetView();
         }
 
-        // --- Æ½»¬»ØÕı£¨¿ÉÑ¡£© ---
+        // --- å¹³æ»‘å›æ­£ï¼ˆå¯é€‰ï¼‰ ---
         if (enableSmoothReturn && !isRotating && Mathf.Abs(currentAngle) > 0.5f)
         {
             targetAngle = Mathf.Lerp(targetAngle, 0, Time.deltaTime * returnSpeed);
@@ -138,7 +138,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Ó¦ÓÃĞı×ª - ÉãÏñ»úÎ§ÈÆ×ÔÉíYÖáĞı×ª£¨ÏñÈË×ªÍ·£©
+    /// åº”ç”¨æ—‹è½¬ - æ‘„åƒæœºå›´ç»•è‡ªèº«Yè½´æ—‹è½¬ï¼ˆåƒäººè½¬å¤´ï¼‰
     /// </summary>
     void ApplyRotation(float angle)
     {
@@ -148,7 +148,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// »ñÈ¡Êó±êÔÚÊÀ½ç¿Õ¼äÖĞµÄÎ»ÖÃ£¨ÓÃÓÚÍÏ×§£©
+    /// è·å–é¼ æ ‡åœ¨ä¸–ç•Œç©ºé—´ä¸­çš„ä½ç½®ï¼ˆç”¨äºæ‹–æ‹½ï¼‰
     /// </summary>
     Vector3 GetMouseWorldPosition()
     {
@@ -166,11 +166,11 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// »ñÈ¡ÉãÏñ»ú¿´ÏòµÄµã£¨Í¸ÊÓÏà»úÓÃ£©
+    /// è·å–æ‘„åƒæœºçœ‹å‘çš„ç‚¹ï¼ˆé€è§†ç›¸æœºç”¨ï¼‰
     /// </summary>
     Vector3 GetLookAtPoint()
     {
-        // ¼òµ¥ÊµÏÖ£º´ÓÉãÏñ»úÎ»ÖÃÑØÇ°½ø·½ÏòÍ¶Éä
+        // ç®€å•å®ç°ï¼šä»æ‘„åƒæœºä½ç½®æ²¿å‰è¿›æ–¹å‘æŠ•å°„
         Ray ray = new Ray(transform.position, transform.forward);
         Plane plane = new Plane(Vector3.up, new Vector3(0, fixedHeight, 0));
         float distance;
@@ -182,7 +182,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// ÖØÖÃÊÓ½Ç
+    /// é‡ç½®è§†è§’
     /// </summary>
     public void ResetView()
     {
@@ -190,7 +190,7 @@ public class CameraController : MonoBehaviour
         currentAngle = 0f;
         ApplyRotation(0f);
 
-        // ÖØÖÃÎ»ÖÃ£¨±£³Ö¸ß¶È²»±ä£©
+        // é‡ç½®ä½ç½®ï¼ˆä¿æŒé«˜åº¦ä¸å˜ï¼‰
         Vector3 pos = transform.position;
         pos.x = originalPosition.x;
         pos.z = originalPosition.z;
@@ -203,7 +203,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// ÉèÖÃÉãÏñ»úÎ»ÖÃ£¨Íâ²¿µ÷ÓÃ£©
+    /// è®¾ç½®æ‘„åƒæœºä½ç½®ï¼ˆå¤–éƒ¨è°ƒç”¨ï¼‰
     /// </summary>
     public void SetPosition(Vector3 position)
     {
@@ -213,12 +213,12 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// »ñÈ¡µ±Ç°½Ç¶È
+    /// è·å–å½“å‰è§’åº¦
     /// </summary>
     public float GetCurrentAngle() => currentAngle;
 
     /// <summary>
-    /// ÊÇ·ñµ½´ï×î´ó½Ç¶È
+    /// æ˜¯å¦åˆ°è¾¾æœ€å¤§è§’åº¦
     /// </summary>
     public bool IsAtMaxAngle() => Mathf.Abs(currentAngle) >= Mathf.Abs(maxAngle);
 }

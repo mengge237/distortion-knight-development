@@ -1,4 +1,4 @@
-using MutationChess.Core;
+﻿using MutationChess.Core;
 using MutationChess.UI;
 using System;
 using System.Collections;
@@ -38,6 +38,8 @@ namespace MutationChess.Battle
 
         [Header("=== 战斗日志 ===")]
         [SerializeField] private TMP_Text battleLogText;
+        [SerializeField] private BattleIntroUI battleIntroUI;
+
 
         [Header("=== 操作提示 ===")]
         [SerializeField] private TMP_Text actionHintText;
@@ -461,6 +463,35 @@ namespace MutationChess.Battle
         {
             currentEnemy = enemy;
             playerData = player;
+
+            var dataManager = PlayerDataManager.Instance;
+            if (dataManager != null)
+            {
+                dataManager.UpdateUI();
+            }
+
+            if (battleIntroUI != null)
+            {
+                string enemyName = enemy != null ? enemy.enemyName : "Unknown";
+                int enemyHp = enemy != null ? enemy.currentHealth : 0;
+                int enemyMaxHp = enemy != null ? enemy.maxHealth : 0;
+                Sprite enemySprite = enemy != null ? enemy.GetSprite() : null;
+
+                battleIntroUI.ShowIntro("Player",
+                    player.currentHealth, player.maxHealth,
+                    enemyName, enemyHp, enemyMaxHp,
+                    enemySprite, () => StartBattlePhase2());
+            }
+            else
+            {
+                StartBattlePhase2();
+            }
+        }
+
+        private void StartBattlePhase2()
+        {
+            if (BattleLogManager.Instance != null) BattleLogManager.Instance.ClearLogs();
+
             isInBattle = true;
             isBattleEnding = false;
             isViewingMap = false;
@@ -469,15 +500,9 @@ namespace MutationChess.Battle
             waitingForPlayerInput = false;
             currentAction = null;
 
-            var dataManager = PlayerDataManager.Instance;
-            if (dataManager != null)
-            {
-                dataManager.UpdateUI();
-            }
-
             if (enemyImage != null)
             {
-                Sprite sprite = enemy.GetSprite();
+                Sprite sprite = currentEnemy.GetSprite();
                 if (sprite != null)
                 {
                     enemyImage.sprite = sprite;
@@ -486,27 +511,26 @@ namespace MutationChess.Battle
                 else
                 {
                     enemyImage.gameObject.SetActive(false);
-                    Debug.LogWarning($"敌人 {enemy.enemyName} 没有图片");
+                    Debug.LogWarning("Enemy has no image: " + currentEnemy.enemyName);
                 }
             }
 
-            SetBattleBackground(enemy.enemyType, enemy.enemyName);
-
+            SetBattleBackground(currentEnemy.enemyType, currentEnemy.enemyName);
             ShowBattleView();
 
             if (battleLogText != null) battleLogText.text = "";
             if (actionHintText != null)
             {
-                actionHintText.text = "点击卡牌出牌 或 结束回合";
+                actionHintText.text = "Click card or End Turn";
                 actionHintText.color = Color.white;
             }
 
             RefreshAllUI();
 
-            AddLog("=== 战斗开始 ===");
-            AddLog($"遭遇 {enemy.enemyName}");
-            AddLog($"玩家 HP: {player.currentHealth}/{player.maxHealth}");
-            AddLog($"敌人 HP: {enemy.currentHealth}/{enemy.maxHealth}");
+            AddLog("=== Battle Start ===");
+            AddLog("Encounter: " + currentEnemy.enemyName);
+            AddLog("Player HP: " + playerData.currentHealth + "/" + playerData.maxHealth);
+            AddLog("Enemy HP: " + currentEnemy.currentHealth + "/" + currentEnemy.maxHealth);
 
             var handManager = HandManager.Instance;
             if (handManager != null) handManager.StartBattle();
@@ -820,6 +844,7 @@ namespace MutationChess.Battle
         void AddLog(string msg)
         {
             if (battleLogText != null) battleLogText.text += msg + "\n";
+            if (BattleLogManager.Instance != null) BattleLogManager.Instance.AddLog(msg);
         }
 
         public bool IsInBattle() => isInBattle;

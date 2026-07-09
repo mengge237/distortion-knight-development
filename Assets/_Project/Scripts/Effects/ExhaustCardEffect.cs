@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace MutationChess.Core
 {
@@ -8,8 +8,8 @@ namespace MutationChess.Core
         public override void Execute(CombatContext context)
         {
             if (context.sourceCard == null) return;
-            // ±ê¼ÇÎªÒÑÏûºÄ£¬ÔÚHandManagerÖĞÌØÊâ´¦Àí
-            // Êµ¼ÊÂß¼­ÔÚHandManagerÖĞÊµÏÖÒÆ³ı
+            // æ ‡è®°ä¸ºå·²æ¶ˆè€—ï¼Œåœ¨HandManagerä¸­ç‰¹æ®Šå¤„ç†
+            // å®é™…é€»è¾‘åœ¨HandManagerä¸­å®ç°ç§»é™¤
         }
     }
 }

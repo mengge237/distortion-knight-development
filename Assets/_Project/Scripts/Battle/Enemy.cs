@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -65,7 +65,7 @@ namespace MutationChess.Battle
 
             if (enemySprite == null)
             {
-                Debug.LogWarning($"Î´ÕÒµ½µĞÈËÍ¼Æ¬: {fullPath}");
+                Debug.LogWarning($"æœªæ‰¾åˆ°æ•Œäººå›¾ç‰‡: {fullPath}");
             }
         }
 
@@ -106,7 +106,7 @@ namespace MutationChess.Battle
                 }
                 else
                 {
-                    Debug.LogWarning($"Î´ÕÒµ½µÚ¶şĞÎÌ¬Í¼Æ¬: {secondFormSpriteName}");
+                    Debug.LogWarning($"æœªæ‰¾åˆ°ç¬¬äºŒå½¢æ€å›¾ç‰‡: {secondFormSpriteName}");
                 }
             }
 
@@ -214,12 +214,12 @@ namespace MutationChess.Battle
             turnCount++;
             ReduceBuffDurations();
 
-            if (enemyName.Contains("ÉîÔ¨Ö®Ö÷") && !isSecondForm && GetHealthPercentage() < 0.5f)
+            if (enemyName.Contains("æ·±æ¸Šä¹‹ä¸»") && !isSecondForm && GetHealthPercentage() < 0.5f)
             {
                 SwitchToSecondForm();
             }
 
-            if (enemyName.Contains("¸¯»¯¾ıÍõ"))
+            if (enemyName.Contains("è…åŒ–å›ç‹"))
             {
                 int bonus = GetKingPowerBonus();
                 if (bonus > 0)
@@ -241,7 +241,7 @@ namespace MutationChess.Battle
 
             int damage = currentAttackDamage + bonus;
 
-            if (enemyName.Contains("¸¯»¯¾ıÍõ"))
+            if (enemyName.Contains("è…åŒ–å›ç‹"))
             {
                 damage += GetKingPowerBonus();
             }
@@ -361,90 +361,90 @@ namespace MutationChess.Battle
         public void PlayHurt() => PlayAnimation(data?.hurtAnimationName ?? "Hurt");
         public void PlayDeath() => PlayAnimation(data?.deathAnimationName ?? "Death");
 
-        // ==================== ¹¤³§·½·¨ ====================
+        // ==================== å·¥å‚æ–¹æ³• ====================
 
         public static Enemy CreateCorruptedSoldier()
         {
-            var data = new EnemyData("¸¯»¯Ê¿±ø", 30, 7, EnemyType.Normal);
+            var data = new EnemyData("è…åŒ–å£«å…µ", 30, 7, EnemyType.Normal);
             data.aiPatternName = "CorruptedSoldier";
-            data.spriteName = "¸¯»¯Ê¿±ø";
+            data.spriteName = "è…åŒ–å£«å…µ";
             return new Enemy(data);
         }
 
         public static Enemy CreateMutantHound()
         {
-            var data = new EnemyData("»û±äÁÔÈ®", 25, 9, EnemyType.Normal);
+            var data = new EnemyData("ç•¸å˜çŒçŠ¬", 25, 9, EnemyType.Normal);
             data.aiPatternName = "MutantHound";
-            data.spriteName = "»û±äÁÔÈ®";
+            data.spriteName = "ç•¸å˜çŒçŠ¬";
             return new Enemy(data);
         }
 
         public static Enemy CreatePlagueAcolyte()
         {
-            var data = new EnemyData("ÎÁÒßÊÌÉ®", 28, 6, EnemyType.Normal);
+            var data = new EnemyData("ç˜Ÿç–«ä¾åƒ§", 28, 6, EnemyType.Normal);
             data.aiPatternName = "PlagueAcolyte";
-            data.spriteName = "ÎÁÒßÊÌÉ®";
+            data.spriteName = "ç˜Ÿç–«ä¾åƒ§";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssGrub()
         {
-            var data = new EnemyData("ÉîÔ¨Çù³æ", 22, 8, EnemyType.Normal);
+            var data = new EnemyData("æ·±æ¸Šè›†è™«", 22, 8, EnemyType.Normal);
             data.aiPatternName = "AbyssGrub";
-            data.spriteName = "ÉîÔ¨Çù³æ";
+            data.spriteName = "æ·±æ¸Šè›†è™«";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedKnight()
         {
-            var data = new EnemyData("¸¯Ê´ÆïÊ¿", 65, 14, EnemyType.Elite);
+            var data = new EnemyData("è…èš€éª‘å£«", 65, 14, EnemyType.Elite);
             data.aiPatternName = "CorruptedKnight";
-            data.spriteName = "¸¯Ê´ÆïÊ¿";
+            data.spriteName = "è…èš€éª‘å£«";
             return new Enemy(data);
         }
 
         public static Enemy CreateHellInquisitor()
         {
-            var data = new EnemyData("µØÓüÉóÅĞ¹Ù", 60, 16, EnemyType.Elite);
+            var data = new EnemyData("åœ°ç‹±å®¡åˆ¤å®˜", 60, 16, EnemyType.Elite);
             data.aiPatternName = "HellInquisitor";
-            data.spriteName = "µØÓüÉóÅĞ¹Ù";
+            data.spriteName = "åœ°ç‹±å®¡åˆ¤å®˜";
             return new Enemy(data);
         }
 
         public static Enemy CreateVoidWizard()
         {
-            var data = new EnemyData("Ğé¿ÕÎ×Ê¦", 55, 12, EnemyType.Elite);
+            var data = new EnemyData("è™šç©ºå·«å¸ˆ", 55, 12, EnemyType.Elite);
             data.aiPatternName = "VoidWizard";
-            data.spriteName = "Ğé¿ÕÎ×Ê¦";
+            data.spriteName = "è™šç©ºå·«å¸ˆ";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedGolem()
         {
-            var data = new EnemyData("¸¯»¯¾ŞÊŞ", 80, 13, EnemyType.Elite);
+            var data = new EnemyData("è…åŒ–å·¨å…½", 80, 13, EnemyType.Elite);
             data.aiPatternName = "CorruptedGolem";
-            data.spriteName = "¸¯»¯¾ŞÊŞ";
+            data.spriteName = "è…åŒ–å·¨å…½";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssLord()
         {
-            var data = new EnemyData("ÉîÔ¨Ö®Ö÷", 150, 22, EnemyType.Boss);
+            var data = new EnemyData("æ·±æ¸Šä¹‹ä¸»", 150, 22, EnemyType.Boss);
             data.aiPatternName = "AbyssLord";
-            data.spriteName = "ÉîÔ¨Ö®Ö÷";
+            data.spriteName = "æ·±æ¸Šä¹‹ä¸»";
 
             var enemy = new Enemy(data);
-            enemy.firstFormSpriteName = "ÉîÔ¨Ö®Ö÷";
-            enemy.secondFormSpriteName = "ÉîÔ¨Ö®Ö÷¡¤¿ËËÕÂ³Ö®Ó°";
+            enemy.firstFormSpriteName = "æ·±æ¸Šä¹‹ä¸»";
+            enemy.secondFormSpriteName = "æ·±æ¸Šä¹‹ä¸»Â·å…‹è‹é²ä¹‹å½±";
 
             return enemy;
         }
 
         public static Enemy CreateCorruptedKing()
         {
-            var data = new EnemyData("¸¯»¯¾ıÍõ¡¤×îºóµÄ°§Ãù", 200, 28, EnemyType.Boss);
+            var data = new EnemyData("è…åŒ–å›ç‹Â·æœ€åçš„å“€é¸£", 200, 28, EnemyType.Boss);
             data.aiPatternName = "CorruptedKing";
-            data.spriteName = "¸¯»¯¾ıÍõ";
+            data.spriteName = "è…åŒ–å›ç‹";
             return new Enemy(data);
         }
 

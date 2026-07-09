@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace MutationChess.Core
 {
@@ -17,7 +17,7 @@ namespace MutationChess.Core
                 var handManager = UI.HandManager.Instance;
                 if (handManager != null)
                 {
-                    // ĞŞ¸ÄÊÖÅÆÖĞËùÓĞ¿¨ÅÆµÄ·ÑÓÃ£¨±£ÁôÔ­ÊµÏÖ£©
+                    // ä¿®æ”¹æ‰‹ç‰Œä¸­æ‰€æœ‰å¡ç‰Œçš„è´¹ç”¨ï¼ˆä¿ç•™åŸå®ç°ï¼‰
                 }
             }
             else

@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using DG.Tweening;
 
@@ -6,7 +6,7 @@ namespace MutationChess.Map
 {
     public class PlayerController : MonoBehaviour
     {
-        [Header("ÒÆ¶¯ÉèÖÃ")]
+        [Header("ç§»åŠ¨è®¾ç½®")]
         [SerializeField] private float moveDuration = 0.6f;
         [SerializeField] private float jumpPower = 2.5f;
         [SerializeField] private int jumpCount = 1;
@@ -37,7 +37,7 @@ namespace MutationChess.Map
                 rotationTween = transform.DORotateQuaternion(targetRotation, rotationDuration).SetEase(Ease.OutQuad);
             }
 
-            // Ê¹ÓÃ DOTween ÌøÔ¾ÒÆ¶¯£¨¸üË¿»¬£©
+            // ä½¿ç”¨ DOTween è·³è·ƒç§»åŠ¨ï¼ˆæ›´ä¸æ»‘ï¼‰
             moveTween = transform
                 .DOJump(target, jumpPower, jumpCount, moveDuration)
                 .SetEase(moveEase)
@@ -58,7 +58,7 @@ namespace MutationChess.Map
         }
 
         /// <summary>
-        /// ¼òµ¥µÄÆ½»¬ÒÆ¶¯£¨²»ÌøÔ¾£©
+        /// ç®€å•çš„å¹³æ»‘ç§»åŠ¨ï¼ˆä¸è·³è·ƒï¼‰
         /// </summary>
         public void MoveToNodeSmooth(Vector3 targetPosition, System.Action onComplete)
         {
@@ -81,7 +81,7 @@ namespace MutationChess.Map
         }
 
         /// <summary>
-        /// ´ø»¡ÏßµÄÒÆ¶¯£¨¸ü×ÔÈ»£¬ÏñÉ±Â¾¼âËşµÄÒÆ¶¯£©
+        /// å¸¦å¼§çº¿çš„ç§»åŠ¨ï¼ˆæ›´è‡ªç„¶ï¼Œåƒæ€æˆ®å°–å¡”çš„ç§»åŠ¨ï¼‰
         /// </summary>
         public void MoveToNodeArc(Vector3 targetPosition, float arcHeight, System.Action onComplete)
         {
@@ -91,7 +91,7 @@ namespace MutationChess.Map
             Vector3 startPos = transform.position;
             Vector3 midPos = (startPos + targetPosition) / 2 + Vector3.up * arcHeight;
 
-            // Ê¹ÓÃÂ·¾¶ÒÆ¶¯£¬CatmullRom ÇúÏß¸üÆ½»¬
+            // ä½¿ç”¨è·¯å¾„ç§»åŠ¨ï¼ŒCatmullRom æ›²çº¿æ›´å¹³æ»‘
             Vector3[] path = new Vector3[] { startPos, midPos, targetPosition };
 
             transform.DOPath(path, moveDuration, PathType.CatmullRom)
@@ -103,7 +103,7 @@ namespace MutationChess.Map
         }
 
         /// <summary>
-        /// Í£Ö¹ÒÆ¶¯
+        /// åœæ­¢ç§»åŠ¨
         /// </summary>
         public void StopMoving()
         {

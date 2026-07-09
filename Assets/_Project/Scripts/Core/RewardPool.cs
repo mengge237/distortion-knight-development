@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 using MutationChess.Core;
 
@@ -8,20 +8,20 @@ namespace MutationChess.UI
     [CreateAssetMenu(fileName = "RewardPool", menuName = "MutationChess/Reward Pool")]
     public class RewardPool : ScriptableObject
     {
-        [Header("=== ½±Àø³ØÃû³Æ ===")]
-        public string poolName = "½±Àø³Ø";
+        [Header("=== å¥–åŠ±æ± åç§° ===")]
+        public string poolName = "å¥–åŠ±æ± ";
 
-        [Header("=== ½±Àø³ØÀàĞÍ ===")]
+        [Header("=== å¥–åŠ±æ± ç±»å‹ ===")]
         public RewardPoolType poolType = RewardPoolType.Common;
 
-        [Header("=== Ã¿´ÎÕ¹Ê¾ÊıÁ¿£¨¿ÉÔÚ´úÂëÖĞ¸²¸Ç£© ===")]
+        [Header("=== æ¯æ¬¡å±•ç¤ºæ•°é‡ï¼ˆå¯åœ¨ä»£ç ä¸­è¦†ç›–ï¼‰ ===")]
         public int cardsToShow = 3;
 
-        [Header("=== ¿ÉÓÃ¿¨ÅÆÁĞ±í£¨Ö»¶Á£¬ÓÉ´úÂë×Ô¶¯Ìî³ä£© ===")]
+        [Header("=== å¯ç”¨å¡ç‰Œåˆ—è¡¨ï¼ˆåªè¯»ï¼Œç”±ä»£ç è‡ªåŠ¨å¡«å……ï¼‰ ===")]
         [SerializeField] private List<CardName> availableRewards = new List<CardName>();
 
         /// <summary>
-        /// »ñÈ¡½±Àø¿¨ÅÆÁĞ±í
+        /// è·å–å¥–åŠ±å¡ç‰Œåˆ—è¡¨
         /// </summary>
         public List<Card> GetRewards()
         {
@@ -29,7 +29,7 @@ namespace MutationChess.UI
 
             if (availableRewards == null || availableRewards.Count == 0)
             {
-                Debug.LogWarning($"½±Àø³Ø {poolName} Îª¿Õ£¬Ê¹ÓÃÄ¬ÈÏ¿¨ÅÆ");
+                Debug.LogWarning($"å¥–åŠ±æ±  {poolName} ä¸ºç©ºï¼Œä½¿ç”¨é»˜è®¤å¡ç‰Œ");
                 return GetDefaultRewards();
             }
 
@@ -50,15 +50,15 @@ namespace MutationChess.UI
         }
 
         /// <summary>
-        /// »ñÈ¡Ä¬ÈÏ½±Àø£¨µ±³ØÎª¿ÕÊ±Ê¹ÓÃ£©
+        /// è·å–é»˜è®¤å¥–åŠ±ï¼ˆå½“æ± ä¸ºç©ºæ—¶ä½¿ç”¨ï¼‰
         /// </summary>
         public List<Card> GetDefaultRewards()
         {
             List<Card> result = new List<Card>();
 
-            Card attack = CardData.CreateCard(CardName.¹¥»÷);
-            Card defend = CardData.CreateCard(CardName.·ÀÓù);
-            Card bash = CardData.CreateCard(CardName.Í´»÷);
+            Card attack = CardData.CreateCard(CardName.æ”»å‡»);
+            Card defend = CardData.CreateCard(CardName.é˜²å¾¡);
+            Card bash = CardData.CreateCard(CardName.ç—›å‡»);
 
             if (attack != null) result.Add(attack);
             if (defend != null) result.Add(defend);
@@ -68,7 +68,7 @@ namespace MutationChess.UI
         }
 
         /// <summary>
-        /// Ë¢ĞÂ¿ÉÓÃ¿¨ÅÆÁĞ±í
+        /// åˆ·æ–°å¯ç”¨å¡ç‰Œåˆ—è¡¨
         /// </summary>
         public void RefreshAvailableRewards(List<CardName> cardList)
         {
@@ -80,7 +80,7 @@ namespace MutationChess.UI
         }
 
         /// <summary>
-        /// »ñÈ¡¿ÉÓÃ¿¨ÅÆÁĞ±íµÄ¸±±¾
+        /// è·å–å¯ç”¨å¡ç‰Œåˆ—è¡¨çš„å‰¯æœ¬
         /// </summary>
         public List<CardName> GetAvailableRewardsCopy()
         {

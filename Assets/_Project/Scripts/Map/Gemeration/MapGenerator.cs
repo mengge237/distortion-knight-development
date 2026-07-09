@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,7 +7,7 @@ namespace MutationChess.Map
 {
     public class MapGenerator : MonoBehaviour
     {
-        [Header("²¼¾Ö²ÎÊı")]
+        [Header("å¸ƒå±€å‚æ•°")]
         [SerializeField] private int rows = 8;
         [SerializeField] private int maxNodesPerRow = 4;
         [SerializeField] private float horizontalSpacing = 3.0f;
@@ -17,13 +17,13 @@ namespace MutationChess.Map
         [SerializeField] private float positionOffsetY = 0.3f;
         [SerializeField] private int extraBranches = 2;
 
-        [Header("½ÚµãÔ¤ÖÆÌå")]
+        [Header("èŠ‚ç‚¹é¢„åˆ¶ä½“")]
         [SerializeField] private GameObject nodePrefab;
 
-        [Header("Á¬Ïß²ÄÖÊ")]
+        [Header("è¿çº¿æè´¨")]
         [SerializeField] private Material lineMaterial;
 
-        [Header("ÌØÊâ²ã¹æÔò")]
+        [Header("ç‰¹æ®Šå±‚è§„åˆ™")]
         [SerializeField] private bool bossLayerHasRestBefore = true;
         [SerializeField] private int treasureLayerIndex = 6;
 
@@ -71,7 +71,7 @@ namespace MutationChess.Map
             linesParent = new GameObject("Lines").transform;
             linesParent.SetParent(transform);
 
-            // ¼ÆËãÃ¿²ãµÄ½ÚµãÊıÁ¿£¨µ¥Æğµãµ¥ÖÕµã£©
+            // è®¡ç®—æ¯å±‚çš„èŠ‚ç‚¹æ•°é‡ï¼ˆå•èµ·ç‚¹å•ç»ˆç‚¹ï¼‰
             List<int> layerCounts = new List<int>();
             int maxCount = maxNodesPerRow;
 
@@ -218,7 +218,7 @@ namespace MutationChess.Map
                 }
             }
 
-            // È·±£Ã¿¸ö½Úµã¶¼ÓĞ³ö±ß
+            // ç¡®ä¿æ¯ä¸ªèŠ‚ç‚¹éƒ½æœ‰å‡ºè¾¹
             for (int row = 0; row < rows - 1; row++)
             {
                 var currentLayer = allLayers[row];
@@ -236,7 +236,7 @@ namespace MutationChess.Map
                 }
             }
 
-            // È·±£Ã¿¸ö½Úµã¶¼ÓĞÈë±ß
+            // ç¡®ä¿æ¯ä¸ªèŠ‚ç‚¹éƒ½æœ‰å…¥è¾¹
             for (int row = 1; row < rows; row++)
             {
                 var currentLayer = allLayers[row];
@@ -254,7 +254,7 @@ namespace MutationChess.Map
                 }
             }
 
-            // È·±£ÆğµãÓĞ³ö±ß
+            // ç¡®ä¿èµ·ç‚¹æœ‰å‡ºè¾¹
             if (allLayers.Count > 0 && allLayers[0].Count > 0)
             {
                 var start = allLayers[0][0];
@@ -271,7 +271,7 @@ namespace MutationChess.Map
                 }
             }
 
-            // È·±£BossÓĞÈë±ß
+            // ç¡®ä¿Bossæœ‰å…¥è¾¹
             if (allLayers.Count > 0)
             {
                 var bossLayer = allLayers[rows - 1];
@@ -292,14 +292,14 @@ namespace MutationChess.Map
                 }
             }
 
-            // ¹Ø¼ü²½Öè£ºÒÆ³ı½»²æÁ¬½Ó£¨²Î¿¼É±Â¾¼âËşËã·¨£©
+            // å…³é”®æ­¥éª¤ï¼šç§»é™¤äº¤å‰è¿æ¥ï¼ˆå‚è€ƒæ€æˆ®å°–å¡”ç®—æ³•ï¼‰
             RemoveCrossConnections();
 
         }
 
         /// <summary>
-        /// ÒÆ³ı½»²æÁ¬½Ó - É±Â¾¼âËş±ê×¼Ëã·¨
-        /// ¼ì²â²¢ĞŞ¸´½»²æ£ºÌí¼ÓÆ½ĞĞÁ¬½Ó£¬È»ºóËæ»úÒÆ³ı½»²æÁ¬½Ó
+        /// ç§»é™¤äº¤å‰è¿æ¥ - æ€æˆ®å°–å¡”æ ‡å‡†ç®—æ³•
+        /// æ£€æµ‹å¹¶ä¿®å¤äº¤å‰ï¼šæ·»åŠ å¹³è¡Œè¿æ¥ï¼Œç„¶åéšæœºç§»é™¤äº¤å‰è¿æ¥
         /// </summary>
         void RemoveCrossConnections()
         {
@@ -317,13 +317,13 @@ namespace MutationChess.Map
                     MapNode topRight = GetNode(new Vector2Int(col + 1, row + 1));
                     if (topLeft == null || topRight == null) continue;
 
-                    // ½»²æÌõ¼ş£º×ó±ß½ÚµãÁ¬½Óµ½ÓÒÉÏ£¬ÓÒ±ß½ÚµãÁ¬½Óµ½×óÉÏ
+                    // äº¤å‰æ¡ä»¶ï¼šå·¦è¾¹èŠ‚ç‚¹è¿æ¥åˆ°å³ä¸Šï¼Œå³è¾¹èŠ‚ç‚¹è¿æ¥åˆ°å·¦ä¸Š
                     bool hasCross = leftNode.connections.Contains(topRight) &&
                                    rightNode.connections.Contains(topLeft);
 
                     if (hasCross)
                     {
-                        // 1. Ìí¼ÓÆ½ĞĞÁ¬½Ó£¨È·±£ÓĞÌæ´úÂ·¾¶£©
+                        // 1. æ·»åŠ å¹³è¡Œè¿æ¥ï¼ˆç¡®ä¿æœ‰æ›¿ä»£è·¯å¾„ï¼‰
                         if (!leftNode.connections.Contains(topLeft))
                             leftNode.AddConnection(topLeft);
                         if (!rightNode.connections.Contains(topRight))
@@ -332,18 +332,18 @@ namespace MutationChess.Map
                         float rnd = Random.Range(0f, 1f);
                         if (rnd < 0.2f)
                         {
-                            // 20% ¸ÅÂÊ£ºÒÆ³ıÁ½Ìõ½»²æÁ¬½Ó
+                            // 20% æ¦‚ç‡ï¼šç§»é™¤ä¸¤æ¡äº¤å‰è¿æ¥
                             leftNode.RemoveConnection(topRight);
                             rightNode.RemoveConnection(topLeft);
                         }
                         else if (rnd < 0.6f)
                         {
-                            // 40% ¸ÅÂÊ£ºÖ»ÒÆ³ıµÚÒ»Ìõ½»²æÁ¬½Ó£¨×ó->ÓÒÉÏ£©
+                            // 40% æ¦‚ç‡ï¼šåªç§»é™¤ç¬¬ä¸€æ¡äº¤å‰è¿æ¥ï¼ˆå·¦->å³ä¸Šï¼‰
                             leftNode.RemoveConnection(topRight);
                         }
                         else
                         {
-                            // 40% ¸ÅÂÊ£ºÖ»ÒÆ³ıµÚ¶şÌõ½»²æÁ¬½Ó£¨ÓÒ->×óÉÏ£©
+                            // 40% æ¦‚ç‡ï¼šåªç§»é™¤ç¬¬äºŒæ¡äº¤å‰è¿æ¥ï¼ˆå³->å·¦ä¸Šï¼‰
                             rightNode.RemoveConnection(topLeft);
                         }
                     }
@@ -452,7 +452,7 @@ namespace MutationChess.Map
 
             ShuffleList(availableCols);
 
-            // ´æ´¢ÒÑÊ¹ÓÃµÄ½Úµã£¬±ÜÃâ¶àÌõÂ·¾¶Ê¹ÓÃÏàÍ¬½Úµã
+            // å­˜å‚¨å·²ä½¿ç”¨çš„èŠ‚ç‚¹ï¼Œé¿å…å¤šæ¡è·¯å¾„ä½¿ç”¨ç›¸åŒèŠ‚ç‚¹
             HashSet<Vector2Int> usedNodes = new HashSet<Vector2Int>();
             usedNodes.Add(startPoint);
 
@@ -505,7 +505,7 @@ namespace MutationChess.Map
             {
                 int currentLayerCount = allLayers[row].Count;
 
-                // Ö»ÔÊĞí´Óµ±Ç°ÁĞÒÆ¶¯ -1, 0, +1£¨É±Â¾¼âËş±ê×¼£©
+                // åªå…è®¸ä»å½“å‰åˆ—ç§»åŠ¨ -1, 0, +1ï¼ˆæ€æˆ®å°–å¡”æ ‡å‡†ï¼‰
                 List<int> candidateCols = new List<int>();
 
                 int forwardCol = lastNodeCol;
@@ -527,14 +527,14 @@ namespace MutationChess.Map
                     continue;
                 }
 
-                // Èç¹ûºòÑ¡ÁĞÌ«ÉÙ£¨±ßÔµÇé¿ö£©£¬Ìí¼ÓËùÓĞÁĞ
+                // å¦‚æœå€™é€‰åˆ—å¤ªå°‘ï¼ˆè¾¹ç¼˜æƒ…å†µï¼‰ï¼Œæ·»åŠ æ‰€æœ‰åˆ—
                 if (candidateCols.Count == 0)
                 {
                     for (int col = 0; col < currentLayerCount; col++)
                         candidateCols.Add(col);
                 }
 
-                // ÓÅÏÈÑ¡ÔñÎ´±»Ê¹ÓÃµÄ½Úµã£¨±ÜÃâÂ·¾¶ÖØµş£©
+                // ä¼˜å…ˆé€‰æ‹©æœªè¢«ä½¿ç”¨çš„èŠ‚ç‚¹ï¼ˆé¿å…è·¯å¾„é‡å ï¼‰
                 var unusedCandidates = candidateCols
                     .Where(col => !usedNodes.Contains(new Vector2Int(col, row)))
                     .ToList();
@@ -557,7 +557,7 @@ namespace MutationChess.Map
                 int candidateIndex;
                 if (finalCandidates.Count > 1)
                 {
-                    // 70%¸ÅÂÊÑ¡Ôñ×îÓÅ£¬30%Ëæ»ú
+                    // 70%æ¦‚ç‡é€‰æ‹©æœ€ä¼˜ï¼Œ30%éšæœº
                     if (Random.Range(0f, 1f) < 0.7f)
                         candidateIndex = 0;
                     else

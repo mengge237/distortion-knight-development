@@ -1,4 +1,4 @@
-using DG.Tweening;
+ï»¿using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using TMPro;
@@ -10,7 +10,7 @@ namespace MutationChess.UI
 {
     public class CardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        [Header("=== UI×é¼ş ===")]
+        [Header("=== UIç»„ä»¶ ===")]
         [SerializeField] private Image cardBackground;
         [SerializeField] private Image borderImage;
         [SerializeField] private Image cardArt;
@@ -18,13 +18,13 @@ namespace MutationChess.UI
         [SerializeField] private TMP_Text costText;
         [SerializeField] private TMP_Text descriptionText;
 
-        [Header("=== ÄÜÁ¿Í¼±ê ===")]
+        [Header("=== èƒ½é‡å›¾æ ‡ ===")]
         [SerializeField] private Image costIcon;
 
-        [Header("=== ·¢¹âĞ§¹û ===")]
+        [Header("=== å‘å…‰æ•ˆæœ ===")]
         [SerializeField] private Image glowImage;
 
-        [Header("=== ¶¯»­²ÎÊı ===")]
+        [Header("=== åŠ¨ç”»å‚æ•° ===")]
         [SerializeField] private float hoverScale = 1.08f;
         [SerializeField] private float hoverFloatAmount = 15f;
         [SerializeField] private float hoverDuration = 0.15f;
@@ -32,10 +32,10 @@ namespace MutationChess.UI
         [SerializeField] private float dragFloatAmount = 50f;
         [SerializeField] private float dragThreshold = 50f;
 
-        [Header("=== ×´Ì¬ ===")]
+        [Header("=== çŠ¶æ€ ===")]
         [SerializeField] private Color disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
 
-        [Header("=== ´óÍ¼Ô¤ÀÀ ===")]
+        [Header("=== å¤§å›¾é¢„è§ˆ ===")]
         [SerializeField] private GameObject bigCardPrefab;
         [SerializeField] private Transform bigCardParent;
         [SerializeField] private float longPressDelay = 0.5f;
@@ -100,19 +100,19 @@ namespace MutationChess.UI
             cardData = card;
 
             if (cardNameText == null)
-                Debug.LogError("CardUI: cardNameText Îª¿Õ£¡Çë¼ì²éÔ¤ÖÆÌå");
+                Debug.LogError("CardUI: cardNameText ä¸ºç©ºï¼è¯·æ£€æŸ¥é¢„åˆ¶ä½“");
             if (costText == null)
-                Debug.LogError("CardUI: costText Îª¿Õ£¡Çë¼ì²éÔ¤ÖÆÌå");
+                Debug.LogError("CardUI: costText ä¸ºç©ºï¼è¯·æ£€æŸ¥é¢„åˆ¶ä½“");
             if (descriptionText == null)
-                Debug.LogError("CardUI: descriptionText Îª¿Õ£¡Çë¼ì²éÔ¤ÖÆÌå");
+                Debug.LogError("CardUI: descriptionText ä¸ºç©ºï¼è¯·æ£€æŸ¥é¢„åˆ¶ä½“");
             if (borderImage == null)
-                Debug.LogError("CardUI: borderImage Îª¿Õ£¡Çë¼ì²éÔ¤ÖÆÌå");
+                Debug.LogError("CardUI: borderImage ä¸ºç©ºï¼è¯·æ£€æŸ¥é¢„åˆ¶ä½“");
             if (cardBackground == null)
-                Debug.LogError("CardUI: cardBackground Îª¿Õ£¡Çë¼ì²éÔ¤ÖÆÌå");
+                Debug.LogError("CardUI: cardBackground ä¸ºç©ºï¼è¯·æ£€æŸ¥é¢„åˆ¶ä½“");
             if (cardArt == null)
-                Debug.LogError("CardUI: cardArt Îª¿Õ£¡Çë¼ì²éÔ¤ÖÆÌå");
+                Debug.LogError("CardUI: cardArt ä¸ºç©ºï¼è¯·æ£€æŸ¥é¢„åˆ¶ä½“");
             if (costIcon == null)
-                Debug.LogError("CardUI: costIcon Îª¿Õ£¡Çë¼ì²éÔ¤ÖÆÌå");
+                Debug.LogError("CardUI: costIcon ä¸ºç©ºï¼è¯·æ£€æŸ¥é¢„åˆ¶ä½“");
 
             UpdateUI();
 
@@ -164,7 +164,7 @@ namespace MutationChess.UI
                 else
                 {
                     cardArt.enabled = false;
-                    Debug.LogWarning($"¿¨ÅÆ {cardData.cardName} Ã»ÓĞÍ¼Æ¬");
+                    Debug.LogWarning($"å¡ç‰Œ {cardData.cardName} æ²¡æœ‰å›¾ç‰‡");
                 }
             }
 

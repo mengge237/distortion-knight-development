@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 
 namespace MutationChess.Battle
 {
@@ -11,10 +11,10 @@ namespace MutationChess.Battle
         public EnemyType enemyType;
         public string description;
 
-        [Header("=== 2D显示 ===")]
+        [Header("=== 2D鏄剧ず ===")]
         public string spriteName;
 
-        [Header("=== 3D模型（可选） ===")]
+        [Header("=== 3D妯″瀷锛堝彲閫夛級 ===")]
         public GameObject enemyPrefab;
         public Vector3 modelOffset = Vector3.zero;
         public Vector3 modelScale = Vector3.one;

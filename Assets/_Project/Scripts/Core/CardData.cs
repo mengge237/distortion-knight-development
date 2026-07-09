@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,90 +8,90 @@ namespace MutationChess.Core
     {
         private static readonly Dictionary<CardName, CardTemplate> Templates = new Dictionary<CardName, CardTemplate>
         {
-            [CardName.¹¥»÷] = new CardTemplate
+            [CardName.æ”»å‡»] = new CardTemplate
             {
-                cardName = "¹¥»÷",
+                cardName = "æ”»å‡»",
                 cost = 1,
                 damage = 6,
                 cardType = CardType.Attack,
                 rarity = CardRarity.Common,
-                description = "Ôì³É 6 µãÉËº¦",
+                description = "é€ æˆ 6 ç‚¹ä¼¤å®³",
                 effectIds = new List<string> { "DealDamage" },
-                cardArtPath = "CardArt/¹¥»÷",
+                cardArtPath = "CardArt/æ”»å‡»",
             },
 
-            [CardName.·ÀÓù] = new CardTemplate
+            [CardName.é˜²å¾¡] = new CardTemplate
             {
-                cardName = "·ÀÓù",
+                cardName = "é˜²å¾¡",
                 cost = 1,
                 block = 5,
                 cardType = CardType.Defense,
                 rarity = CardRarity.Common,
-                description = "»ñµÃ 5 µã¸ñµ²",
+                description = "è·å¾— 5 ç‚¹æ ¼æŒ¡",
                 effectIds = new List<string> { "ApplyBlock" },
-                cardArtPath = "CardArt/·ÀÓù",
+                cardArtPath = "CardArt/é˜²å¾¡",
             },
 
-            [CardName.Í´»÷] = new CardTemplate
+            [CardName.ç—›å‡»] = new CardTemplate
             {
-                cardName = "Í´»÷",
+                cardName = "ç—›å‡»",
                 cost = 2,
                 damage = 8,
                 magicNumber = 2,
                 cardType = CardType.Attack,
                 rarity = CardRarity.Common,
-                description = "Ôì³É 8 µãÉËº¦£¬Ê©¼Ó 2 ²ãÒ×ÉË",
+                description = "é€ æˆ 8 ç‚¹ä¼¤å®³ï¼Œæ–½åŠ  2 å±‚æ˜“ä¼¤",
                 effectIds = new List<string> { "DealDamage", "ApplyVulnerability" },
-                cardArtPath = "CardArt/Í´»÷",
+                cardArtPath = "CardArt/ç—›å‡»",
             },
 
-            [CardName.ºó·¢ÖÆÈË] = new CardTemplate
+            [CardName.åå‘åˆ¶äºº] = new CardTemplate
             {
-                cardName = "ºó·¢ÖÆÈË",
+                cardName = "åå‘åˆ¶äºº",
                 cost = 1,
                 magicNumber = 12,
                 cardType = CardType.Skill,
                 rarity = CardRarity.Uncommon,
-                description = "ÏÂ»ØºÏÔì³É 12 µãÉËº¦",
+                description = "ä¸‹å›åˆé€ æˆ 12 ç‚¹ä¼¤å®³",
                 effectIds = new List<string> { "DealDamageNextTurn" },
-                cardArtPath = "CardArt/ºó·¢ÖÆÈË",
+                cardArtPath = "CardArt/åå‘åˆ¶äºº",
             },
 
-            [CardName.Äº¹âÒÇÊ½] = new CardTemplate
+            [CardName.æš®å…‰ä»ªå¼] = new CardTemplate
             {
-                cardName = "Äº¹âÒÇÊ½",
+                cardName = "æš®å…‰ä»ªå¼",
                 cost = 2,
                 magicNumber = 3,
                 cardType = CardType.Power,
                 rarity = CardRarity.Rare,
-                description = "»ñµÃ³ÖĞø 3 »ØºÏµÄÁÙÊ±Á¦Á¿",
+                description = "è·å¾—æŒç»­ 3 å›åˆçš„ä¸´æ—¶åŠ›é‡",
                 effectIds = new List<string> { "ApplyTemporaryStrength" },
-                cardArtPath = "CardArt/Äº¹âÒÇÊ½",
+                cardArtPath = "CardArt/æš®å…‰ä»ªå¼",
             },
 
-            [CardName.Ô¤ÖªÒÇÊ½] = new CardTemplate
+            [CardName.é¢„çŸ¥ä»ªå¼] = new CardTemplate
             {
-                cardName = "Ô¤ÖªÒÇÊ½",
+                cardName = "é¢„çŸ¥ä»ªå¼",
                 cost = 1,
                 block = 8,
                 magicNumber = 1,
                 cardType = CardType.Skill,
                 rarity = CardRarity.Uncommon,
-                description = "»ñµÃ 8 µã¸ñµ²£¬³é 1 ÕÅÅÆ",
+                description = "è·å¾— 8 ç‚¹æ ¼æŒ¡ï¼ŒæŠ½ 1 å¼ ç‰Œ",
                 effectIds = new List<string> { "ApplyBlock", "DrawCards" },
-                cardArtPath = "CardArt/Ô¤ÖªÒÇÊ½",
+                cardArtPath = "CardArt/é¢„çŸ¥ä»ªå¼",
             },
 
-            [CardName.¼Ó¹Ì] = new CardTemplate
+            [CardName.åŠ å›º] = new CardTemplate
             {
-                cardName = "¼Ó¹Ì",
+                cardName = "åŠ å›º",
                 cost = 1,
                 magicNumber = 3,
                 cardType = CardType.Defense,
                 rarity = CardRarity.Uncommon,
-                description = "»ñµÃ 3 µãÃô½İ",
+                description = "è·å¾— 3 ç‚¹æ•æ·",
                 effectIds = new List<string> { "ApplyDexterity" },
-                cardArtPath = "CardArt/¼Ó¹Ì",
+                cardArtPath = "CardArt/åŠ å›º",
             },
         };
 
@@ -102,7 +102,7 @@ namespace MutationChess.Core
             if (Templates.TryGetValue(cardName, out CardTemplate template))
                 return template;
 
-            Debug.LogError($"Î´ÕÒµ½¿¨ÅÆÄ£°å: {cardName}");
+            Debug.LogError($"æœªæ‰¾åˆ°å¡ç‰Œæ¨¡æ¿: {cardName}");
             return default;
         }
 
@@ -110,7 +110,7 @@ namespace MutationChess.Core
         {
             if (!Templates.TryGetValue(cardName, out CardTemplate template))
             {
-                Debug.LogError($"Î´Öª¿¨ÅÆÃû³Æ: {cardName}");
+                Debug.LogError($"æœªçŸ¥å¡ç‰Œåç§°: {cardName}");
                 return null;
             }
 
@@ -135,7 +135,7 @@ namespace MutationChess.Core
                 }
                 else
                 {
-                    Debug.LogWarning($"Î´ÕÒµ½¿¨ÅÆÍ¼Æ¬: {template.cardArtPath}");
+                    Debug.LogWarning($"æœªæ‰¾åˆ°å¡ç‰Œå›¾ç‰‡: {template.cardArtPath}");
                 }
             }
 
@@ -150,13 +150,13 @@ namespace MutationChess.Core
                     }
                     else
                     {
-                        Debug.LogError($"¼ÓÔØĞ§¹ûÊ§°Ü: {effectId} µ½¿¨ÅÆ {template.cardName}");
+                        Debug.LogError($"åŠ è½½æ•ˆæœå¤±è´¥: {effectId} åˆ°å¡ç‰Œ {template.cardName}");
                     }
                 }
             }
             else
             {
-                Debug.LogWarning($"¿¨ÅÆ {template.cardName} Ã»ÓĞÅäÖÃĞ§¹û£¡");
+                Debug.LogWarning($"å¡ç‰Œ {template.cardName} æ²¡æœ‰é…ç½®æ•ˆæœï¼");
             }
 
             return card;
@@ -171,20 +171,20 @@ namespace MutationChess.Core
 
             CardEffect effect = null;
 
-            // ×¢Òâ£ºÎÄ¼şÃûÊÇ effectId£¨Èç "DealDamage"£©£¬ÀàĞÍÊÇ CardEffect
+            // æ³¨æ„ï¼šæ–‡ä»¶åæ˜¯ effectIdï¼ˆå¦‚ "DealDamage"ï¼‰ï¼Œç±»å‹æ˜¯ CardEffect
             string effectPath = $"Effects/{effectId}";
             effect = Resources.Load<CardEffect>(effectPath);
 
             if (effect == null)
             {
-                Debug.LogWarning($"Â·¾¶1¼ÓÔØÊ§°Ü: {effectPath}£¬³¢ÊÔÆäËûÂ·¾¶...");
+                Debug.LogWarning($"è·¯å¾„1åŠ è½½å¤±è´¥: {effectPath}ï¼Œå°è¯•å…¶ä»–è·¯å¾„...");
 
                 effect = Resources.Load<CardEffect>($"CardEffects/{effectId}");
             }
 
             if (effect == null)
             {
-                Debug.LogWarning($"Â·¾¶2¼ÓÔØÊ§°Ü: CardEffects/{effectId}£¬³¢ÊÔÖ±½Ó¼ÓÔØ...");
+                Debug.LogWarning($"è·¯å¾„2åŠ è½½å¤±è´¥: CardEffects/{effectId}ï¼Œå°è¯•ç›´æ¥åŠ è½½...");
 
                 effect = Resources.Load<CardEffect>(effectId);
             }
@@ -195,9 +195,9 @@ namespace MutationChess.Core
             }
             else
             {
-                Debug.LogError($"¡ï¡ï¡ï ÎŞ·¨¼ÓÔØĞ§¹û: {effectId} ¡ï¡ï¡ï");
-                Debug.LogError($"ÇëÈ·±£Ğ§¹û×Ê²úÔÚ Resources/Effects/ Ä¿Â¼ÏÂ£¬ÎÄ¼şÃûÎª {effectId}");
-                Debug.LogError($"ÀıÈç: Resources/Effects/DealDamage.asset");
+                Debug.LogError($"â˜…â˜…â˜… æ— æ³•åŠ è½½æ•ˆæœ: {effectId} â˜…â˜…â˜…");
+                Debug.LogError($"è¯·ç¡®ä¿æ•ˆæœèµ„äº§åœ¨ Resources/Effects/ ç›®å½•ä¸‹ï¼Œæ–‡ä»¶åä¸º {effectId}");
+                Debug.LogError($"ä¾‹å¦‚: Resources/Effects/DealDamage.asset");
             }
 
             return effect;
@@ -213,9 +213,9 @@ namespace MutationChess.Core
     {
         public string cardName;
         public int cost;
-        public int damage;      // ¹¥»÷ÉËº¦£¬·Ç¹¥»÷¿¨ÅÆÎª0
-        public int block;       // ¸ñµ²Öµ£¬·Ç·ÀÓù¿¨ÅÆÎª0
-        public int magicNumber; // Ä§·¨Êı×Ö£¬ÓÃÓÚ¸÷ÖÖĞ§¹û
+        public int damage;      // æ”»å‡»ä¼¤å®³ï¼Œéæ”»å‡»å¡ç‰Œä¸º0
+        public int block;       // æ ¼æŒ¡å€¼ï¼Œéé˜²å¾¡å¡ç‰Œä¸º0
+        public int magicNumber; // é­”æ³•æ•°å­—ï¼Œç”¨äºå„ç§æ•ˆæœ
         public CardType cardType;
         public CardRarity rarity;
         public string description;

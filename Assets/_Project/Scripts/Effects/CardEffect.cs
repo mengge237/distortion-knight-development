@@ -1,19 +1,19 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace MutationChess.Core
 {
     /// <summary>
-    /// ËùÓĞ¿¨ÅÆĞ§¹ûµÄ»ùÀà
+    /// æ‰€æœ‰å¡ç‰Œæ•ˆæœçš„åŸºç±»
     /// </summary>
     public abstract class CardEffect : ScriptableObject
     {
         [TextArea(2, 4)]
-        public string effectDescription; // Ğ§¹ûÃèÊö£¬ÓÃÓÚUIÏÔÊ¾
+        public string effectDescription; // æ•ˆæœæè¿°ï¼Œç”¨äºUIæ˜¾ç¤º
 
         /// <summary>
-        /// Ö´ĞĞĞ§¹û
+        /// æ‰§è¡Œæ•ˆæœ
         /// </summary>
-        /// <param name="context">Õ½¶·ÉÏÏÂÎÄ</param>
+        /// <param name="context">æˆ˜æ–—ä¸Šä¸‹æ–‡</param>
         public abstract void Execute(CombatContext context);
     }
 }

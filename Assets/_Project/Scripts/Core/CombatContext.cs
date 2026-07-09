@@ -1,17 +1,17 @@
-using MutationChess.Battle;
+ï»¿using MutationChess.Battle;
 using UnityEngine;
 
 namespace MutationChess.Core
 {
     /// <summary>
-    /// Õ½¶·ÉÏÏÂÎÄ - ÓÃÓÚ¿¨ÅÆĞ§¹ûÖ´ĞĞÊ±´«µİ²ÎÊı
+    /// æˆ˜æ–—ä¸Šä¸‹æ–‡ - ç”¨äºå¡ç‰Œæ•ˆæœæ‰§è¡Œæ—¶ä¼ é€’å‚æ•°
     /// </summary>
     public class CombatContext
     {
-        public BattleManager battleManager;  // Õ½¶·¹ÜÀíÆ÷
-        public Enemy targetEnemy;            // Ä¿±êµĞÈË
-        public PlayerData targetPlayer;      // Ä¿±êÍæ¼Ò
-        public Card sourceCard;              // ´¥·¢Ğ§¹ûµÄ¿¨ÅÆ
+        public BattleManager battleManager;  // æˆ˜æ–—ç®¡ç†å™¨
+        public Enemy targetEnemy;            // ç›®æ ‡æ•Œäºº
+        public PlayerData targetPlayer;      // ç›®æ ‡ç©å®¶
+        public Card sourceCard;              // è§¦å‘æ•ˆæœçš„å¡ç‰Œ
 
         public CombatContext(BattleManager battleManager, Enemy targetEnemy, PlayerData targetPlayer, Card sourceCard)
         {

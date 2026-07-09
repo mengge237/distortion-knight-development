@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 using MutationChess.Battle;
 
@@ -7,11 +7,11 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "BackgroundConfig", menuName = "MutationChess/Background Config")]
     public class BackgroundConfig : ScriptableObject
     {
-        [Header("=== ±³¾°Ó³ÉäÁĞ±í ===")]
+        [Header("=== èƒŒæ™¯æ˜ å°„åˆ—è¡¨ ===")]
         public List<BackgroundMapping> mappings = new List<BackgroundMapping>();
 
         /// <summary>
-        /// ¸ù¾İµĞÈËÀàĞÍ»ñÈ¡¶ÔÓ¦µÄ±³¾°Í¼Æ¬
+        /// æ ¹æ®æ•Œäººç±»å‹è·å–å¯¹åº”çš„èƒŒæ™¯å›¾ç‰‡
         /// </summary>
         public Sprite GetBackground(EnemyType enemyType)
         {
@@ -26,7 +26,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        /// ¸ù¾İµĞÈËÃû³ÆÃ¶¾Ù»ñÈ¡¶ÔÓ¦µÄ±³¾°Í¼Æ¬
+        /// æ ¹æ®æ•Œäººåç§°æšä¸¾è·å–å¯¹åº”çš„èƒŒæ™¯å›¾ç‰‡
         /// </summary>
         public Sprite GetBackground(EnemyNameOption enemyName)
         {
@@ -41,7 +41,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        /// ¸ù¾İµĞÈËÃû³Æ×Ö·û´®»ñÈ¡¶ÔÓ¦µÄ±³¾°Í¼Æ¬£¨¼æÈİ¾É´úÂë£©
+        /// æ ¹æ®æ•Œäººåç§°å­—ç¬¦ä¸²è·å–å¯¹åº”çš„èƒŒæ™¯å›¾ç‰‡ï¼ˆå…¼å®¹æ—§ä»£ç ï¼‰
         /// </summary>
         public Sprite GetBackgroundByName(string enemyName)
         {
@@ -50,7 +50,7 @@ namespace MutationChess.Core
                 return GetBackground(parsedName);
             }
 
-            // Èç¹û×ª»»Ê§°Ü£¬±éÀú²éÕÒÆ¥ÅäµÄÃû³Æ
+            // å¦‚æœè½¬æ¢å¤±è´¥ï¼Œéå†æŸ¥æ‰¾åŒ¹é…çš„åç§°
             foreach (var mapping in mappings)
             {
                 if (mapping.enemyName.ToString() == enemyName && mapping.background != null)
@@ -65,30 +65,30 @@ namespace MutationChess.Core
     [System.Serializable]
     public class BackgroundMapping
     {
-        [Header("=== µĞÈËĞÅÏ¢ ===")]
+        [Header("=== æ•Œäººä¿¡æ¯ ===")]
         public EnemyType enemyType;
 
-        [Header("=== µĞÈËÃû³Æ£¨ÏÂÀ­Ñ¡Ôñ£© ===")]
+        [Header("=== æ•Œäººåç§°ï¼ˆä¸‹æ‹‰é€‰æ‹©ï¼‰ ===")]
         public EnemyNameOption enemyName;
 
-        [Header("=== ±³¾°Í¼Æ¬ ===")]
+        [Header("=== èƒŒæ™¯å›¾ç‰‡ ===")]
         public Sprite background;
     }
 
     /// <summary>
-    /// ËùÓĞµĞÈËÃû³ÆµÄÃ¶¾Ù£¨ÓÃÓÚÏÂÀ­Ñ¡Ôñ£©
+    /// æ‰€æœ‰æ•Œäººåç§°çš„æšä¸¾ï¼ˆç”¨äºä¸‹æ‹‰é€‰æ‹©ï¼‰
     /// </summary>
     public enum EnemyNameOption
     {
-        ¸¯»¯Ê¿±ø,
-        »û±äÁÔÈ®,
-        ÎÁÒßÊÌÉ®,
-        ÉîÔ¨Çù³æ,
-        ¸¯Ê´ÆïÊ¿,
-        µØÓüÉóÅĞ¹Ù,
-        Ğé¿ÕÎ×Ê¦,
-        ¸¯»¯¾ŞÊŞ,
-        ÉîÔ¨Ö®Ö÷¿ËËÕÂ³Ö®Ó°,
-        µØÓü¸´³ğÆïÊ¿
+        è…åŒ–å£«å…µ,
+        ç•¸å˜çŒçŠ¬,
+        ç˜Ÿç–«ä¾åƒ§,
+        æ·±æ¸Šè›†è™«,
+        è…èš€éª‘å£«,
+        åœ°ç‹±å®¡åˆ¤å®˜,
+        è™šç©ºå·«å¸ˆ,
+        è…åŒ–å·¨å…½,
+        æ·±æ¸Šä¹‹ä¸»å…‹è‹é²ä¹‹å½±,
+        åœ°ç‹±å¤ä»‡éª‘å£«
     }
 }

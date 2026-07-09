@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using MutationChess.Map;
 using MutationChess.Battle;
 using MutationChess.Core;
@@ -7,26 +7,26 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("µØÍ¼ÓëÍæ¼Ò")]
+    [Header("åœ°å›¾ä¸ç©å®¶")]
     [SerializeField] private MapGenerator mapGenerator;
     [SerializeField] private PlayerController playerController;
     [SerializeField] private GameObject playerPrefab;
 
-    [Header("Õ½¶·")]
+    [Header("æˆ˜æ–—")]
     [SerializeField] private BattleManager battleManager;
 
-    [Header("ÊÓÍ¼")]
+    [Header("è§†å›¾")]
     [SerializeField] private MapView mapView;
 
-    [Header("Íæ¼ÒÆ«ÒÆ")]
+    [Header("ç©å®¶åç§»")]
     [SerializeField] private float playerYOffset = 0.5f;
 
-    [Header("=== ¿¨ÅÆ½±Àø³Ø£¨ÍÏÈë Inspector£© ===")]
+    [Header("=== å¡ç‰Œå¥–åŠ±æ± ï¼ˆæ‹–å…¥ Inspectorï¼‰ ===")]
     [SerializeField] private RewardPool commonRewardPool;
     [SerializeField] private RewardPool eliteRewardPool;
     [SerializeField] private RewardPool bossRewardPool;
 
-    [Header("=== ½ğ±Ò½±Àø·¶Î§ ===")]
+    [Header("=== é‡‘å¸å¥–åŠ±èŒƒå›´ ===")]
     [SerializeField] private Vector2Int commonGoldRange = new Vector2Int(10, 25);
     [SerializeField] private Vector2Int eliteGoldRange = new Vector2Int(20, 40);
     [SerializeField] private Vector2Int bossGoldRange = new Vector2Int(50, 80);
@@ -40,7 +40,7 @@ public class GameManager : MonoBehaviour
         var dataManager = PlayerDataManager.Instance;
         if (dataManager == null)
         {
-            Debug.LogError("PlayerDataManager Î´ÕÒµ½£¡ÇëÔÚ³¡¾°ÖĞÌí¼Ó");
+            Debug.LogError("PlayerDataManager æœªæ‰¾åˆ°ï¼è¯·åœ¨åœºæ™¯ä¸­æ·»åŠ ");
             return;
         }
 
@@ -106,7 +106,7 @@ public class GameManager : MonoBehaviour
 
         if (playerController == null)
         {
-            Debug.LogError("PlayerController Îª¿Õ");
+            Debug.LogError("PlayerController ä¸ºç©º");
             return;
         }
 
@@ -145,7 +145,7 @@ public class GameManager : MonoBehaviour
         else
         {
             isMoving = false;
-            Debug.LogError("ÎŞ·¨ÒÆ¶¯£ºPlayerController Îª¿Õ");
+            Debug.LogError("æ— æ³•ç§»åŠ¨ï¼šPlayerController ä¸ºç©º");
         }
     }
 

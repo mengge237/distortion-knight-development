@@ -1,4 +1,4 @@
-using DG.Tweening;
+ï»¿using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using System.Collections;
@@ -13,32 +13,36 @@ namespace MutationChess.UI
     {
         public static HandManager Instance { get; private set; }
 
-        [Header("=== UIÒıÓÃ ===")]
+        [Header("=== UIå¼•ç”¨ ===")]
         [SerializeField] private GameObject handPanel;
         [SerializeField] private GameObject cardPrefab;
         [SerializeField] private RectTransform cardsContainer;
 
-        [Header("=== ÅÆ¶ÑĞÅÏ¢À¸ ===")]
+        [Header("=== ç‰Œå †ä¿¡æ¯æ  ===")]
         [SerializeField] private TMP_Text energyText;
         [SerializeField] private TMP_Text drawPileCountText;
         [SerializeField] private TMP_Text discardPileCountText;
 
-        [Header("=== ¿¨×éÅäÖÃ ===")]
+        [Header("=== Fan Layout ===")]
+        [SerializeField] private float fanRadius = 2000f;
+        [SerializeField] private float maxFanAngle = 35f;
+        [SerializeField] [Range(0f, 1f)] private float fanRotationStrength = 1f;
+        [Header("=== å¡ç»„é…ç½® ===")]
         [SerializeField] private DeckData deckData;
 
-        [Header("=== ÊÖÅÆÉèÖÃ ===")]
+        [Header("=== æ‰‹ç‰Œè®¾ç½® ===")]
         [SerializeField] private int maxHandSize = 10;
         [SerializeField] private int cardsPerTurn = 5;
         [SerializeField] private int startingHandSize = 5;
 
-        [Header("=== ¶¯»­ÉèÖÃ ===")]
+        [Header("=== åŠ¨ç”»è®¾ç½® ===")]
         [SerializeField] private float drawAnimationDelay = 0.05f;
 
-        [Header("=== ÄÜÁ¿ÏµÍ³ ===")]
+        [Header("=== èƒ½é‡ç³»ç»Ÿ ===")]
         [SerializeField] private int maxEnergy = 3;
         private int currentEnergy = 3;
 
-        [Header("=== ÅÆ¶Ñ£¨ÔËĞĞÊ±£© ===")]
+        [Header("=== ç‰Œå †ï¼ˆè¿è¡Œæ—¶ï¼‰ ===")]
         [SerializeField] private List<Card> drawPile = new List<Card>();
         [SerializeField] private List<Card> handCards = new List<Card>();
         [SerializeField] private List<Card> discardPile = new List<Card>();
@@ -68,14 +72,14 @@ namespace MutationChess.UI
             UpdatePileCountUI();
         }
 
-        // ==================== Õ½¶·¿ªÊ¼/½áÊø ====================
+        // ==================== æˆ˜æ–—å¼€å§‹/ç»“æŸ ====================
 
         public void StartBattle()
         {
             battleManager = FindObjectOfType<BattleManager>();
             if (battleManager == null)
             {
-                Debug.LogError("HandManager: ÎŞ·¨ÕÒµ½ BattleManager£¡");
+                Debug.LogError("HandManager: æ— æ³•æ‰¾åˆ° BattleManagerï¼");
             }
 
             isFirstTurn = true;
@@ -114,7 +118,7 @@ namespace MutationChess.UI
             isAnimating = false;
         }
 
-        // ==================== »ØºÏ¹ÜÀí ====================
+        // ==================== å›åˆç®¡ç† ====================
 
         public void OnNewTurn()
         {
@@ -177,7 +181,7 @@ namespace MutationChess.UI
             });
         }
 
-        // ==================== ÅÆ¶Ñ¹ÜÀí ====================
+        // ==================== ç‰Œå †ç®¡ç† ====================
 
         void InitializeDeckFromConfig()
         {
@@ -195,9 +199,9 @@ namespace MutationChess.UI
 
         void CreateDefaultDeck()
         {
-            Card attack = CardData.CreateCard(CardName.¹¥»÷);
-            Card defend = CardData.CreateCard(CardName.·ÀÓù);
-            Card bash = CardData.CreateCard(CardName.Í´»÷);
+            Card attack = CardData.CreateCard(CardName.æ”»å‡»);
+            Card defend = CardData.CreateCard(CardName.é˜²å¾¡);
+            Card bash = CardData.CreateCard(CardName.ç—›å‡»);
 
             if (attack != null)
             {
@@ -245,7 +249,7 @@ namespace MutationChess.UI
             UpdatePileCountUI();
         }
 
-        // ==================== ³éÅÆ ====================
+        // ==================== æŠ½ç‰Œ ====================
 
         Vector3 GetDrawPilePosition()
         {
@@ -330,6 +334,17 @@ namespace MutationChess.UI
             isAnimating = false;
         }
 
+
+        private Vector2 CalculateFanPosition(int index, int totalCount)
+        {
+            if (totalCount <= 1) return Vector2.zero;
+            float t = (float)index / (totalCount - 1);
+            float angle = (t - 0.5f) * maxFanAngle * Mathf.Deg2Rad;
+            float x = Mathf.Sin(angle) * fanRadius;
+            float y = -(1f - Mathf.Cos(angle)) * fanRadius;
+            return new Vector2(x, y);
+        }
+
         void UpdateHandUIWithAnimation(Vector3 drawPilePos, List<Card> newCards)
         {
             foreach (var cardUI in cardUIs)
@@ -347,18 +362,18 @@ namespace MutationChess.UI
 
             if (cardPrefab == null || cardsContainer == null)
             {
-                Debug.LogWarning("CardPrefab »ò CardsContainer Îª¿Õ£¡");
+                Debug.LogWarning("CardPrefab å’Œ CardsContainer ä¸ºç©ºï¼");
                 return;
             }
 
-            float spacing = 20f;
-            float totalWidth = (handCards.Count - 1) * (CARD_WIDTH + spacing);
-            float startX = -totalWidth / 2f;
-
-            List<Vector3> targetPositions = new List<Vector3>();
+            List<Vector2> targetPositions = new List<Vector2>();
+            List<float> targetRotations = new List<float>();
             for (int i = 0; i < handCards.Count; i++)
             {
-                targetPositions.Add(new Vector2(startX + i * (CARD_WIDTH + spacing), 0));
+                Vector2 fanPos = CalculateFanPosition(i, handCards.Count);
+                targetPositions.Add(fanPos);
+                float rot = -(i - handCards.Count / 2f + 0.5f) / (handCards.Count / 2f) * maxFanAngle * 0.5f * fanRotationStrength;
+                targetRotations.Add(rot);
             }
 
             for (int i = 0; i < handCards.Count; i++)
@@ -385,6 +400,7 @@ namespace MutationChess.UI
                     }
 
                     rect.anchoredPosition = targetPositions[i];
+                    rect.localRotation = Quaternion.Euler(0f, 0f, targetRotations[i]);
                     cardUI.SetOriginalPosition(targetPositions[i]);
                 }
 
@@ -395,7 +411,8 @@ namespace MutationChess.UI
             UpdatePileCountUI();
         }
 
-        // ==================== ³öÅÆÂß¼­£¨¹Ø¼üĞŞ¸´£© ====================
+
+        // ==================== å‡ºç‰Œé€»è¾‘ï¼ˆå…³é”®ä¿®å¤ï¼‰ ====================
 
         public void PlayCard(Card card)
         {
@@ -460,7 +477,7 @@ namespace MutationChess.UI
 
         }
 
-        // ==================== ÆúÅÆ·½·¨ ====================
+        // ==================== å¼ƒç‰Œæ–¹æ³• ====================
 
         public void DiscardCard(Card card)
         {
@@ -487,11 +504,11 @@ namespace MutationChess.UI
             RefreshAllUI();
         }
 
-        // ==================== »ñÈ¡ÊÖÅÆÁĞ±í ====================
+        // ==================== è·å–æ‰‹ç‰Œåˆ—è¡¨ ====================
 
         public List<Card> GetHandCards() => new List<Card>(handCards);
 
-        // ==================== UI¸üĞÂ ====================
+        // ==================== UIæ›´æ–° ====================
 
         void RefreshAllUI()
         {
@@ -517,13 +534,9 @@ namespace MutationChess.UI
 
             if (cardPrefab == null || cardsContainer == null)
             {
-                Debug.LogWarning("CardPrefab »ò CardsContainer Îª¿Õ£¡");
+                Debug.LogWarning("CardPrefab å’Œ CardsContainer ä¸ºç©ºï¼");
                 return;
             }
-
-            float spacing = 20f;
-            float totalWidth = (handCards.Count - 1) * (CARD_WIDTH + spacing);
-            float startX = -totalWidth / 2f;
 
             for (int i = 0; i < handCards.Count; i++)
             {
@@ -541,8 +554,14 @@ namespace MutationChess.UI
                     cardUI.SetInteractable(canPlay);
 
                     RectTransform rect = cardUI.GetRectTransform();
-                    rect.anchoredPosition = new Vector2(startX + i * (CARD_WIDTH + spacing), 0);
-                    cardUI.SetOriginalPosition(rect.anchoredPosition);
+
+                    Vector2 fanPos = CalculateFanPosition(i, handCards.Count);
+                    rect.anchoredPosition = fanPos;
+
+                    float rot = -(i - handCards.Count / 2f + 0.5f) / (handCards.Count / 2f) * maxFanAngle * 0.5f * fanRotationStrength;
+                    rect.localRotation = Quaternion.Euler(0f, 0f, rot);
+
+                    cardUI.SetOriginalPosition(fanPos);
                 }
 
                 cardUIs.Add(cardUI);
@@ -552,18 +571,19 @@ namespace MutationChess.UI
             UpdatePileCountUI();
         }
 
+
         void UpdateEnergyUI()
         {
             if (energyText != null)
-                energyText.text = $"ÄÜÁ¿: {currentEnergy}/{maxEnergy}";
+                energyText.text = $"èƒ½é‡: {currentEnergy}/{maxEnergy}";
         }
 
         void UpdatePileCountUI()
         {
             if (drawPileCountText != null)
-                drawPileCountText.text = $"³éÅÆ: {drawPile.Count}";
+                drawPileCountText.text = $"æŠ½ç‰Œ: {drawPile.Count}";
             if (discardPileCountText != null)
-                discardPileCountText.text = $"ÆúÅÆ: {discardPile.Count}";
+                discardPileCountText.text = $"å¼ƒç‰Œ: {discardPile.Count}";
         }
 
         void OnCardUIClicked(Card card)
@@ -584,7 +604,7 @@ namespace MutationChess.UI
             cardUIs.Clear();
         }
 
-        // ==================== ¹«¹²·½·¨ ====================
+        // ==================== å…¬å…±æ–¹æ³• ====================
 
         public void AddCardToDrawPile(Card card)
         {
