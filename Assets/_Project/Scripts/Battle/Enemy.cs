@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -236,10 +236,11 @@ namespace MutationChess.Battle
 
         public int GetAttackDamage()
         {
-            int bonus = GetBuffAmount(BuffType.Strength) * 2;
+            int strength = GetBuffAmount(BuffType.Strength) * 2;
             int vulnerability = GetBuffAmount(BuffType.Vulnerability);
+            int weak = GetBuffAmount(BuffType.Weak);
 
-            int damage = currentAttackDamage + bonus;
+            int damage = currentAttackDamage + strength;
 
             if (enemyName.Contains("腐化君王"))
             {
@@ -250,10 +251,25 @@ namespace MutationChess.Battle
 
             if (vulnerability > 0)
             {
-                damage = Mathf.RoundToInt(damage * (1 + vulnerability * 0.1f));
+                damage = Mathf.RoundToInt(damage * (1 + vulnerability * 0.2f));
+            }
+
+            if (weak > 0)
+            {
+                damage = Mathf.RoundToInt(damage * (1 - weak * 0.2f));
             }
 
             return Mathf.Max(1, damage);
+        }
+
+        public int GetModifiedBlock(int baseBlock)
+        {
+            int frail = GetBuffAmount(BuffType.Frail);
+            if (frail > 0)
+            {
+                return Mathf.RoundToInt(baseBlock * (1 - frail * 0.2f));
+            }
+            return baseBlock;
         }
 
         public void TakeDamage(int damage)
@@ -261,7 +277,7 @@ namespace MutationChess.Battle
             int vulnerability = GetBuffAmount(BuffType.Vulnerability);
             if (vulnerability > 0)
             {
-                damage = Mathf.RoundToInt(damage * (1 + vulnerability * 0.1f));
+                damage = Mathf.RoundToInt(damage * (1 + vulnerability * 0.2f));
             }
 
             currentHealth = Mathf.Max(0, currentHealth - damage);
@@ -360,6 +376,11 @@ namespace MutationChess.Battle
         public void PlayAttack() => PlayAnimation(data?.attackAnimationName ?? "Attack");
         public void PlayHurt() => PlayAnimation(data?.hurtAnimationName ?? "Hurt");
         public void PlayDeath() => PlayAnimation(data?.deathAnimationName ?? "Death");
+
+        public List<Buff> GetBuffs()
+        {
+            return new List<Buff>(buffs);
+        }
 
         // ==================== 工厂方法 ====================
 
@@ -470,7 +491,9 @@ namespace MutationChess.Battle
         Dexterity,
         Shield,
         Poison,
-        Vulnerability
+        Vulnerability,
+        Weak,
+        Frail
     }
 
     [System.Serializable]

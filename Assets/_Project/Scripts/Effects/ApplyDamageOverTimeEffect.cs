@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -11,7 +11,12 @@ namespace MutationChess.Core
             if (context.targetEnemy != null && context.sourceCard != null)
             {
                 int poisonCount = context.sourceCard.magicNumber > 0 ? context.sourceCard.magicNumber : 3;
-                context.targetEnemy.AddBuff(new Buff { type = BuffType.Poison, amount = poisonCount, duration = 999 });
+                context.targetEnemy.AddBuff(new Buff
+                {
+                    type = BuffType.Poison,
+                    amount = poisonCount,
+                    duration = 999
+                });
             }
         }
     }

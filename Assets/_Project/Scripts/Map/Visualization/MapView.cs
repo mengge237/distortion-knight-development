@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Map
@@ -50,7 +50,23 @@ namespace MutationChess.Map
 
         public void RefreshAllNodes()
         {
-            if (mapGenerator == null || mapGenerator.AllLayers == null) return;
+            // ★ 如果 MapGenerator 为空，重新查找
+            if (mapGenerator == null)
+            {
+                mapGenerator = FindObjectOfType<MapGenerator>();
+                if (mapGenerator == null)
+                {
+                    Debug.LogError("[MapView] MapGenerator 未找到！");
+                    return;
+                }
+                Debug.Log("[MapView] 重新找到了 MapGenerator");
+            }
+
+            if (mapGenerator.AllLayers == null)
+            {
+                Debug.LogWarning("[MapView] MapGenerator.AllLayers 为空");
+                return;
+            }
 
             MapNode currentNode = mapGenerator.CurrentNode;
 
@@ -63,6 +79,7 @@ namespace MutationChess.Map
             }
 
             mapGenerator.UpdateLineColors();
+            mapGenerator.UpdateAllMapDisplays();
         }
 
         void UpdateNodeVisual(MapNode node, MapNode currentNode)
@@ -97,9 +114,17 @@ namespace MutationChess.Map
         public void RefreshNode(MapNode node)
         {
             if (node == null || node.nodeObject == null) return;
-            MapNode currentNode = mapGenerator?.CurrentNode;
+
+            if (mapGenerator == null)
+            {
+                mapGenerator = FindObjectOfType<MapGenerator>();
+                if (mapGenerator == null) return;
+            }
+
+            MapNode currentNode = mapGenerator.CurrentNode;
             UpdateNodeVisual(node, currentNode);
-            mapGenerator?.UpdateLineColors();
+            mapGenerator.UpdateLineColors();
+            mapGenerator.UpdateAllMapDisplays();
         }
 
         public void Initialize(MapData data)

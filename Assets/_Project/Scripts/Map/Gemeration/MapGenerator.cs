@@ -1,10 +1,17 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace MutationChess.Map
 {
+    [System.Serializable]
+    public class MapTextureListEntry
+    {
+        public NodeType nodeType;
+        public List<Texture2D> textures = new List<Texture2D>();
+    }
+
     public class MapGenerator : MonoBehaviour
     {
         [Header("布局参数")]
@@ -17,11 +24,21 @@ namespace MutationChess.Map
         [SerializeField] private float positionOffsetY = 0.3f;
         [SerializeField] private int extraBranches = 2;
 
-        [Header("节点预制体")]
+        [Header("节点预制体（默认，当蓝图未配置时使用）")]
         [SerializeField] private GameObject nodePrefab;
 
         [Header("连线材质")]
         [SerializeField] private Material lineMaterial;
+
+        [Header("★ 节点蓝图配置（推荐）")]
+        [SerializeField] private List<NodeBlueprint> nodeBlueprints = new List<NodeBlueprint>();
+
+        [Header("★ 地图显示 - 列表配置模式（原有功能，保留兼容）")]
+        [SerializeField] private bool enableMapDisplay = true;
+        [SerializeField] private List<MapTextureListEntry> mapTextureLists = new List<MapTextureListEntry>();
+        [SerializeField] private Vector3 mapDisplayOffset = new Vector3(0, -0.4f, 0);
+        [SerializeField] private float mapDisplayScale = 0.6f;
+        [SerializeField] private Color mapTintColor = new Color(1, 1, 1, 0.8f);
 
         [Header("特殊层规则")]
         [SerializeField] private bool bossLayerHasRestBefore = true;
@@ -42,14 +59,217 @@ namespace MutationChess.Map
 
         private Material defaultLineMaterial;
         private Transform linesParent;
+        private Dictionary<NodeType, NodeBlueprint> blueprintCache;
+        private Dictionary<NodeType, List<Texture2D>> textureCache;
 
         void Start()
         {
+            Debug.Log("=== MapGenerator.Start() 被调用 ===");
+
             if (Camera.main != null && Camera.main.GetComponent<PhysicsRaycaster>() == null)
                 Camera.main.gameObject.AddComponent<PhysicsRaycaster>();
 
             defaultLineMaterial = CreateDefaultLineMaterial();
+
+            // ★ 构建蓝图缓存
+            BuildBlueprintCache();
+
+            // ★ 构建贴图缓存（原有功能）
+            BuildTextureCache();
+
             GenerateMap();
+
+            Debug.Log($"[MapGenerator] 地图显示功能: {(enableMapDisplay ? "已启用" : "已禁用")}");
+            Debug.Log($"[MapGenerator] 蓝图缓存条目数: {(blueprintCache != null ? blueprintCache.Count : 0)}");
+            Debug.Log($"[MapGenerator] 贴图缓存条目数: {(textureCache != null ? textureCache.Count : 0)}");
+
+            if (blueprintCache != null)
+            {
+                foreach (var kvp in blueprintCache)
+                {
+                    Debug.Log($"  - 蓝图 {kvp.Key}: {(kvp.Value.prefab != null ? kvp.Value.prefab.name : "无模型")}");
+                }
+            }
+            if (textureCache != null)
+            {
+                foreach (var kvp in textureCache)
+                {
+                    Debug.Log($"  - 贴图 {kvp.Key}: {kvp.Value.Count} 个");
+                }
+            }
+        }
+
+        /// <summary>
+        /// ★ 新增：构建蓝图缓存
+        /// </summary>
+        private void BuildBlueprintCache()
+        {
+            blueprintCache = new Dictionary<NodeType, NodeBlueprint>();
+
+            if (nodeBlueprints != null && nodeBlueprints.Count > 0)
+            {
+                Debug.Log($"[MapGenerator] 加载 {nodeBlueprints.Count} 个节点蓝图");
+                foreach (var bp in nodeBlueprints)
+                {
+                    if (bp != null && !blueprintCache.ContainsKey(bp.nodeType))
+                    {
+                        blueprintCache[bp.nodeType] = bp;
+                        Debug.Log($"  - {bp.nodeType}: {bp.displayName} -> {(bp.prefab != null ? bp.prefab.name : "无模型")}");
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[MapGenerator] nodeBlueprints 为空！将使用默认预制体");
+            }
+        }
+
+        /// <summary>
+        /// ★ 保留原有：构建贴图缓存
+        /// </summary>
+        private void BuildTextureCache()
+        {
+            textureCache = new Dictionary<NodeType, List<Texture2D>>();
+
+            if (mapTextureLists != null && mapTextureLists.Count > 0)
+            {
+                Debug.Log($"[MapGenerator] 从 Inspector 加载 {mapTextureLists.Count} 个贴图列表条目");
+                foreach (var entry in mapTextureLists)
+                {
+                    if (entry.textures != null && entry.textures.Count > 0)
+                    {
+                        List<Texture2D> validTextures = entry.textures.Where(t => t != null).ToList();
+                        if (validTextures.Count > 0)
+                        {
+                            textureCache[entry.nodeType] = validTextures;
+                            Debug.Log($"  - {entry.nodeType}: 加载了 {validTextures.Count} 个贴图 (来自 Inspector)");
+                        }
+                    }
+                }
+            }
+
+            // 从 Resources 加载作为后备
+            NodeType[] allTypes = System.Enum.GetValues(typeof(NodeType)) as NodeType[];
+            foreach (NodeType type in allTypes)
+            {
+                if (!textureCache.ContainsKey(type) || textureCache[type] == null || textureCache[type].Count == 0)
+                {
+                    List<Texture2D> loadedTextures = LoadTexturesFromResources(type);
+                    if (loadedTextures != null && loadedTextures.Count > 0)
+                    {
+                        textureCache[type] = loadedTextures;
+                        Debug.Log($"  - {type}: 加载了 {loadedTextures.Count} 个贴图 (来自 Resources)");
+                    }
+                    else
+                    {
+                        if (!textureCache.ContainsKey(type))
+                            textureCache[type] = new List<Texture2D>();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 从 Resources 加载贴图（保留原有功能）
+        /// </summary>
+        private List<Texture2D> LoadTexturesFromResources(NodeType type)
+        {
+            List<Texture2D> result = new List<Texture2D>();
+            string basePath = $"MapTextures/{type}";
+
+            Texture2D[] allInFolder = Resources.LoadAll<Texture2D>($"MapTextures/{type}");
+            if (allInFolder != null && allInFolder.Length > 0)
+            {
+                result.AddRange(allInFolder);
+                return result;
+            }
+
+            Texture2D baseTex = Resources.Load<Texture2D>(basePath);
+            if (baseTex != null)
+                result.Add(baseTex);
+
+            int index = 1;
+            while (true)
+            {
+                string path = $"{basePath}_{index}";
+                Texture2D tex = Resources.Load<Texture2D>(path);
+                if (tex != null)
+                {
+                    result.Add(tex);
+                    index++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// ★ 新增：根据节点类型获取蓝图
+        /// </summary>
+        private NodeBlueprint GetBlueprint(NodeType type)
+        {
+            if (blueprintCache != null && blueprintCache.ContainsKey(type))
+                return blueprintCache[type];
+            return null;
+        }
+
+        /// <summary>
+        /// ★ 新增：根据节点类型获取预制体（优先使用蓝图）
+        /// </summary>
+        private GameObject GetNodePrefab(NodeType type)
+        {
+            NodeBlueprint bp = GetBlueprint(type);
+            if (bp != null && bp.prefab != null)
+                return bp.prefab;
+            return nodePrefab;
+        }
+
+        /// <summary>
+        /// ★ 新增：根据节点类型获取蓝图颜色
+        /// </summary>
+        private Color GetBlueprintColor(NodeType type)
+        {
+            NodeBlueprint bp = GetBlueprint(type);
+            if (bp != null)
+                return bp.color;
+            return GetNodeTypeColor(type);
+        }
+
+        /// <summary>
+        /// ★ 新增：根据节点类型获取蓝图材质
+        /// </summary>
+        private Material GetBlueprintMaterial(NodeType type)
+        {
+            NodeBlueprint bp = GetBlueprint(type);
+            if (bp != null && bp.material != null)
+                return bp.material;
+            return null;
+        }
+
+        /// <summary>
+        /// ★ 新增：根据节点类型获取地图预制体（从蓝图）
+        /// </summary>
+        private GameObject GetMapPrefabFromBlueprint(NodeType type)
+        {
+            NodeBlueprint bp = GetBlueprint(type);
+            if (bp != null && bp.mapPrefab != null)
+                return bp.mapPrefab;
+            return null;
+        }
+
+        /// <summary>
+        /// ★ 新增：根据节点类型获取地图贴图（从蓝图）
+        /// </summary>
+        private Texture2D GetMapTextureFromBlueprint(NodeType type)
+        {
+            NodeBlueprint bp = GetBlueprint(type);
+            if (bp != null && bp.mapTexture != null)
+                return bp.mapTexture;
+            return null;
         }
 
         private Material CreateDefaultLineMaterial()
@@ -64,6 +284,8 @@ namespace MutationChess.Map
 
         void GenerateMap()
         {
+            Debug.Log("[MapGenerator] GenerateMap() 开始生成地图");
+
             allLayers.Clear();
             lineConnections.Clear();
 
@@ -71,7 +293,6 @@ namespace MutationChess.Map
             linesParent = new GameObject("Lines").transform;
             linesParent.SetParent(transform);
 
-            // 计算每层的节点数量（单起点单终点）
             List<int> layerCounts = new List<int>();
             int maxCount = maxNodesPerRow;
 
@@ -109,15 +330,16 @@ namespace MutationChess.Map
             }
 
             BuildFullConnections();
-
             EnsureAllNodesReachableFromBottom();
-
             UpdateStartAndBossVisuals();
-
             InitializeStartNodes();
-
             DrawAllLines();
 
+            if (enableMapDisplay)
+            {
+                UpdateAllMapDisplays();
+                Debug.Log($"[MapGenerator] 地图显示已更新，共 {CountAllNodes()} 个节点");
+            }
         }
 
         Vector3 CalculatePosition(int row, int col, int count)
@@ -153,14 +375,34 @@ namespace MutationChess.Map
 
         MapNode CreateNode(Vector3 pos, NodeType type, int row, int col)
         {
-            GameObject obj = Instantiate(nodePrefab, pos, Quaternion.identity, transform);
+            // ★ 修改：优先使用蓝图中的预制体
+            GameObject prefab = GetNodePrefab(type);
+
+            // 如果预制体为空，使用默认 nodePrefab
+            if (prefab == null)
+                prefab = nodePrefab;
+
+            // 如果还是为空，创建默认球体
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[MapGenerator] 节点 {type} 没有配置预制体，创建默认球体");
+                GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                fallback.transform.localScale = Vector3.one * 0.5f;
+                prefab = fallback;
+            }
+
+            GameObject obj = Instantiate(prefab, pos, Quaternion.identity, transform);
             obj.name = $"Node_{type}_{row}_{col}";
             MapNode node = new MapNode(new Vector2Int(col, row), type);
             node.nodeObject = obj;
             node.position = pos;
 
             if (obj.GetComponent<Collider>() == null)
-                obj.AddComponent<BoxCollider>();
+            {
+                Collider existing = obj.GetComponentInChildren<Collider>();
+                if (existing == null)
+                    obj.AddComponent<BoxCollider>();
+            }
 
             NodeClickHandler handler = obj.GetComponent<NodeClickHandler>();
             if (handler == null)
@@ -170,14 +412,121 @@ namespace MutationChess.Map
             MeshRenderer mr = obj.GetComponent<MeshRenderer>();
             if (mr != null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-                if (shader == null) shader = Shader.Find("Standard");
-                Material mat = new Material(shader);
-                mat.color = GetNodeTypeColor(type);
-                mr.material = mat;
+                // ★ 优先使用蓝图中的材质
+                Material blueprintMat = GetBlueprintMaterial(type);
+                if (blueprintMat != null)
+                {
+                    mr.material = blueprintMat;
+                }
+                else
+                {
+                    Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+                    if (shader == null) shader = Shader.Find("Standard");
+                    Material mat = new Material(shader);
+                    // ★ 优先使用蓝图中的颜色
+                    mat.color = GetBlueprintColor(type);
+                    mr.material = mat;
+                }
+            }
+
+            if (enableMapDisplay)
+            {
+                CreateMapDisplay(node, pos, type);
             }
 
             return node;
+        }
+
+        /// <summary>
+        /// ★ 修改：创建地图显示（优先使用蓝图中的 mapPrefab）
+        /// </summary>
+        void CreateMapDisplay(MapNode node, Vector3 nodePos, NodeType type)
+        {
+            // 1. 优先使用蓝图中的地图预制体
+            GameObject mapPrefab = GetMapPrefabFromBlueprint(type);
+            if (mapPrefab != null)
+            {
+                GameObject mapObj = Instantiate(mapPrefab, nodePos + mapDisplayOffset, Quaternion.identity, node.nodeObject.transform);
+                mapObj.name = $"MapDisplay_{type}";
+                mapObj.transform.localScale = Vector3.one * mapDisplayScale;
+                node.mapDisplayObject = mapObj;
+                Debug.Log($"[MapGenerator] 为 {type} 节点使用地图预制体 (来自蓝图): {mapPrefab.name}");
+                return;
+            }
+
+            // 2. 其次使用蓝图中的贴图
+            Texture2D bpTexture = GetMapTextureFromBlueprint(type);
+            if (bpTexture != null)
+            {
+                GameObject mapObj = CreateMapQuad(nodePos + mapDisplayOffset, bpTexture, node.nodeObject.transform, type);
+                mapObj.name = $"MapDisplay_{type}";
+                mapObj.transform.localScale = Vector3.one * mapDisplayScale;
+                node.mapDisplayObject = mapObj;
+                Debug.Log($"[MapGenerator] 为 {type} 节点使用地图贴图 (来自蓝图): {bpTexture.name}");
+                return;
+            }
+
+            // 3. 最后使用原有贴图列表
+            Texture2D texture = GetRandomMapTexture(type);
+            if (texture != null)
+            {
+                GameObject mapObj = CreateMapQuad(nodePos + mapDisplayOffset, texture, node.nodeObject.transform, type);
+                mapObj.name = $"MapDisplay_{type}";
+                mapObj.transform.localScale = Vector3.one * mapDisplayScale;
+                node.mapDisplayObject = mapObj;
+                Debug.Log($"[MapGenerator] 为 {type} 节点使用地图贴图 (来自列表): {texture.name}");
+                return;
+            }
+
+            // 4. 没有配置任何地图显示
+            Debug.LogWarning($"[MapGenerator] {type} 节点没有配置地图显示");
+        }
+
+        /// <summary>
+        /// ★ 保留原有：创建 Quad 贴图
+        /// </summary>
+        GameObject CreateMapQuad(Vector3 position, Texture2D texture, Transform parent, NodeType nodeType)
+        {
+            GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.transform.SetParent(parent);
+            quad.transform.position = position;
+            quad.transform.rotation = Quaternion.Euler(0, 0, 0);
+
+            Collider col = quad.GetComponent<Collider>();
+            if (col != null) DestroyImmediate(col);
+
+            Renderer renderer = quad.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+                if (shader == null) shader = Shader.Find("Unlit/Texture");
+                if (shader == null) shader = Shader.Find("Standard");
+
+                Material mat = new Material(shader);
+                mat.mainTexture = texture;
+                mat.color = mapTintColor;
+                renderer.material = mat;
+                renderer.enabled = true;
+            }
+
+            return quad;
+        }
+
+        /// <summary>
+        /// ★ 保留原有：根据节点类型从贴图列表中随机获取一个贴图
+        /// </summary>
+        Texture2D GetRandomMapTexture(NodeType type)
+        {
+            if (textureCache != null && textureCache.ContainsKey(type))
+            {
+                List<Texture2D> textures = textureCache[type];
+                if (textures != null && textures.Count > 0)
+                {
+                    int index = Random.Range(0, textures.Count);
+                    return textures[index];
+                }
+            }
+            return null;
         }
 
         Color GetNodeTypeColor(NodeType type)
@@ -195,6 +544,8 @@ namespace MutationChess.Map
                 default: return Color.white;
             }
         }
+
+        // ========== 以下所有原有方法保持不变 ==========
 
         void BuildFullConnections()
         {
@@ -218,7 +569,6 @@ namespace MutationChess.Map
                 }
             }
 
-            // 确保每个节点都有出边
             for (int row = 0; row < rows - 1; row++)
             {
                 var currentLayer = allLayers[row];
@@ -236,7 +586,6 @@ namespace MutationChess.Map
                 }
             }
 
-            // 确保每个节点都有入边
             for (int row = 1; row < rows; row++)
             {
                 var currentLayer = allLayers[row];
@@ -254,7 +603,6 @@ namespace MutationChess.Map
                 }
             }
 
-            // 确保起点有出边
             if (allLayers.Count > 0 && allLayers[0].Count > 0)
             {
                 var start = allLayers[0][0];
@@ -271,7 +619,6 @@ namespace MutationChess.Map
                 }
             }
 
-            // 确保Boss有入边
             if (allLayers.Count > 0)
             {
                 var bossLayer = allLayers[rows - 1];
@@ -292,15 +639,9 @@ namespace MutationChess.Map
                 }
             }
 
-            // 关键步骤：移除交叉连接（参考杀戮尖塔算法）
             RemoveCrossConnections();
-
         }
 
-        /// <summary>
-        /// 移除交叉连接 - 杀戮尖塔标准算法
-        /// 检测并修复交叉：添加平行连接，然后随机移除交叉连接
-        /// </summary>
         void RemoveCrossConnections()
         {
             for (int row = 0; row < rows - 1; row++)
@@ -317,13 +658,11 @@ namespace MutationChess.Map
                     MapNode topRight = GetNode(new Vector2Int(col + 1, row + 1));
                     if (topLeft == null || topRight == null) continue;
 
-                    // 交叉条件：左边节点连接到右上，右边节点连接到左上
                     bool hasCross = leftNode.connections.Contains(topRight) &&
                                    rightNode.connections.Contains(topLeft);
 
                     if (hasCross)
                     {
-                        // 1. 添加平行连接（确保有替代路径）
                         if (!leftNode.connections.Contains(topLeft))
                             leftNode.AddConnection(topLeft);
                         if (!rightNode.connections.Contains(topRight))
@@ -332,18 +671,15 @@ namespace MutationChess.Map
                         float rnd = Random.Range(0f, 1f);
                         if (rnd < 0.2f)
                         {
-                            // 20% 概率：移除两条交叉连接
                             leftNode.RemoveConnection(topRight);
                             rightNode.RemoveConnection(topLeft);
                         }
                         else if (rnd < 0.6f)
                         {
-                            // 40% 概率：只移除第一条交叉连接（左->右上）
                             leftNode.RemoveConnection(topRight);
                         }
                         else
                         {
-                            // 40% 概率：只移除第二条交叉连接（右->左上）
                             rightNode.RemoveConnection(topLeft);
                         }
                     }
@@ -403,14 +739,12 @@ namespace MutationChess.Map
                 }
             }
 
-            int unreachableCount = 0;
             for (int row = 1; row < rows; row++)
             {
                 foreach (var node in allLayers[row])
                 {
                     if (!reachableFromStart.Contains(node))
                     {
-                        unreachableCount++;
                         var prevLayer = allLayers[row - 1];
                         if (prevLayer.Count > 0)
                         {
@@ -423,7 +757,6 @@ namespace MutationChess.Map
                     }
                 }
             }
-
         }
 
         Vector2Int GetFinalNode()
@@ -452,7 +785,6 @@ namespace MutationChess.Map
 
             ShuffleList(availableCols);
 
-            // 存储已使用的节点，避免多条路径使用相同节点
             HashSet<Vector2Int> usedNodes = new HashSet<Vector2Int>();
             usedNodes.Add(startPoint);
 
@@ -477,7 +809,6 @@ namespace MutationChess.Map
                 path.Add(finalNode);
                 paths.Add(path);
             }
-
 
             return paths;
         }
@@ -505,7 +836,6 @@ namespace MutationChess.Map
             {
                 int currentLayerCount = allLayers[row].Count;
 
-                // 只允许从当前列移动 -1, 0, +1（杀戮尖塔标准）
                 List<int> candidateCols = new List<int>();
 
                 int forwardCol = lastNodeCol;
@@ -527,14 +857,12 @@ namespace MutationChess.Map
                     continue;
                 }
 
-                // 如果候选列太少（边缘情况），添加所有列
                 if (candidateCols.Count == 0)
                 {
                     for (int col = 0; col < currentLayerCount; col++)
                         candidateCols.Add(col);
                 }
 
-                // 优先选择未被使用的节点（避免路径重叠）
                 var unusedCandidates = candidateCols
                     .Where(col => !usedNodes.Contains(new Vector2Int(col, row)))
                     .ToList();
@@ -557,7 +885,6 @@ namespace MutationChess.Map
                 int candidateIndex;
                 if (finalCandidates.Count > 1)
                 {
-                    // 70%概率选择最优，30%随机
                     if (Random.Range(0f, 1f) < 0.7f)
                         candidateIndex = 0;
                     else
@@ -611,7 +938,6 @@ namespace MutationChess.Map
             {
                 conn.isReachable = true;
             }
-
         }
 
         public void ConfirmReachNode(MapNode node)
@@ -631,6 +957,8 @@ namespace MutationChess.Map
             }
 
             UpdateLineColors();
+            if (enableMapDisplay)
+                UpdateAllMapDisplays();
             OnNodeReached?.Invoke(node);
         }
 
@@ -687,7 +1015,6 @@ namespace MutationChess.Map
                     }
                 }
             }
-
         }
 
         void ClearAllLines()
@@ -726,6 +1053,54 @@ namespace MutationChess.Map
 
                 LineRendererHelper.SetLineColor(conn.lineRenderer, color);
             }
+        }
+
+        public void UpdateAllMapDisplays()
+        {
+            if (!enableMapDisplay)
+            {
+                Debug.LogWarning("[MapGenerator] UpdateAllMapDisplays 被调用但 enableMapDisplay = false");
+                return;
+            }
+
+            int displayCount = 0;
+            foreach (var layer in allLayers)
+            {
+                foreach (var node in layer)
+                {
+                    if (node.mapDisplayObject == null)
+                    {
+                        if (enableMapDisplay)
+                        {
+                            Debug.LogWarning($"[MapGenerator] 节点 {node.nodeType} 的 mapDisplayObject 为空，重新创建");
+                            CreateMapDisplay(node, node.position, node.nodeType);
+                        }
+                        continue;
+                    }
+
+                    Renderer renderer = node.mapDisplayObject.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        renderer.enabled = true;
+                        Color color = renderer.material.color;
+                        if (node.isVisited)
+                        {
+                            color.a = 0.4f;
+                        }
+                        else if (node.isReachable)
+                        {
+                            color.a = 0.9f;
+                        }
+                        else
+                        {
+                            color.a = 0.2f;
+                        }
+                        renderer.material.color = color;
+                        displayCount++;
+                    }
+                }
+            }
+            Debug.Log($"[MapGenerator] UpdateAllMapDisplays 完成，更新了 {displayCount} 个地图显示");
         }
 
         int CountAllNodes()

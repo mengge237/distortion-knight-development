@@ -1,22 +1,36 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    [CreateAssetMenu(fileName = "ApplyDebuff", menuName = "MutationChess/Effects/Apply Debuff")]
+    [CreateAssetMenu(fileName = "ApplyDebuffEffect", menuName = "MutationChess/Effects/Apply Debuff")]
     public class ApplyDebuffEffect : CardEffect
     {
-        public BuffType debuffType = BuffType.Vulnerability;
-        public int defaultAmount = 1;
-        public int defaultDuration = 2;
+        [Header("Debuff类型")]
+        [SerializeField] private BuffType debuffType = BuffType.Vulnerability;
+        [Header("层数")]
+        [SerializeField] private int amount = 1;
+        [Header("持续回合")]
+        [SerializeField] private int duration = 2;
 
         public override void Execute(CombatContext context)
         {
-            if (context.targetEnemy != null && context.sourceCard != null)
+            bool targetIsEnemy = context.targetEnemy != null;
+
+            Buff buff = new Buff
             {
-                int amount = context.sourceCard.magicNumber > 0 ? context.sourceCard.magicNumber : defaultAmount;
-                int duration = defaultDuration;
-                context.targetEnemy.AddBuff(new Buff { type = debuffType, amount = amount, duration = duration });
+                type = debuffType,
+                amount = amount,
+                duration = duration
+            };
+
+            if (targetIsEnemy)
+            {
+                context.targetEnemy.AddBuff(buff);
+            }
+            else if (context.targetPlayer != null)
+            {
+                context.targetPlayer.AddBuff(buff);
             }
         }
     }

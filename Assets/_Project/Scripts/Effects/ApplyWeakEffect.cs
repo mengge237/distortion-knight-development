@@ -3,11 +3,11 @@ using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    [CreateAssetMenu(fileName = "ApplyVulnerabilityEffect", menuName = "MutationChess/Effects/Apply Vulnerability")]
-    public class ApplyVulnerabilityEffect : CardEffect
+    [CreateAssetMenu(fileName = "ApplyWeakEffect", menuName = "MutationChess/Effects/Apply Weak")]
+    public class ApplyWeakEffect : CardEffect
     {
-        [Header("易伤层数")]
-        [SerializeField] private int vulnerabilityAmount = 1;
+        [Header("弱化层数")]
+        [SerializeField] private int weakAmount = 1;
         [Header("持续回合")]
         [SerializeField] private int duration = 2;
 
@@ -15,8 +15,8 @@ namespace MutationChess.Core
         {
             Buff buff = new Buff
             {
-                type = BuffType.Vulnerability,
-                amount = vulnerabilityAmount,
+                type = BuffType.Weak,
+                amount = weakAmount,
                 duration = duration
             };
 

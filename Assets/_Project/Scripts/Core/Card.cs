@@ -1,10 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Core
 {
-    // ==================== 卡牌类型枚举 ====================
     public enum CardType
     {
         Attack,
@@ -13,20 +12,17 @@ namespace MutationChess.Core
         Power
     }
 
-    // ==================== 卡牌稀有度枚举 ====================
     public enum CardRarity
     {
-        Common,     // 普通 - 灰色
-        Uncommon,   // 罕见 - 蓝色
-        Rare,       // 稀有 - 金色
-        Mythic      // 神话 - 紫色
+        Common,
+        Uncommon,
+        Rare,
+        Mythic
     }
 
-    // ==================== 卡牌数据类 ====================
     [Serializable]
     public class Card
     {
-        // ===== 核心数据 =====
         public string cardId;
         public string cardName;
         public int cost;
@@ -40,11 +36,8 @@ namespace MutationChess.Core
         public string upgradeDescription;
         public bool isUpgraded = false;
 
-        // ===== 效果列表 =====
         [NonSerialized]
         public List<CardEffect> effects = new List<CardEffect>();
-
-        // ===== 构造函数 =====
 
         public Card()
         {
@@ -74,7 +67,11 @@ namespace MutationChess.Core
             GenerateDescription();
         }
 
-        // ===== 卡牌升级 =====
+        public bool HasKeyword(string keyword)
+        {
+            if (string.IsNullOrEmpty(cardName)) return false;
+            return cardName.Contains(keyword);
+        }
 
         public void Upgrade()
         {
@@ -92,8 +89,6 @@ namespace MutationChess.Core
             isUpgraded = true;
             GenerateDescription();
         }
-
-        // ===== 描述生成 =====
 
         public void GenerateDescription()
         {
@@ -125,6 +120,12 @@ namespace MutationChess.Core
                 }
             }
 
+            if (HasKeyword("粘液"))
+                desc += $"\n<color=#00FF88>粘液：触发相邻卡牌效果</color>";
+
+            if (HasKeyword("不舍"))
+                desc += $"\n<color=#CC66FF>不舍：抽一张不舍卡牌</color>";
+
             if (isUpgraded)
                 desc += " (升级)";
 
@@ -147,14 +148,11 @@ namespace MutationChess.Core
             }
         }
 
-        // ===== 执行效果 =====
-
         public void ExecuteEffects(CombatContext context)
         {
-
             if (effects.Count == 0)
             {
-                Debug.LogWarning($"卡牌 {cardName} 没有效果！请检查 CardData.CreateCard 是否正确加载了效果。");
+                Debug.LogWarning($"卡牌 {cardName} 没有效果！");
                 return;
             }
 

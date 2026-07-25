@@ -1,4 +1,4 @@
-﻿using MutationChess.Core;
+using MutationChess.Core;
 using MutationChess.UI;
 using System;
 using System.Collections;
@@ -40,6 +40,8 @@ namespace MutationChess.Battle
         [SerializeField] private TMP_Text battleLogText;
         [SerializeField] private BattleIntroUI battleIntroUI;
 
+        [Header("=== 玩家Debuff显示 ===")]
+        [SerializeField] private TMP_Text playerDebuffText;
 
         [Header("=== 操作提示 ===")]
         [SerializeField] private TMP_Text actionHintText;
@@ -78,11 +80,9 @@ namespace MutationChess.Battle
 
         void Start()
         {
-            // 使用更可靠的方式获取 GameManager
             gameManager = FindObjectOfType<GameManager>();
             if (gameManager == null)
             {
-                // 尝试从 DontDestroyOnLoad 场景中查找
                 gameManager = FindObjectOfType<GameManager>(true);
             }
 
@@ -171,6 +171,11 @@ namespace MutationChess.Battle
             waitingForPlayerInput = true;
             isEnemyTurn = false;
 
+            if (playerData != null)
+            {
+                playerData.OnTurnStart();
+            }
+
             if (endTurnButton != null)
                 endTurnButton.gameObject.SetActive(true);
 
@@ -198,6 +203,8 @@ namespace MutationChess.Battle
             var dataManager = PlayerDataManager.Instance;
             if (dataManager != null)
                 dataManager.UpdateUI();
+
+            UpdatePlayerDebuffDisplay();
         }
 
         void OnEnemyTurnStart()
@@ -273,7 +280,12 @@ namespace MutationChess.Battle
         {
             if (enemyIntentUI != null)
             {
-                enemyIntentUI.ShowIntent(currentIntent, currentIntentValue);
+                int displayValue = currentIntentValue;
+                if (currentIntent == EnemyIntentType.Attack || currentIntent == EnemyIntentType.Special)
+                {
+                    displayValue = currentEnemy.GetAttackDamage();
+                }
+                enemyIntentUI.ShowIntent(currentIntent, displayValue);
             }
             else
             {
@@ -375,6 +387,7 @@ namespace MutationChess.Battle
             }
 
             RefreshAllUI();
+            UpdatePlayerDebuffDisplay();
             yield return new WaitForSeconds(0.5f);
         }
 
@@ -408,6 +421,7 @@ namespace MutationChess.Battle
             }
 
             RefreshAllUI();
+            UpdatePlayerDebuffDisplay();
             yield return new WaitForSeconds(0.5f);
         }
 
@@ -463,6 +477,11 @@ namespace MutationChess.Battle
         {
             currentEnemy = enemy;
             playerData = player;
+
+            if (playerData != null)
+            {
+                playerData.ClearBuffs();
+            }
 
             var dataManager = PlayerDataManager.Instance;
             if (dataManager != null)
@@ -618,6 +637,13 @@ namespace MutationChess.Battle
             }
 
             int finalDamage = Mathf.Max(1, damage + UnityEngine.Random.Range(-1, 2));
+
+            int weak = playerData.GetBuffAmount(BuffType.Weak);
+            if (weak > 0)
+            {
+                finalDamage = Mathf.RoundToInt(finalDamage * (1 - weak * 0.2f));
+            }
+
             currentEnemy.TakeDamage(finalDamage);
 
             AddLog($"玩家造成 {finalDamage} 点伤害");
@@ -641,8 +667,9 @@ namespace MutationChess.Battle
         {
             if (currentEnemy == null || currentEnemy.IsDead()) return;
 
-            playerBlock += blockAmount;
-            AddLog($"玩家获得 {blockAmount} 点格挡 (累计: {playerBlock})");
+            int finalBlock = playerData.GetModifiedBlock(blockAmount);
+            playerBlock += finalBlock;
+            AddLog($"玩家获得 {finalBlock} 点格挡 (累计: {playerBlock})");
 
             RefreshAllUI();
             waitingForPlayerInput = true;
@@ -679,12 +706,11 @@ namespace MutationChess.Battle
             if (dataManager != null)
                 dataManager.UpdateUI();
 
-            // 胜利时显示奖励面板
             if (victory)
             {
                 if (rewardPanel == null)
                 {
-                    Debug.LogError("BattleManager: rewardPanel 未设置！请在 Inspector 中拖入 RewardPanel 引用。");
+                    Debug.LogError("BattleManager: rewardPanel 未设置！");
                     OnBattleEnd?.Invoke(victory);
                     StartCoroutine(DelayedExit());
                     return;
@@ -692,7 +718,6 @@ namespace MutationChess.Battle
 
                 if (gameManager == null)
                 {
-                    Debug.LogError("BattleManager: gameManager 为空！正在重新查找...");
                     gameManager = FindObjectOfType<GameManager>();
                     if (gameManager == null)
                     {
@@ -742,7 +767,6 @@ namespace MutationChess.Battle
                     OnPanelClosed
                 );
 
-                // 暂停游戏等待玩家选择（使用 DOTween 的独立时间）
                 Time.timeScale = 0f;
                 return;
             }
@@ -790,13 +814,11 @@ namespace MutationChess.Battle
 
         private void OnPanelClosed()
         {
-            // 如果面板被关闭但未确认，恢复游戏时间
             Time.timeScale = 1f;
         }
 
         IEnumerator DelayedExit()
         {
-            // 使用不受 Time.timeScale 影响的 WaitForSecondsRealtime
             yield return new WaitForSecondsRealtime(1.5f);
             if (battlePanel != null) battlePanel.SetActive(false);
             if (handPanel != null) handPanel.SetActive(false);
@@ -815,6 +837,7 @@ namespace MutationChess.Battle
         {
             UpdatePlayerUI();
             UpdateEnemyUI();
+            UpdatePlayerDebuffDisplay();
         }
 
         void UpdatePlayerUI()
@@ -838,6 +861,46 @@ namespace MutationChess.Battle
             if (enemyHpText != null && currentEnemy != null)
             {
                 enemyHpText.text = $"{currentEnemy.currentHealth}/{currentEnemy.maxHealth}";
+            }
+        }
+
+        void UpdatePlayerDebuffDisplay()
+        {
+            if (playerDebuffText == null || playerData == null) return;
+
+            List<string> debuffStrings = new List<string>();
+            var buffs = playerData.GetBuffs();
+
+            foreach (var buff in buffs)
+            {
+                if (buff.duration > 0)
+                {
+                    switch (buff.type)
+                    {
+                        case BuffType.Vulnerability:
+                            debuffStrings.Add($"易伤 {buff.amount}({buff.duration})");
+                            break;
+                        case BuffType.Weak:
+                            debuffStrings.Add($"虚弱 {buff.amount}({buff.duration})");
+                            break;
+                        case BuffType.Frail:
+                            debuffStrings.Add($"脆弱 {buff.amount}({buff.duration})");
+                            break;
+                        case BuffType.Poison:
+                            debuffStrings.Add($"中毒 {buff.amount}({buff.duration})");
+                            break;
+                    }
+                }
+            }
+
+            if (debuffStrings.Count > 0)
+            {
+                playerDebuffText.text = string.Join(" ", debuffStrings);
+                playerDebuffText.gameObject.SetActive(true);
+            }
+            else
+            {
+                playerDebuffText.gameObject.SetActive(false);
             }
         }
 

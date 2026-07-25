@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Map;
 using MutationChess.Battle;
 using MutationChess.Core;
@@ -14,6 +14,9 @@ public class GameManager : MonoBehaviour
 
     [Header("战斗")]
     [SerializeField] private BattleManager battleManager;
+
+    [Header("摄像机跟随")]
+    [SerializeField] private CameraFollowController cameraFollow;
 
     [Header("视图")]
     [SerializeField] private MapView mapView;
@@ -49,6 +52,18 @@ public class GameManager : MonoBehaviour
         if (mapGenerator == null)
             mapGenerator = FindObjectOfType<MapGenerator>();
 
+        if (battleManager == null)
+            battleManager = FindObjectOfType<BattleManager>();
+
+        if (cameraFollow == null)
+            cameraFollow = FindObjectOfType<CameraFollowController>();
+
+        if (mapView == null)
+            mapView = FindObjectOfType<MapView>();
+
+        if (mapGenerator == null)
+            Debug.LogError("[GameManager] MapGenerator 未找到！请确保场景中有 MapGenerator 对象");
+
         if (mapGenerator != null)
         {
             mapGenerator.OnNodeClickedAction += OnNodeClicked;
@@ -67,13 +82,30 @@ public class GameManager : MonoBehaviour
     void SetupPlayer()
     {
         Vector3 startPos = Vector3.zero;
+        MapNode startNode = null;
+
         if (mapGenerator != null && mapGenerator.AllLayers.Count > 0)
         {
-            var startNode = mapGenerator.AllLayers[0][0];
+            startNode = mapGenerator.AllLayers[0][0];
             if (startNode.nodeObject != null)
             {
                 startPos = mapGenerator.GetNodeWorldPosition(startNode);
                 startPos.y += playerYOffset;
+            }
+        }
+
+        if (cameraFollow != null && startNode != null)
+        {
+            cameraFollow.TeleportToNode(startNode);
+        }
+        else
+        {
+            Camera cam = Camera.main;
+            if (cam != null && startNode != null && startNode.nodeObject != null)
+            {
+                Vector3 targetPos = startNode.position + new Vector3(0, 8, -8);
+                cam.transform.position = targetPos;
+                cam.transform.LookAt(startNode.position);
             }
         }
 
@@ -104,12 +136,6 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        if (playerController == null)
-        {
-            Debug.LogError("PlayerController 为空");
-            return;
-        }
-
         bool isValidMove = false;
         if (mapGenerator.CurrentNode != null)
         {
@@ -129,32 +155,68 @@ public class GameManager : MonoBehaviour
         }
 
         isMoving = true;
-        Vector3 target = mapGenerator.GetNodeWorldPosition(node);
-        target.y += playerYOffset;
 
-        if (playerController != null)
+        if (cameraFollow != null)
         {
-            playerController.MoveToNode(target, () =>
+            cameraFollow.MoveToNode(node, () =>
             {
                 isMoving = false;
                 mapGenerator.ConfirmReachNode(node);
                 if (mapView != null)
                     mapView.RefreshAllNodes();
+
+                if (playerController != null)
+                {
+                    Vector3 targetPos = mapGenerator.GetNodeWorldPosition(node);
+                    targetPos.y += playerYOffset;
+                    playerController.TeleportToNode(targetPos);
+                }
             });
         }
         else
         {
-            isMoving = false;
-            Debug.LogError("无法移动：PlayerController 为空");
+            if (playerController != null)
+            {
+                Vector3 target = mapGenerator.GetNodeWorldPosition(node);
+                target.y += playerYOffset;
+
+                playerController.MoveToNode(target, () =>
+                {
+                    isMoving = false;
+                    mapGenerator.ConfirmReachNode(node);
+                    if (mapView != null)
+                        mapView.RefreshAllNodes();
+                });
+            }
+            else
+            {
+                isMoving = false;
+                Debug.LogError("无法移动：PlayerController 和 CameraFollowController 都为空");
+            }
         }
     }
 
     void OnNodeReached(MapNode node)
     {
+        if (mapView == null)
+        {
+            mapView = FindObjectOfType<MapView>();
+            if (mapView != null)
+                Debug.Log("[GameManager] 重新找到了 MapView");
+        }
+
+        if (mapGenerator == null)
+        {
+            mapGenerator = FindObjectOfType<MapGenerator>();
+            if (mapGenerator != null)
+                Debug.Log("[GameManager] 重新找到了 MapGenerator");
+        }
+
         if (mapView != null)
             mapView.RefreshAllNodes();
 
         var dataManager = PlayerDataManager.Instance;
+        if (dataManager == null) return;
 
         switch (node.nodeType)
         {
@@ -166,7 +228,12 @@ public class GameManager : MonoBehaviour
                     Enemy randomEnemy = GetRandomNormalEnemy();
                     battleManager.StartBattle(randomEnemy, dataManager.GetPlayerData());
                 }
+                else
+                {
+                    Debug.LogError("BattleManager 为空！请检查场景中的 BattleManager 对象");
+                }
                 break;
+
             case NodeType.EliteMonster:
                 currentEnemyType = EnemyType.Elite;
                 if (battleManager != null)
@@ -175,7 +242,12 @@ public class GameManager : MonoBehaviour
                     Enemy randomElite = GetRandomEliteEnemy();
                     battleManager.StartBattle(randomElite, dataManager.GetPlayerData());
                 }
+                else
+                {
+                    Debug.LogError("BattleManager 为空！请检查场景中的 BattleManager 对象");
+                }
                 break;
+
             case NodeType.Boss:
                 currentEnemyType = EnemyType.Boss;
                 if (battleManager != null)
@@ -183,24 +255,36 @@ public class GameManager : MonoBehaviour
                     isInBattle = true;
                     battleManager.StartBattle(Enemy.CreateAbyssLord(), dataManager.GetPlayerData());
                 }
+                else
+                {
+                    Debug.LogError("BattleManager 为空！请检查场景中的 BattleManager 对象");
+                }
                 break;
+
             case NodeType.MysteryEvent:
                 if (Random.value < 0.5f)
                     dataManager.AddGold(Random.Range(20, 51));
                 else
                     dataManager.TakeDamage(Random.Range(5, 13));
                 break;
+
             case NodeType.Shop:
                 if (dataManager.RemoveGold(50))
                     dataManager.Heal(20);
                 break;
+
             case NodeType.Treasure:
                 dataManager.AddGold(50);
                 break;
+
             case NodeType.Rest:
                 dataManager.Heal(20);
                 break;
+
             case NodeType.Start:
+                break;
+
+            default:
                 break;
         }
     }
@@ -248,6 +332,24 @@ public class GameManager : MonoBehaviour
 
         if (victory)
         {
+        }
+        else
+        {
+            Debug.Log("玩家战败");
+        }
+
+        if (mapView == null)
+        {
+            mapView = FindObjectOfType<MapView>();
+            if (mapView != null)
+                Debug.Log("[GameManager] 战斗结束后重新找到了 MapView");
+        }
+
+        if (mapGenerator == null)
+        {
+            mapGenerator = FindObjectOfType<MapGenerator>();
+            if (mapGenerator != null)
+                Debug.Log("[GameManager] 战斗结束后重新找到了 MapGenerator");
         }
 
         if (mapView != null)

@@ -9,7 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0090cf1576c984f41b9ef3e39e65d3eb, type: 3}
-  m_Name: ApplyDamageOverTime
+  m_Script: {fileID: 11500000, guid: 137b9c0c85ae0714eaab8e2c5c46dce0, type: 3}
+  m_Name: EliteMonster
   m_EditorClassIdentifier: 
-  effectDescription: "\u65BD\u52A0\u4E2D\u6BD2/\u6301\u7EED\u4F24\u5BB3"
+  nodeType: 0
+  displayName: "\u8282\u70B9"
+  color: {r: 1, g: 1, b: 1, a: 1}
+  prefab: {fileID: 0}
+  material: {fileID: 0}
+  mapPrefab: {fileID: 0}
+  mapTexture: {fileID: 0}

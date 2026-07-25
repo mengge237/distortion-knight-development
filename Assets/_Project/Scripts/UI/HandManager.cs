@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using System.Collections;
@@ -26,7 +26,8 @@ namespace MutationChess.UI
         [Header("=== Fan Layout ===")]
         [SerializeField] private float fanRadius = 2000f;
         [SerializeField] private float maxFanAngle = 35f;
-        [SerializeField] [Range(0f, 1f)] private float fanRotationStrength = 1f;
+        [SerializeField][Range(0f, 1f)] private float fanRotationStrength = 1f;
+
         [Header("=== 卡组配置 ===")]
         [SerializeField] private DeckData deckData;
 
@@ -56,9 +57,6 @@ namespace MutationChess.UI
         public System.Action<Card> OnCardPlayed;
         public System.Action OnHandUpdated;
 
-        private const float CARD_WIDTH = 150f;
-        private const float CARD_HEIGHT = 200f;
-
         void Awake()
         {
             if (Instance == null) Instance = this;
@@ -71,8 +69,6 @@ namespace MutationChess.UI
             UpdateEnergyUI();
             UpdatePileCountUI();
         }
-
-        // ==================== 战斗开始/结束 ====================
 
         public void StartBattle()
         {
@@ -96,7 +92,6 @@ namespace MutationChess.UI
             OnEnergyChanged?.Invoke(currentEnergy);
             UpdateEnergyUI();
             UpdatePileCountUI();
-
         }
 
         public void EndBattle()
@@ -117,8 +112,6 @@ namespace MutationChess.UI
             isFirstTurn = true;
             isAnimating = false;
         }
-
-        // ==================== 回合管理 ====================
 
         public void OnNewTurn()
         {
@@ -141,7 +134,6 @@ namespace MutationChess.UI
             }
 
             StartCoroutine(DrawCardsRoutine(cardsPerTurn, GetDrawPilePosition()));
-
         }
 
         public void OnEndTurn()
@@ -149,9 +141,7 @@ namespace MutationChess.UI
             foreach (var card in handCards)
                 discardPile.Add(card);
 
-            int discardCount = handCards.Count;
             handCards.Clear();
-
 
             if (cardUIs.Count > 0)
             {
@@ -180,8 +170,6 @@ namespace MutationChess.UI
                 UpdatePileCountUI();
             });
         }
-
-        // ==================== 牌堆管理 ====================
 
         void InitializeDeckFromConfig()
         {
@@ -217,7 +205,6 @@ namespace MutationChess.UI
 
             if (bash != null)
                 drawPile.Add(bash);
-
         }
 
         void ShuffleDrawPile()
@@ -238,18 +225,13 @@ namespace MutationChess.UI
                 return;
             }
 
-            int discardCount = discardPile.Count;
-
             drawPile.AddRange(discardPile);
             discardPile.Clear();
 
             ShuffleDrawPile();
 
-
             UpdatePileCountUI();
         }
-
-        // ==================== 抽牌 ====================
 
         Vector3 GetDrawPilePosition()
         {
@@ -289,7 +271,6 @@ namespace MutationChess.UI
 
             int drawn = 0;
             List<Card> drawnCards = new List<Card>();
-
 
             for (int i = 0; i < count; i++)
             {
@@ -333,7 +314,6 @@ namespace MutationChess.UI
             UpdatePileCountUI();
             isAnimating = false;
         }
-
 
         private Vector2 CalculateFanPosition(int index, int totalCount)
         {
@@ -411,9 +391,6 @@ namespace MutationChess.UI
             UpdatePileCountUI();
         }
 
-
-        // ==================== 出牌逻辑（关键修复） ====================
-
         public void PlayCard(Card card)
         {
             if (card == null) return;
@@ -474,10 +451,7 @@ namespace MutationChess.UI
             OnCardPlayed?.Invoke(card);
 
             RefreshAllUI();
-
         }
-
-        // ==================== 弃牌方法 ====================
 
         public void DiscardCard(Card card)
         {
@@ -504,11 +478,38 @@ namespace MutationChess.UI
             RefreshAllUI();
         }
 
-        // ==================== 获取手牌列表 ====================
-
         public List<Card> GetHandCards() => new List<Card>(handCards);
 
-        // ==================== UI更新 ====================
+        public List<Card> GetDrawPile() => drawPile;
+
+        public void RemoveCardFromDrawPile(int index)
+        {
+            if (index >= 0 && index < drawPile.Count)
+            {
+                drawPile.RemoveAt(index);
+                UpdatePileCountUI();
+            }
+        }
+
+        public void AddCardToHand(Card card)
+        {
+            if (card == null) return;
+
+            if (handCards.Count < maxHandSize)
+            {
+                handCards.Add(card);
+                Vector3 drawPilePos = GetDrawPilePosition();
+                List<Card> newCards = new List<Card> { card };
+                UpdateHandUIWithAnimation(drawPilePos, newCards);
+                UpdatePileCountUI();
+            }
+            else
+            {
+                discardPile.Add(card);
+                Debug.Log($"手牌已满，{card.cardName} 进入弃牌堆");
+                UpdatePileCountUI();
+            }
+        }
 
         void RefreshAllUI()
         {
@@ -571,7 +572,6 @@ namespace MutationChess.UI
             UpdatePileCountUI();
         }
 
-
         void UpdateEnergyUI()
         {
             if (energyText != null)
@@ -603,8 +603,6 @@ namespace MutationChess.UI
             }
             cardUIs.Clear();
         }
-
-        // ==================== 公共方法 ====================
 
         public void AddCardToDrawPile(Card card)
         {

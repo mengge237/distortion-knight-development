@@ -9,7 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0090cf1576c984f41b9ef3e39e65d3eb, type: 3}
-  m_Name: ApplyDamageOverTime
+  m_Script: {fileID: 11500000, guid: 1d04a2213682e46438bae025896bc7d1, type: 3}
+  m_Name: ApplyWeakEffect
   m_EditorClassIdentifier: 
-  effectDescription: "\u65BD\u52A0\u4E2D\u6BD2/\u6301\u7EED\u4F24\u5BB3"
+  effectDescription: "\u65BD\u52A0\u865A\u5F31"
+  weakAmount: 1
+  duration: 2

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b68a756442b4074fb9ed28a514ce696, type: 3}
   m_Name: ApplyDebuff
   m_EditorClassIdentifier: 
-  effectDescription: Debuff
+  effectDescription: "\u901A\u7528Debuff"
   debuffType: 4
-  defaultAmount: 1
-  defaultDuration: 2
+  amount: 1
+  duration: 2

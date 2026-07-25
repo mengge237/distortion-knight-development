@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MutationChess.Map
@@ -6,7 +6,7 @@ namespace MutationChess.Map
     [System.Serializable]
     public partial class MapNode
     {
-        public Vector2Int point;              // 网格坐标 (x, y) 对应 (col, row)
+        public Vector2Int point;              // 网格坐标 (col, row)
         public NodeType nodeType;
         public bool isVisited = false;
         public bool isReachable = false;
@@ -16,6 +16,7 @@ namespace MutationChess.Map
 
         // 可视化引用（运行时赋值，不序列化）
         [System.NonSerialized] public GameObject nodeObject;
+        [System.NonSerialized] public GameObject mapDisplayObject;    // 地图显示子物体
         [System.NonSerialized] public Vector3 position;
 
         public MapNode(Vector2Int pos, NodeType type)

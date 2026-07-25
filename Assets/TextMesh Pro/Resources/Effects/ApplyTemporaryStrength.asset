@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb2392d02944d7947b89562bbef0b17f, type: 3}
   m_Name: ApplyTemporaryStrength
   m_EditorClassIdentifier: 
-  effectDescription: "\t\u4E34\u65F6\u529B\u91CF"
+  effectDescription: "\u4E34\u65F6\u529B\u91CF"
