@@ -12,7 +12,7 @@ namespace MutationChess.Core
             {
                 int amount = 2; // 固定获得 2 层力量
                 int duration = context.sourceCard.magicNumber > 0 ? context.sourceCard.magicNumber : 3;
-                // 需要对玩家添加 Buff 系统（后续扩展）
+                Debug.LogWarning("ApplyTemporaryStrengthEffect 对玩家的 Buff 功能尚未实现");
             }
             else if (context.targetEnemy != null)
             {

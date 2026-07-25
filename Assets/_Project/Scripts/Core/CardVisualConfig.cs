@@ -11,6 +11,7 @@ namespace MutationChess.Core
                 case CardRarity.Common: return new Color(0.63f, 0.63f, 0.63f);
                 case CardRarity.Uncommon: return new Color(0.31f, 0.76f, 0.97f);
                 case CardRarity.Rare: return new Color(1f, 0.84f, 0.31f);
+                case CardRarity.Mythic: return new Color(0.75f, 0.45f, 0.95f);
                 default: return Color.white;
             }
         }

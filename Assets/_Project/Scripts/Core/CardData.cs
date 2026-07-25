@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -262,7 +262,7 @@ namespace MutationChess.Core
         }
     }
 
-    public struct CardTemplate
+    public class CardTemplate
     {
         public string cardName;
         public int cost;
@@ -275,5 +275,9 @@ namespace MutationChess.Core
         public List<string> effectIds;
         public string cardId;
         public string cardArtPath;
+
+        public CardTemplate()
+        {
+        }
     }
 }

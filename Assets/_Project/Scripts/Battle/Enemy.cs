@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -218,15 +218,6 @@ namespace MutationChess.Battle
             {
                 SwitchToSecondForm();
             }
-
-            if (enemyName.Contains("腐化君王"))
-            {
-                int bonus = GetKingPowerBonus();
-                if (bonus > 0)
-                {
-                }
-            }
-
         }
 
         public void OnTurnEnd()

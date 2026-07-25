@@ -1,4 +1,4 @@
-using MutationChess.Core;
+﻿using MutationChess.Core;
 using MutationChess.UI;
 using System;
 using System.Collections;

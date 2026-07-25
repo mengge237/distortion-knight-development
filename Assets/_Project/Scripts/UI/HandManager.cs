@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using System.Collections;
@@ -327,6 +327,11 @@ namespace MutationChess.UI
 
         void UpdateHandUIWithAnimation(Vector3 drawPilePos, List<Card> newCards)
         {
+            CreateCardUIs(drawPilePos, newCards);
+        }
+
+        private void CreateCardUIs(Vector3 drawPilePos, List<Card> newCards = null)
+        {
             foreach (var cardUI in cardUIs)
             {
                 if (cardUI != null) Destroy(cardUI.gameObject);
@@ -356,6 +361,8 @@ namespace MutationChess.UI
                 targetRotations.Add(rot);
             }
 
+            int newCardStartIndex = newCards != null ? handCards.Count - newCards.Count : -1;
+
             for (int i = 0; i < handCards.Count; i++)
             {
                 Card card = handCards[i];
@@ -373,9 +380,9 @@ namespace MutationChess.UI
 
                     RectTransform rect = cardUI.GetRectTransform();
 
-                    if (i >= handCards.Count - newCards.Count)
+                    if (newCards != null && i >= newCardStartIndex)
                     {
-                        float delay = (i - (handCards.Count - newCards.Count)) * drawAnimationDelay;
+                        float delay = (i - newCardStartIndex) * drawAnimationDelay;
                         cardUI.PlayDrawAnimation(drawPilePos, delay);
                     }
 
@@ -520,56 +527,7 @@ namespace MutationChess.UI
 
         void UpdateHandUI()
         {
-            foreach (var cardUI in cardUIs)
-            {
-                if (cardUI != null) Destroy(cardUI.gameObject);
-            }
-            cardUIs.Clear();
-
-            if (handCards.Count == 0)
-            {
-                UpdateEnergyUI();
-                UpdatePileCountUI();
-                return;
-            }
-
-            if (cardPrefab == null || cardsContainer == null)
-            {
-                Debug.LogWarning("CardPrefab 和 CardsContainer 为空！");
-                return;
-            }
-
-            for (int i = 0; i < handCards.Count; i++)
-            {
-                Card card = handCards[i];
-                GameObject cardObj = Instantiate(cardPrefab, cardsContainer);
-                CardUI cardUI = cardObj.GetComponent<CardUI>();
-
-                if (cardUI != null)
-                {
-                    cardUI.Initialize(card);
-                    cardUI.OnCardClicked += OnCardUIClicked;
-                    cardUI.OnCardPlayed += PlayCard;
-
-                    bool canPlay = card.cost <= currentEnergy;
-                    cardUI.SetInteractable(canPlay);
-
-                    RectTransform rect = cardUI.GetRectTransform();
-
-                    Vector2 fanPos = CalculateFanPosition(i, handCards.Count);
-                    rect.anchoredPosition = fanPos;
-
-                    float rot = -(i - handCards.Count / 2f + 0.5f) / (handCards.Count / 2f) * maxFanAngle * 0.5f * fanRotationStrength;
-                    rect.localRotation = Quaternion.Euler(0f, 0f, rot);
-
-                    cardUI.SetOriginalPosition(fanPos);
-                }
-
-                cardUIs.Add(cardUI);
-            }
-
-            UpdateEnergyUI();
-            UpdatePileCountUI();
+            CreateCardUIs(Vector3.zero);
         }
 
         void UpdateEnergyUI()

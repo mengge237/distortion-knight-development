@@ -1,17 +1,14 @@
-﻿using MutationChess.Battle;
-using UnityEngine;
+﻿using UnityEngine;
+using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    /// <summary>
-    /// 战斗上下文 - 用于卡牌效果执行时传递参数
-    /// </summary>
     public class CombatContext
     {
-        public BattleManager battleManager;  // 战斗管理器
-        public Enemy targetEnemy;            // 目标敌人
-        public PlayerData targetPlayer;      // 目标玩家
-        public Card sourceCard;              // 触发效果的卡牌
+        public BattleManager battleManager;
+        public Enemy targetEnemy;
+        public PlayerData targetPlayer;
+        public Card sourceCard;
 
         public CombatContext(BattleManager battleManager, Enemy targetEnemy, PlayerData targetPlayer, Card sourceCard)
         {
@@ -19,7 +16,6 @@ namespace MutationChess.Core
             this.targetEnemy = targetEnemy;
             this.targetPlayer = targetPlayer;
             this.sourceCard = sourceCard;
-
         }
     }
 }
