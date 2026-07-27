@@ -1,4 +1,4 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using MutationChess.Map;
 using MutationChess.Battle;
 using MutationChess.Core;
@@ -7,29 +7,32 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("åœ°å›¾ä¸ç©å®¶")]
+    [Header("ºËĞÄÊôĞÔ")]
     [SerializeField] private MapGenerator mapGenerator;
     [SerializeField] private PlayerController playerController;
     [SerializeField] private GameObject playerPrefab;
 
-    [Header("æˆ˜æ–—")]
+    [Header("Õ½¶·")]
     [SerializeField] private BattleManager battleManager;
 
-    [Header("æ‘„åƒæœºè·Ÿéš")]
+    [Header("ÉãÏñ»ú¸úËæ")]
     [SerializeField] private CameraFollowController cameraFollow;
 
-    [Header("è§†å›¾")]
+    [Header("µØÍ¼ÊÓÍ¼")]
     [SerializeField] private MapView mapView;
 
-    [Header("ç©å®¶åç§»")]
+    [Header("Íæ¼Ò²ÎÊı")]
     [SerializeField] private float playerYOffset = 0.5f;
 
-    [Header("=== å¡ç‰Œå¥–åŠ±æ± ï¼ˆæ‹–å…¥ Inspectorï¼‰ ===")]
+    [Header("=== ½±Àø³Ø×é¼ş (InspectorÖĞÉèÖÃ) ===")]
     [SerializeField] private RewardPool commonRewardPool;
     [SerializeField] private RewardPool eliteRewardPool;
     [SerializeField] private RewardPool bossRewardPool;
 
-    [Header("=== é‡‘å¸å¥–åŠ±èŒƒå›´ ===")]
+    [Header("=== ÉÌµê ===")]
+    [SerializeField] private ShopPanel shopPanel;
+
+    [Header("=== ½ğ±ÒµôÂä·¶Î§ ===")]
     [SerializeField] private Vector2Int commonGoldRange = new Vector2Int(10, 25);
     [SerializeField] private Vector2Int eliteGoldRange = new Vector2Int(20, 40);
     [SerializeField] private Vector2Int bossGoldRange = new Vector2Int(50, 80);
@@ -43,7 +46,7 @@ public class GameManager : MonoBehaviour
         var dataManager = PlayerDataManager.Instance;
         if (dataManager == null)
         {
-            Debug.LogError("PlayerDataManager æœªæ‰¾åˆ°ï¼è¯·åœ¨åœºæ™¯ä¸­æ·»åŠ ");
+            Debug.LogError("PlayerDataManager Î´ÉèÖÃ£¡ÇëÔÚ³¡¾°ÖĞÌí¼Ó PlayerDataManager ×é¼ş");
             return;
         }
 
@@ -62,7 +65,7 @@ public class GameManager : MonoBehaviour
             mapView = FindObjectOfType<MapView>();
 
         if (mapGenerator == null)
-            Debug.LogError("[GameManager] MapGenerator æœªæ‰¾åˆ°ï¼è¯·ç¡®ä¿åœºæ™¯ä¸­æœ‰ MapGenerator å¯¹è±¡");
+            Debug.LogError("[GameManager] MapGenerator Î´ÉèÖÃ£¡ÇëÔÚ³¡¾°ÖĞËÑË÷ MapGenerator ¶ÔÏó...");
 
         if (mapGenerator != null)
         {
@@ -191,7 +194,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 isMoving = false;
-                Debug.LogError("æ— æ³•ç§»åŠ¨ï¼šPlayerController å’Œ CameraFollowController éƒ½ä¸ºç©º");
+                Debug.LogError("³¡¾°ÖĞÕÒ²»µ½PlayerController »ò CameraFollowController ×é¼ş");
             }
         }
     }
@@ -202,14 +205,14 @@ public class GameManager : MonoBehaviour
         {
             mapView = FindObjectOfType<MapView>();
             if (mapView != null)
-                Debug.Log("[GameManager] é‡æ–°æ‰¾åˆ°äº† MapView");
+                Debug.Log("[GameManager] ½øÈë³¡¾° ÇĞ»»µ½ MapView");
         }
 
         if (mapGenerator == null)
         {
             mapGenerator = FindObjectOfType<MapGenerator>();
             if (mapGenerator != null)
-                Debug.Log("[GameManager] é‡æ–°æ‰¾åˆ°äº† MapGenerator");
+                Debug.Log("[GameManager] ÇĞ»»µ½³¡¾° MapGenerator");
         }
 
         if (mapView != null)
@@ -230,7 +233,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("BattleManager ä¸ºç©ºï¼è¯·æ£€æŸ¥åœºæ™¯ä¸­çš„ BattleManager å¯¹è±¡");
+                    Debug.LogError("BattleManager Îª¿Õ£¡³¡¾°ÖĞ±ØĞëÓĞ BattleManager ×é¼ş");
                 }
                 break;
 
@@ -244,7 +247,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("BattleManager ä¸ºç©ºï¼è¯·æ£€æŸ¥åœºæ™¯ä¸­çš„ BattleManager å¯¹è±¡");
+                    Debug.LogError("BattleManager Îª¿Õ£¡³¡¾°ÖĞ±ØĞëÓĞ BattleManager ×é¼ş");
                 }
                 break;
 
@@ -257,7 +260,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("BattleManager ä¸ºç©ºï¼è¯·æ£€æŸ¥åœºæ™¯ä¸­çš„ BattleManager å¯¹è±¡");
+                    Debug.LogError("BattleManager Îª¿Õ£¡³¡¾°ÖĞ±ØĞëÓĞ BattleManager ×é¼ş");
                 }
                 break;
 
@@ -269,8 +272,16 @@ public class GameManager : MonoBehaviour
                 break;
 
             case NodeType.Shop:
-                if (dataManager.RemoveGold(50))
-                    dataManager.Heal(20);
+                Debug.Log("[GameManager] ½øÈëÕ½¶·Ä£Ê½");
+                if (shopPanel != null)
+                {
+                    Debug.Log("[GameManager] ÕıÔÚ´ò¿ª ShopPanel...");
+                    shopPanel.OpenShop();
+                }
+                else
+                {
+                    Debug.LogError("[GameManager] ShopPanel Î´ÉèÖÃ£¡ÇëÔÚ Inspector ÖĞ¸ø GameManager µÄ Shop Panel ×Ö¶ÎÍÏÈë ShopPanel ¶ÔÏó");
+                }
                 break;
 
             case NodeType.Treasure:
@@ -335,21 +346,21 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("ç©å®¶æˆ˜è´¥");
+            Debug.Log("ÓÎÏ·½áÊø");
         }
 
         if (mapView == null)
         {
             mapView = FindObjectOfType<MapView>();
             if (mapView != null)
-                Debug.Log("[GameManager] æˆ˜æ–—ç»“æŸåé‡æ–°æ‰¾åˆ°äº† MapView");
+                Debug.Log("[GameManager] ÓÎÏ·½áÊø ÇĞ»»»Ø³¡¾° MapView");
         }
 
         if (mapGenerator == null)
         {
             mapGenerator = FindObjectOfType<MapGenerator>();
             if (mapGenerator != null)
-                Debug.Log("[GameManager] æˆ˜æ–—ç»“æŸåé‡æ–°æ‰¾åˆ°äº† MapGenerator");
+                Debug.Log("[GameManager] ÓÎÏ·½áÊø ÇĞ»»»Ø³¡¾° MapGenerator");
         }
 
         if (mapView != null)

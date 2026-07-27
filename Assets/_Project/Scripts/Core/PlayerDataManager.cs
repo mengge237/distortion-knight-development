@@ -1,4 +1,4 @@
-锘縰sing System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
@@ -19,18 +19,18 @@ namespace MutationChess.Core
             }
         }
 
-        [Header("=== ???? ===")]
+        [Header("=== 数据 ===")]
         [SerializeField] private PlayerData playerData;
 
-        [Header("=== TopBar ???? ===")]
+        [Header("=== TopBar 引用 ===")]
         [SerializeField] private TMP_Text healthText;
         [SerializeField] private TMP_Text goldText;
 
-        [Header("=== ????? ===")]
+        [Header("=== 牌组 ===")]
         [SerializeField] private DeckData initialDeck;
         private List<Card> runtimeDeck = new List<Card>();
 
-        [Header("=== ?????? ===")]
+        [Header("=== 事件回调 ===")]
         public System.Action<PlayerData> OnDataChanged;
 
         public PlayerData PlayerData => playerData;
@@ -60,7 +60,7 @@ namespace MutationChess.Core
             UpdateUI();
         }
 
-        // ==================== ???????? ====================
+        // ==================== 牌组管理 ====================
 
         public void InitializeDeck(DeckData deckTemplate)
         {
@@ -77,7 +77,7 @@ namespace MutationChess.Core
             else
             {
                 runtimeDeck = new List<Card>();
-                Debug.LogWarning("?????????,???????");
+                Debug.LogWarning("未设置初始牌组，将使用空牌组");
             }
         }
 
@@ -91,7 +91,7 @@ namespace MutationChess.Core
             return runtimeDeck;
         }
 
-        // ==================== ???? ====================
+        // ==================== 卡牌管理 ====================
 
         public void AddCardToDeck(Card card)
         {
@@ -118,7 +118,7 @@ namespace MutationChess.Core
             return removed;
         }
 
-        // ==================== ???? ====================
+        // ==================== 生命值 ====================
 
         public void Heal(int amount)
         {
@@ -134,7 +134,7 @@ namespace MutationChess.Core
             UpdateUI();
         }
 
-        // ==================== ???? ====================
+        // ==================== 金币 ====================
 
         public void AddGold(int amount)
         {
@@ -154,7 +154,7 @@ namespace MutationChess.Core
             return success;
         }
 
-        // ==================== UI?? ====================
+        // ==================== UI更新 ====================
 
         public void UpdateUI()
         {
@@ -171,7 +171,7 @@ namespace MutationChess.Core
             }
         }
 
-        // ==================== ???? ====================
+        // ==================== 查询 ====================
 
         public PlayerData GetPlayerData() => playerData;
         public int GetHealth() => playerData.currentHealth;
@@ -179,7 +179,7 @@ namespace MutationChess.Core
         public int GetGold() => playerData.gold;
         public bool IsDead() => playerData.IsDead();
 
-        // ==================== ???? ====================
+        // ==================== 重置 ====================
 
         public void ResetData()
         {

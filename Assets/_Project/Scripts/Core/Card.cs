@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,6 +20,13 @@ namespace MutationChess.Core
         Mythic
     }
 
+    public enum CardFaction
+    {
+        None,
+        Slime,
+        Reluctant,
+    }
+
     [Serializable]
     public class Card
     {
@@ -31,6 +38,7 @@ namespace MutationChess.Core
         public int magicNumber;
         public CardType cardType;
         public CardRarity rarity;
+        public CardFaction faction;
         public Sprite cardArt;
         public string description;
         public string upgradeDescription;
@@ -96,18 +104,18 @@ namespace MutationChess.Core
             switch (cardType)
             {
                 case CardType.Attack:
-                    desc = $"é€ æˆ {damage} ç‚¹ä¼¤å®³";
-                    if (magicNumber > 0) desc += $"ï¼ŒæŠ½ {magicNumber} å¼ ç‰Œ";
+                    desc = $"Ôì³É {damage} µãÉËº¦";
+                    if (magicNumber > 0) desc += $" Ê©¼Ó {magicNumber} ²ãÒ×ÉË";
                     break;
                 case CardType.Defense:
-                    desc = $"è·å¾— {block} ç‚¹æ ¼æŒ¡";
-                    if (magicNumber > 0) desc += $"ï¼ŒæŠ½ {magicNumber} å¼ ç‰Œ";
+                    desc = $"»ñµÃ {block} µã¸ñµ²";
+                    if (magicNumber > 0) desc += $" ³é {magicNumber} ÕÅÅÆ";
                     break;
                 case CardType.Skill:
-                    desc = magicNumber > 0 ? $"æŠ½ {magicNumber} å¼ ç‰Œ" : "æ•ˆæœæœªçŸ¥";
+                    desc = magicNumber > 0 ? $"³é {magicNumber} ÕÅÅÆ" : "Ğ§¹ûÎ´¶¨Òå";
                     break;
                 case CardType.Power:
-                    desc = magicNumber > 0 ? $"è·å¾— {magicNumber} å±‚èƒ½åŠ›" : "è·å¾—èƒ½åŠ›";
+                    desc = magicNumber > 0 ? $"³ÖĞø {magicNumber} »ØºÏ" : "Ğ§¹ûÎ´¶¨Òå";
                     break;
             }
 
@@ -120,14 +128,14 @@ namespace MutationChess.Core
                 }
             }
 
-            if (HasKeyword("ç²˜æ¶²"))
-                desc += $"\n<color=#00FF88>ç²˜æ¶²ï¼šè§¦å‘ç›¸é‚»å¡ç‰Œæ•ˆæœ</color>";
+            if (faction == CardFaction.Slime)
+                desc += $"\n<color=#00FF88>Õ³Òº£º´ò³öÊ±´¥·¢ÏàÁÚ¿¨ÅÆĞ§¹û</color>";
 
-            if (HasKeyword("ä¸èˆ"))
-                desc += $"\n<color=#CC66FF>ä¸èˆï¼šæŠ½ä¸€å¼ ä¸èˆå¡ç‰Œ</color>";
+            if (faction == CardFaction.Reluctant)
+                desc += $"\n<color=#CC66FF>²»Éá£º´ÓÅÆ¿âÖĞ³éÒ»ÕÅ²»Éá¿¨ÅÆ</color>";
 
             if (isUpgraded)
-                desc += " (å‡çº§)";
+                desc += " (ÒÑÉı¼¶)";
 
             description = desc;
         }
@@ -140,19 +148,32 @@ namespace MutationChess.Core
         {
             switch (rarity)
             {
-                case CardRarity.Common: return "æ™®é€š";
-                case CardRarity.Uncommon: return "ç½•è§";
-                case CardRarity.Rare: return "ç¨€æœ‰";
-                case CardRarity.Mythic: return "éš¾å¯»";
-                default: return "æœªçŸ¥";
+                case CardRarity.Common: return "ÆÕÍ¨";
+                case CardRarity.Uncommon: return "º±¼û";
+                case CardRarity.Rare: return "Ï¡ÓĞ";
+                case CardRarity.Mythic: return "Éñ»°";
+                default: return "Î´Öª";
             }
         }
+
+        public string GetFactionName()
+        {
+            switch (faction)
+            {
+                case CardFaction.None: return "";
+                case CardFaction.Slime: return "Õ³Òº";
+                case CardFaction.Reluctant: return "²»Éá";
+                default: return "";
+            }
+        }
+
+        public bool HasFaction() => faction != CardFaction.None;
 
         public void ExecuteEffects(CombatContext context)
         {
             if (effects.Count == 0)
             {
-                Debug.LogWarning($"å¡ç‰Œ {cardName} æ²¡æœ‰æ•ˆæœï¼");
+                Debug.LogWarning($"¿¨ÅÆ {cardName} Ã»ÓĞĞ§¹ûÁĞ±í");
                 return;
             }
 
@@ -164,7 +185,7 @@ namespace MutationChess.Core
                 }
                 else
                 {
-                    Debug.LogWarning("å¡ç‰Œæ•ˆæœä¸ºç©ºï¼");
+                    Debug.LogWarning("·¢ÏÖ¿ÕĞ§¹ûÒıÓÃ");
                 }
             }
         }

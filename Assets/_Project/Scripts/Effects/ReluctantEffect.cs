@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.UI;
 using System.Collections.Generic;
 
@@ -12,7 +12,7 @@ namespace MutationChess.Core
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                Debug.LogWarning("ReluctantEffect: HandManager 未找到");
+                Debug.LogWarning("ReluctantEffect: HandManager δ�ҵ�");
                 return;
             }
 
@@ -23,7 +23,7 @@ namespace MutationChess.Core
 
             for (int i = 0; i < drawPile.Count; i++)
             {
-                if (drawPile[i] != null && drawPile[i].HasKeyword("不舍"))
+                if (drawPile[i] != null && drawPile[i].faction == CardFaction.Reluctant)
                 {
                     reluctantCard = drawPile[i];
                     reluctantIndex = i;
@@ -35,11 +35,11 @@ namespace MutationChess.Core
             {
                 handManager.RemoveCardFromDrawPile(reluctantIndex);
                 handManager.AddCardToHand(reluctantCard);
-                Debug.Log($"ReluctantEffect: 从牌库中抽到了 {reluctantCard.cardName}");
+                Debug.Log($"ReluctantEffect: ���ƿ��г鵽�� {reluctantCard.cardName}");
             }
             else
             {
-                Debug.Log("ReluctantEffect: 牌库中没有具有'不舍'关键字的卡牌");
+                Debug.Log("ReluctantEffect: �ƿ���û�в��Ῠ��");
             }
         }
     }

@@ -1,4 +1,4 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using MutationChess.UI;
 
 namespace MutationChess.Core
@@ -16,7 +16,7 @@ namespace MutationChess.Core
             {
                 int index = Random.Range(0, handCards.Count);
                 Card cardToDiscard = handCards[index];
-                // ï¿½ï¿½Òª HandManager ï¿½á¹©ï¿½ï¿½ï¿½Æ·ï¿½ï¿½ï¿½
+                // ÐèÒª HandManager Ìá¹©ÆúÅÆ·½·¨
                 handManager.DiscardCard(cardToDiscard);
             }
         }

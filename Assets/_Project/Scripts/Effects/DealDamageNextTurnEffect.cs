@@ -1,4 +1,4 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -6,7 +6,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "DealDamageNextTurn", menuName = "MutationChess/Effects/Deal Damage Next Turn")]
     public class DealDamageNextTurnEffect : CardEffect
     {
-        // ï¿½ï¿½ Card ï¿½ï¿½ magicNumber ï¿½ï¿½ damage ï¿½ï¿½È¡ï¿½Ó³ï¿½ï¿½Ëºï¿½Öµ
+        // ´Ó Card µÄ magicNumber »ò damage »ñÈ¡ÑÓ³ÙÉËº¦Öµ
 
         public override void Execute(CombatContext context)
         {

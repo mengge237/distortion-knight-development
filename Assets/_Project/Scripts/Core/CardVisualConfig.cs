@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace MutationChess.Core
 {
@@ -13,6 +13,17 @@ namespace MutationChess.Core
                 case CardRarity.Rare: return new Color(1f, 0.84f, 0.31f);
                 case CardRarity.Mythic: return new Color(0.75f, 0.45f, 0.95f);
                 default: return Color.white;
+            }
+        }
+
+        public static Color GetFactionColor(CardFaction faction)
+        {
+            switch (faction)
+            {
+                case CardFaction.Slime: return new Color(0f, 1f, 0.53f);
+                case CardFaction.Reluctant: return new Color(0.8f, 0.4f, 1f);
+                case CardFaction.None:
+                default: return new Color(0.5f, 0.5f, 0.5f);
             }
         }
 

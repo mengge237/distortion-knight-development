@@ -1,4 +1,4 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using MutationChess.UI;
 using System.Collections.Generic;
 
@@ -11,14 +11,14 @@ namespace MutationChess.Core
         {
             if (context == null || context.sourceCard == null)
             {
-                Debug.LogWarning("SlimeEffect: ä¸Šä¸‹æ–‡æˆ–å¡ç‰Œä¸ºç©º");
+                Debug.LogWarning("SlimeEffect: ÉÏÏÂÎÄÎŞĞ§");
                 return;
             }
 
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                Debug.LogWarning("SlimeEffect: HandManager æœªæ‰¾åˆ°");
+                Debug.LogWarning("SlimeEffect: HandManager Î´ÕÒµ½");
                 return;
             }
 
@@ -37,7 +37,7 @@ namespace MutationChess.Core
 
             if (playedCardIndex < 0)
             {
-                Debug.LogWarning("SlimeEffect: æ‰¾ä¸åˆ°æ‰“å‡ºçš„å¡ç‰Œ");
+                Debug.LogWarning("SlimeEffect: ÔÚÊÖÖĞÎ´ÕÒµ½¿¨ÅÆ");
                 return;
             }
 
@@ -58,15 +58,15 @@ namespace MutationChess.Core
 
             if (adjacentCards.Count == 0)
             {
-                Debug.Log("SlimeEffect: æ²¡æœ‰ç›¸é‚»å¡ç‰Œ");
+                Debug.Log("SlimeEffect: Ã»ÓĞÏàÁÚ¿¨ÅÆ");
                 return;
             }
 
             foreach (var adjCard in adjacentCards)
             {
-                if (adjCard != null && adjCard.HasKeyword("ç²˜æ¶²"))
+                if (adjCard != null && adjCard.faction == CardFaction.Slime)
                 {
-                    Debug.Log($"SlimeEffect: è§¦å‘ç›¸é‚»å¡ç‰Œ {adjCard.cardName} çš„æ•ˆæœ");
+                    Debug.Log($"SlimeEffect: ´¥·¢ÏàÁÚÕ³Òº¿¨ÅÆ {adjCard.cardName} µÄĞ§¹û");
 
                     CombatContext tempContext = new CombatContext(
                         context.battleManager,

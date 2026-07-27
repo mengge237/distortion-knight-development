@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nodeType: 0
   displayName: "\u8282\u70B9"
-  color: {r: 1, g: 1, b: 1, a: 1}
+  color: {r: 1, g: 0, b: 0.98129225, a: 1}
   prefab: {fileID: 0}
   material: {fileID: 0}
   mapPrefab: {fileID: 0}

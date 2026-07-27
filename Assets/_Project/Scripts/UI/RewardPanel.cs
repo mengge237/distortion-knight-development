@@ -1,4 +1,4 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using MutationChess.Core;
@@ -8,39 +8,44 @@ namespace MutationChess.UI
 {
     public class RewardPanel : MonoBehaviour
     {
-        [Header("=== é¢æ¿å¼•ç”¨ ===")]
+        [Header("=== Ãæ°åÒıÓÃ ===")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private GameObject rewardOverview;
         [SerializeField] private GameObject cardSelectionPanel;
 
-        [Header("=== å¥–åŠ±æ˜¾ç¤ºï¼ˆæ¦‚è§ˆå±‚ï¼‰ ===")]
+        [Header("=== ½ğ±Ò½±Àø ===")]
         [SerializeField] private TMP_Text goldAmountText;
         [SerializeField] private Button cardRewardButton;
         [SerializeField] private TMP_Text cardRewardLabel;
 
-        [Header("=== å¡ç‰Œé€‰æ‹©å±‚ ===")]
+        [Header("=== ¿¨ÅÆ½±Àø ===")]
         [SerializeField] private Transform cardContainer;
         [SerializeField] private GameObject cardPrefab;
         [SerializeField] private Button skipCardButton;
 
-        [Header("=== æ¦‚è§ˆå±‚è·³è¿‡ ===")]
+        [Header("=== ÒÅÎï½±Àø ===")]
         [SerializeField] private Button skipOverviewButton;
 
-        [Header("=== æ ‡é¢˜ ===")]
+        [Header("=== ±êÌâ ===")]
         [SerializeField] private TMP_Text titleText;
 
-        [Header("=== å¥–åŠ±å¯¹è±¡ï¼ˆç”¨äºæ˜¾ç¤º/éšè—ï¼‰ ===")]
+        [Header("=== ½±ÀøÎïÌåÒıÓÃ ===")]
         [SerializeField] private GameObject goldRewardObject;
         [SerializeField] private GameObject relicRewardObject;
         [SerializeField] private GameObject potionRewardObject;
         [SerializeField] private GameObject cardRewardObject;
 
-        [Header("=== å¡ç‰Œå®¹å™¨è®¾ç½® ===")]
+        [Header("=== ÒÅÎïÏÔÊ¾ ===")]
+        [SerializeField] private Image relicIconImage;
+        [SerializeField] private TMP_Text relicNameText;
+
+        [Header("=== ²¼¾ÖÆ«ÒÆ ===")]
         [SerializeField] private Vector2 cardContainerOffset = new Vector2(0, -50);
 
         private Card selectedCard = null;
         private int currentGoldReward = 0;
         private List<Card> currentCardRewards = new List<Card>();
+        private Relic currentRelicReward = null;
         private System.Action<int, Card> onRewardsConfirmed;
         private System.Action onPanelClosed;
         private bool goldClaimed = false;
@@ -57,7 +62,7 @@ namespace MutationChess.UI
             }
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "å¡ç‰Œå¥–åŠ±";
+                cardRewardLabel.text = "Ñ¡Ôñ½±Àø¿¨ÅÆ";
 
             if (goldAmountText != null)
             {
@@ -115,13 +120,14 @@ namespace MutationChess.UI
             }
         }
 
-        public void ShowRewards(int goldReward, List<Card> cardRewards,
+        public void ShowRewards(int goldReward, List<Card> cardRewards, Relic relicReward,
                                 System.Action<int, Card> onConfirmed,
                                 System.Action onClosed = null)
         {
 
             currentGoldReward = goldReward;
             currentCardRewards = cardRewards ?? new List<Card>();
+            currentRelicReward = relicReward;
             onRewardsConfirmed = onConfirmed;
             onPanelClosed = onClosed;
 
@@ -134,19 +140,9 @@ namespace MutationChess.UI
                 goldAmountText.text = goldReward.ToString();
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "å¡ç‰Œå¥–åŠ±";
+                cardRewardLabel.text = "Ñ¡Ôñ½±Àø¿¨ÅÆ";
 
             HideAllRewardObjects();
-
-            if (relicRewardObject != null)
-            {
-                relicRewardObject.SetActive(false);
-                foreach (Transform child in relicRewardObject.transform)
-                {
-                    if (child != null && child.gameObject != null)
-                        child.gameObject.SetActive(false);
-                }
-            }
 
             if (potionRewardObject != null)
             {
@@ -175,6 +171,27 @@ namespace MutationChess.UI
                 if (cardRect != null)
                 {
                     cardRect.anchoredPosition = new Vector2(0, 150);
+                }
+            }
+
+            // ÉèÖÃÒÅÎï½±Àø
+            if (relicRewardObject != null)
+            {
+                if (currentRelicReward != null)
+                {
+                    relicRewardObject.SetActive(true);
+                    if (relicIconImage != null)
+                        relicIconImage.sprite = currentRelicReward.icon;
+                    if (relicNameText != null)
+                        relicNameText.text = $"{currentRelicReward.relicName} ({currentRelicReward.GetRarityName()})";
+
+                    RectTransform relicRect = relicRewardObject.GetComponent<RectTransform>();
+                    if (relicRect != null)
+                        relicRect.anchoredPosition = new Vector2(0, 50);
+                }
+                else
+                {
+                    relicRewardObject.SetActive(false);
                 }
             }
 
@@ -221,7 +238,11 @@ namespace MutationChess.UI
                 }
             }
 
-            if (relicRewardObject != null && relicRewardObject.activeSelf)
+            if (relicRewardObject != null && currentRelicReward != null)
+            {
+                relicRewardObject.SetActive(true);
+            }
+            else if (relicRewardObject != null)
             {
                 relicRewardObject.SetActive(false);
             }
@@ -257,7 +278,7 @@ namespace MutationChess.UI
         {
             if (panelRoot == null)
             {
-                Debug.LogError("RewardPanel: panelRoot ä¸ºç©ºï¼");
+                Debug.LogError("RewardPanel: panelRoot Îª¿Õ");
                 return;
             }
 
@@ -337,19 +358,19 @@ namespace MutationChess.UI
         {
             if (cardContainer == null)
             {
-                Debug.LogError("RewardPanel: cardContainer ä¸ºç©ºï¼");
+                Debug.LogError("RewardPanel: cardContainer Îª¿Õ");
                 return;
             }
 
             if (rewards == null || rewards.Count == 0)
             {
-                Debug.LogWarning("RewardPanel: æ²¡æœ‰å¡ç‰Œå¥–åŠ±");
+                Debug.LogWarning("RewardPanel: ÎŞ¿ÉÓÃµÄ¿¨ÅÆ½±Àø");
                 return;
             }
 
             if (cardPrefab == null)
             {
-                Debug.LogError("RewardPanel: cardPrefab ä¸ºç©ºï¼");
+                Debug.LogError("RewardPanel: cardPrefab Îª¿Õ");
                 return;
             }
 
@@ -381,7 +402,7 @@ namespace MutationChess.UI
                 }
                 else
                 {
-                    Debug.LogError("RewardPanel: CardUI ç»„ä»¶ä¸ºç©ºï¼");
+                    Debug.LogError("RewardPanel: CardUI ×é¼şÎ´ÕÒµ½");
                 }
             }
         }
@@ -392,11 +413,11 @@ namespace MutationChess.UI
             goldClaimed = true;
 
             if (goldAmountText != null)
-                goldAmountText.text = $"{currentGoldReward} ?";
+                goldAmountText.text = $"{currentGoldReward} G";
 
             if (goldRewardObject != null)
             {
-                // æ’­æ”¾æ¶ˆå¤±åŠ¨ç”»æˆ–ç›´æ¥éšè—
+                // ¸üĞÂ½ğ±ÒÎÄ±¾
                 goldRewardObject.SetActive(false);
             }
 
@@ -443,7 +464,7 @@ namespace MutationChess.UI
             ArrangeRewards();
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "å¡ç‰Œå·²é€‰ ?";
+                cardRewardLabel.text = "Ñ¡Ôñ½±Àø¿¨ÅÆ ?";
         }
 
         public void ShowOverview()
@@ -455,7 +476,7 @@ namespace MutationChess.UI
                 cardSelectionPanel.SetActive(false);
 
             if (titleText != null)
-                titleText.text = "æˆ˜æ–—å¥–åŠ±";
+                titleText.text = "Õ½¶·½±Àø£¡";
 
             isCardSelectionActive = false;
             ArrangeRewards();
@@ -468,7 +489,7 @@ namespace MutationChess.UI
                 cardSelectionPanel.SetActive(true);
 
             if (titleText != null)
-                titleText.text = "é€‰æ‹©ä¸€å¼ å¡ç‰Œ";
+                titleText.text = "Õ½¶·Ê§°Ü...";
 
             isCardSelectionActive = true;
         }
