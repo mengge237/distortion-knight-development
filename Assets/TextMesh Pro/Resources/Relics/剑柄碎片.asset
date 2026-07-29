@@ -18,9 +18,9 @@ MonoBehaviour:
   faction: 0
   effectType: 12
   effectValue: 5
-  description: "\u83B7\u5F97\u65F6\u6700\u5927\u751F\u547D\u503C+5\uFF08\u53EF\u4E0E\u5251\u788E\u7247\u5408\u6210\uFF09"
+  description: 获得时最大生命值+5（可与剑碎片合成）
   price: 150
-  iconPath: "RelicsArt/\u5251\u67C4\u788E\u7247"
+  iconPath: RelicsArt/剑柄碎片
   effectIds: []
   isFactionUnlocker: 0
   unlockedFaction: 0

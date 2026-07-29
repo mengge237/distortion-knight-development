@@ -1,19 +1,25 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace MutationChess.Core
 {
     [CreateAssetMenu(fileName = "HealPlayer", menuName = "MutationChess/Effects/Heal Player")]
     public class HealPlayerEffect : CardEffect
     {
+        [Header("")]
+        [Tooltip("magicNumber>0magicNumber")]
+        public int healAmount = 5;
+
         public override void Execute(CombatContext context)
         {
-            if (context.sourceCard == null) return;
-            int healAmount = context.sourceCard.magicNumber > 0 ? context.sourceCard.magicNumber : 5;
+            if (context == null) return;
+
+            int amount = (context.sourceCard != null && context.sourceCard.magicNumber > 0)
+                ? context.sourceCard.magicNumber : healAmount;
 
             var dataManager = PlayerDataManager.Instance;
             if (dataManager != null)
             {
-                dataManager.Heal(healAmount);
+                dataManager.Heal(amount);
             }
         }
     }

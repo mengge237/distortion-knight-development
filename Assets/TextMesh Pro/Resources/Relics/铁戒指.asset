@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: "02"
   relicName: "\u94C1\u6212\u6307"
-  rarity: 2
+  rarity: 1
   faction: 0
   effectType: 12
   effectValue: 3
-  description: "\u6218\u6597\u5F00\u59CB\u65F6\u83B7\u5F973\u70B9\u4E34\u65F6\u529B\u91CF"
+  description: 每回合结束时获得5点格挡
   price: 250
-  iconPath: "RelicsArt/\u94C1\u6212\u6307"
+  iconPath: RelicsArt/铁戒指
   effectIds: []
   isFactionUnlocker: 0
   unlockedFaction: 0

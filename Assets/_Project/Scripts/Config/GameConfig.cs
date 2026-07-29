@@ -1,108 +1,100 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
-
-
-
-
-
-
+    ///
     /// </summary>
     [CreateAssetMenu(fileName = "GameConfig", menuName = "MutationChess/Config/Game Config")]
     public class GameConfig : ScriptableObject
     {
-        [Header("????????")]
-        [Tooltip("????????")]
+        [Header("")]
+        [Tooltip("")]
         public int maxHealth = 100;
 
-        [Tooltip("??????")]
+        [Tooltip("")]
         public int startingGold = 99;
 
-        [Tooltip("??????????")]
+        [Tooltip("")]
         public int maxPotions = 3;
 
-        [Header("????????")]
-        [Tooltip("?????????")]
+        [Header("")]
+        [Tooltip("")]
         public int maxHandSize = 10;
 
-        [Tooltip("???????????")]
+        [Tooltip("")]
         public int cardsPerTurn = 5;
 
-        [Tooltip("????????")]
+        [Tooltip("")]
         public int maxEnergy = 3;
 
-        [Tooltip("?????????")]
+        [Tooltip("")]
         public int startingHandSize = 5;
 
-        [Header("??????")]
-        [Tooltip("???????????????????")]
+        [Header("")]
+        [Tooltip("")]
         public float strengthDamageMultiplier = 1.0f;
 
-        [Tooltip("????????????")]
+        [Tooltip("")]
         public float dexterityBlockMultiplier = 1.0f;
 
-        [Tooltip("????????????????")]
+        [Tooltip("")]
         public float weakDamageMultiplier = 0.75f;
 
-        [Tooltip("????????????????")]
+        [Tooltip("")]
         public float vulnerabilityDamageMultiplier = 1.5f;
 
-        [Header("??????????")]
-        [Tooltip("??????????????????3?=1??????")]
+        [Header("")]
+        [Tooltip("3? = 1")]
         public int defaultBloodPerEnergy = 3;
 
-        [Tooltip("????????????????5??=1??????")]
+        [Tooltip("5?? = 1")]
         public int defaultBlockPerEnergy = 5;
 
-        [Header("??????")]
-        [Tooltip("????????")]
+        [Header("")]
+        [Tooltip("")]
         public int maxFloor = 3;
 
-        [Tooltip("????????15% = 0.15??")]
+        [Tooltip("15% = 0.15??")]
         public float goldBonusPerFloor = 0.15f;
 
-        [Tooltip("????????????10% = 0.10??")]
+        [Tooltip("10% = 0.10??")]
         public float rareDropBonusPerFloor = 0.10f;
 
-        [Tooltip("??????????????????")]
+        [Tooltip("")]
         public float relicRarityBonusPerFloor = 0.15f;
 
-        [Header("???????????")]
-        [Tooltip("Common??????????")]
+        [Header("")]
+        [Tooltip("Common")]
         public float relicCommonBaseChance = 0.72f;
-        [Tooltip("Rare??????????")]
+        [Tooltip("Rare")]
         public float relicRareBaseChance = 0.20f;
-        [Tooltip("Legendary??????????")]
+        [Tooltip("Legendary")]
         public float relicLegendaryBaseChance = 0.08f;
 
-        [Header("??????")]
-        [Tooltip("???????????")]
+        [Header("")]
+        [Tooltip("")]
         [Range(0, 1)]
         public float earlyPotionDropChance = 0.45f;
 
-        [Tooltip("????????????")]
+        [Tooltip("")]
         [Range(0, 1)]
         public float latePotionDropChance = 0.10f;
 
-        [Tooltip("?????????????")]
+        [Tooltip("")]
         public float normalEnemyPotionMultiplier = 1.0f;
 
-        [Tooltip("?????????????")]
+        [Tooltip("")]
         public float eliteEnemyPotionMultiplier = 1.5f;
 
-        [Tooltip("Boss???????????0=??????Boss???????")]
+        [Tooltip("Boss0=Boss")]
         public float bossEnemyPotionMultiplier = 0.0f;
 
 
         private static GameConfig _instance;
 
         /// <summary>
-
+        ///
         /// </summary>
         public static GameConfig Instance
         {
@@ -114,7 +106,7 @@ namespace MutationChess.Core
                     if (_instance == null)
                     {
                         _instance = CreateInstance<GameConfig>();
-                        GameLogger.LogWarning("[GameConfig] ???? Resources/GameConfig????????????");
+                        GameLogger.LogWarning("[GameConfig] Resources/GameConfig");
                     }
                 }
                 return _instance;
@@ -122,7 +114,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-
+        ///
         /// </summary>
         public static void Reload()
         {
@@ -130,4 +122,3 @@ namespace MutationChess.Core
         }
     }
 }
-

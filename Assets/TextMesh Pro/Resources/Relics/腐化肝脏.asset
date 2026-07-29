@@ -10,17 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b8888e08f2d9274abb9bc2eaf6ee423, type: 3}
-  m_Name: "\u8150\u5316\u809D\u810F"
+  m_Name: 腐化肝脏
   m_EditorClassIdentifier: 
-  relicId: "relic_corrupt_liver"
-  relicName: "\u8150\u5316\u809D\u810F"
-  rarity: 3
+  relicId: Boss_CorruptLiver
+  relicName: 腐化肝脏
+  rarity: 4
   faction: 6
-  effectType: 9
-  effectValue: 0
-  description: "\u51FB\u8D25\u654C\u4EBA\u65F6\u6C38\u4E45\u589E\u52A0\u4F24\u5BB3\uFF08\u6700\u591A+10\uFF09\uFF0C\u6240\u6709\u5361\u724C\u5E26\u6D88\u8017\u5C5E\u6027"
+  description: 消耗卡牌时回复能量+1；消耗时抽牌+1
   price: 350
-  iconPath: "RelicsArt/\u8150\u5316\u809D\u810F"
-  effectIds: []
-  isFactionUnlocker: 1
-  unlockedFaction: 6
+  iconPath: RelicsArt/腐化肝脏
+  baseEffectIds:
+    - effectId: BossCorruptLiverEffect
+      trigger: 0
+      value1: 0
+      value2: 0
+  hiddenActivatorRelicId: 
+  hiddenEffectIds:
+  relicEffects: []
+  isShopRelic: false
+  isBossRelic: true
+  isStartingRelic: false
+  isSynthesisTarget: 0
+  isFactionUnlocker: 0

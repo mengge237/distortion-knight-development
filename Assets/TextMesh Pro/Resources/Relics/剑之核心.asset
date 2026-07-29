@@ -18,9 +18,9 @@ MonoBehaviour:
   faction: 0
   effectType: 11
   effectValue: 2
-  description: "\u5251\u788E\u7247\u4E0E\u5251\u67C4\u788E\u7247\u5408\u6210\u800C\u6210\uFF0C\u83B7\u5F97\u65F6\u6C38\u4E45\u589E\u52A02\u70B9\u529B\u91CF"
+  description: 剑碎片与剑柄碎片合成，永久+2力量
   price: 0
-  iconPath: "RelicsArt/\u5251\u4E4B\u6838\u5FC3"
+  iconPath: RelicsArt/剑之核心
   effectIds: []
   isFactionUnlocker: 0
   unlockedFaction: 0

@@ -10,17 +10,33 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b8888e08f2d9274abb9bc2eaf6ee423, type: 3}
-  m_Name: "\u8BB0\u5FC6\u6676\u72B6\u4F53"
+  m_Name: 记忆晶状体
   m_EditorClassIdentifier: 
-  relicId: "relic_reluctant_lens"
-  relicName: "\u8BB0\u5FC6\u6676\u72B6\u4F53"
-  rarity: 3
-  faction: 2
-  effectType: 7
-  effectValue: 1
-  description: "\u6BCF\u4E24\u56DE\u5408\u83B7\u5F971\u70B9\u80FD\u91CF"
-  price: 300
-  iconPath: "RelicsArt/\u8BB0\u5FC6\u6676\u72B6\u4F53"
-  effectIds: []
-  isFactionUnlocker: 1
-  unlockedFaction: 2
+  relicId: Boss_MemoryLens
+  relicName: 记忆晶状体
+  rarity: 4
+  faction: 3
+  description: 战斗开始+15格挡；暗影牌+3伤害；每4回合结束-1敏捷（负面）
+  price: 350
+  iconPath: RelicsArt/记忆晶状体
+  baseEffectIds:
+    - effectId: ShadowCardBonusDamageEffect
+      trigger: 0
+      value1: 0
+      value2: 0
+    - effectId: ApplyBlockEffect
+      trigger: 0
+      value1: 0
+      value2: 0
+    - effectId: Every4TurnsLoseDexEffect
+      trigger: 0
+      value1: 0
+      value2: 0
+  hiddenActivatorRelicId: 
+  hiddenEffectIds:
+  relicEffects: []
+  isShopRelic: false
+  isBossRelic: true
+  isStartingRelic: false
+  isSynthesisTarget: 0
+  isFactionUnlocker: 0

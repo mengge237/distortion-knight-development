@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using MutationChess.Core;
 using UnityEngine;
 using TMPro;
@@ -79,13 +79,29 @@ namespace MutationChess.Core
             else
             {
                 runtimeDeck = new List<Card>();
-                GameLogger.LogWarning("飬");
+                GameLogger.LogWarning("?");
             }
         }
 
         public List<Card> GetRuntimeDeckCopy()
         {
-            return new List<Card>(runtimeDeck);
+            //
+            List<Card> freshCards = new List<Card>();
+            foreach (var card in runtimeDeck)
+            {
+                if (card == null) continue;
+                if (System.Enum.TryParse<CardName>(card.cardName, out var cn))
+                {
+                    Card fresh = CardData.CreateCard(cn);
+                    if (fresh != null)
+                        freshCards.Add(fresh);
+                }
+                else
+                {
+                    freshCards.Add(card);
+                }
+            }
+            return freshCards;
         }
 
         public List<Card> GetRuntimeDeckRef()

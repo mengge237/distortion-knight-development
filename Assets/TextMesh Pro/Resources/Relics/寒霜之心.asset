@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b8888e08f2d9274abb9bc2eaf6ee423, type: 3}
+  m_Name: 寒霜之心
+  m_EditorClassIdentifier: 
+  relicId: Boss_FrostHeart
+  relicName: 寒霜之心
+  rarity: 4
+  faction: 2
+  description: 战斗开始+1敏捷；寒霜牌额外+1格挡（Boss·激活寒霜隐藏）
+  price: 350
+  iconPath: RelicsArt/寒霜之心
+  baseEffectIds:
+    - effectId: BossFrostHeartEffect
+      trigger: 0
+      value1: 0
+      value2: 0
+  hiddenActivatorRelicId: 
+  hiddenEffectIds:
+  relicEffects: []
+  isShopRelic: false
+  isBossRelic: true
+  isStartingRelic: false
+  isSynthesisTarget: 0
+  isFactionUnlocker: 0

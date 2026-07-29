@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 using MutationChess.Core;
 
@@ -8,12 +8,12 @@ namespace MutationChess.UI
     {
         public static StatusBarManager Instance { get; private set; }
 
-        [Header("")]
+        [Header("UI Reference")]
         [SerializeField] private TMP_Text healthText;
         [SerializeField] private TMP_Text goldText;
         [SerializeField] private TMP_Text mapNameText;
 
-        [Header("")]
+        [Header("Settings")]
         [SerializeField] private float updateInterval = 0.3f;
 
         private PlayerData playerData;

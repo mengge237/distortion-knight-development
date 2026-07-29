@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80d3c09f245fc1b459e11831dc33fc23, type: 3}
+  m_Name: AddCardToDeckEffect
+  m_EditorClassIdentifier: 
+  effectDescription: "\u5411\u724C\u7EC4\u6DFB\u52A0\u968F\u673A\u8150\u5316\u5361\u724C"
+  selectionMode: 3
+  cardNameToAdd: 
+  filterCardType: 0
+  filterTag: 7
+  filterRarity: 0
+  count: 2
+  location: 2
+  showCardNameInDescription: 0

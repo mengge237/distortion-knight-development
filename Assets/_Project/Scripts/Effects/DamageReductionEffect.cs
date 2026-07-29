@@ -1,28 +1,25 @@
-﻿﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Core;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
     /// <summary>
-
-    /// ??????????????????????????
-    /// ??? EffectManager.RegisterValueModifier ??? CalculatePlayerDamage??
-
-
+    ///
+    ///
     /// </summary>
     [CreateAssetMenu(fileName = "DamageReductionEffect", menuName = "MutationChess/Potion Effects/Damage Reduction")]
     public class DamageReductionEffect : CardEffect
     {
-        [Header("????????")]
-        [Tooltip("????????????0.5=????")]
+        [Header("")]
+        [Tooltip("0.5=")]
         [Range(0.1f, 0.9f)]
         public float damageReduction = 0.5f;
 
-        [Tooltip("?????????")]
+        [Tooltip("")]
         public int duration = 1;
 
-        // ???????
+        //
         [System.NonSerialized]
         private bool isActive = false;
 
@@ -50,7 +47,7 @@ namespace MutationChess.Core
             if (isActive)
             {
                 remainingTurns = Mathf.Max(remainingTurns, duration);
-                GameLogger.Log($"[DamageReduction]  {remainingTurns}");
+                GameLogger.Log($"[DamageReduction] : {remainingTurns}");
                 return;
             }
 
@@ -69,7 +66,7 @@ namespace MutationChess.Core
             {
                 if (!isActive) return baseValue;
                 int reduced = Mathf.RoundToInt(baseValue * (1f - damageReduction));
-                GameLogger.Log($"[DamageReduction] : {baseValue}  {reduced}");
+                GameLogger.Log($"[DamageReduction] : {baseValue} ?? {reduced}");
                 return reduced;
             };
 
@@ -79,15 +76,14 @@ namespace MutationChess.Core
             turnEndHandlerRef = (ctx) => OnTurnEnd();
             effectManager.Register(EffectTrigger.PlayerTurnEnd, turnEndHandlerRef);
 
-            GameLogger.Log($"[DamageReduction]  {damageReduction * 100}% {remainingTurns} ");
+            GameLogger.Log($"[DamageReduction] {damageReduction * 100}%{remainingTurns} ");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($" {damageReduction * 100}%");
+                battleManager.AddBattleLog($"{damageReduction * 100}%");
         }
 
         /// <summary>
-
-
+        ///
         /// </summary>
         public void OnTurnEnd()
         {
@@ -112,5 +108,3 @@ namespace MutationChess.Core
         }
     }
 }
-
-

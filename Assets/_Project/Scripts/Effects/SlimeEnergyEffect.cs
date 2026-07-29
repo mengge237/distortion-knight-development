@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Core;
 using MutationChess.UI;
 using MutationChess.Battle;
@@ -18,6 +18,9 @@ namespace MutationChess.Core
         [Header("")]
         [Tooltip("")]
         public int energyGain = 1;
+
+        [Tooltip("Boss")]
+        public int bossExtraEnergy = 1;
 
         public override void Execute(CombatContext context)
         {
@@ -42,8 +45,10 @@ namespace MutationChess.Core
             var handManager = HandManager.Instance;
             if (handManager != null)
             {
-                handManager.RestoreEnergy(energyGain);
-                GameLogger.Log($"[SlimeEnergy]  {context.sourceCard.cardName}  +{energyGain}");
+                int totalEnergy = energyGain + (ConversionModifier.BossSlimeGlandActive ? bossExtraEnergy : 0);
+                handManager.RestoreEnergy(totalEnergy);
+                GameLogger.Log($"[SlimeEnergy]  {context.sourceCard.cardName}  +{totalEnergy}" +
+                    (ConversionModifier.BossSlimeGlandActive ? " (Boss???)" : ""));
             }
         }
     }

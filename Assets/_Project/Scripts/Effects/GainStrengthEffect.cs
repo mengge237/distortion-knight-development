@@ -1,20 +1,4 @@
-﻿using UnityEngine;
-
-namespace MutationChess.Core
-{
-    /// <summary>
-
-    /// </summary>
-    [CreateAssetMenu(fileName = "GainStrengthEffect", menuName = "MutationChess/Relic Effects/Gain Strength")]
-    public class GainStrengthEffect : CardEffect
-    {
-        [Header("")]
-        [Tooltip("")]
-        public int strengthAmount = 2;
-
-        public override void Execute(CombatContext context)
-        {
-
-        }
-    }
+using UnityEngine;
+using MutationChess.Battle;  namespace MutationChess.Core
+{  /// <summary>  ///  ///  /// </summary>  [CreateAssetMenu(fileName = "GainStrengthEffect", menuName = "MutationChess/Relic Effects/Gain Strength")]  public class GainStrengthEffect : CardEffect  {  [Header("")]  [Tooltip("")]  public int strengthAmount = 2;  public override void Execute(CombatContext context)  {  if (context == null) return;  PlayerData playerData = context.targetPlayer ?? context.battleManager?.GetPlayerData();  if (playerData == null)  {  GameLogger.LogWarning("[GainStrengthEffect] playerData ");  return;  }  playerData.AddBuff(new Buff  {  type = BuffType.Strength,  amount = strengthAmount,  duration = -1  });  GameLogger.Log($"[GainStrengthEffect] {strengthAmount} ");  if (context.battleManager != null)  context.battleManager.AddBattleLog($"{strengthAmount} ");  }  }
 }

@@ -8,17 +8,17 @@ namespace MutationChess.Core
 
         public static void Log(string message)
         {
-            Debug.Log($"{Tag} {message}");
+            UnityEngine.Debug.Log($"{Tag} {message}");
         }
 
         public static void LogWarning(string message)
         {
-            Debug.LogWarning($"{Tag} [Warning] {message}");
+            UnityEngine.Debug.LogWarning($"{Tag} [Warning] {message}");
         }
 
         public static void LogError(string message)
         {
-            Debug.LogError($"{Tag} [Error] {message}");
+            UnityEngine.Debug.LogError($"{Tag} [Error] {message}");
         }
     }
 }

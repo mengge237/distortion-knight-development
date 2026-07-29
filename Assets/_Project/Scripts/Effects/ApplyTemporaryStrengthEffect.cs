@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Core;
 using MutationChess.Battle;
 
@@ -7,14 +7,16 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "ApplyTemporaryStrength", menuName = "MutationChess/Effects/Apply Temporary Strength")]
     public class ApplyTemporaryStrengthEffect : CardEffect
     {
-        [Header("力量加成")]
-        [Tooltip("获得的力量数值")]
+        [Header("")]
+        [Tooltip("")]
         public int strengthAmount = 2;
-        [Tooltip("持续回合数，-1为永久")]
+        [Tooltip("-1")]
         public int duration = -1;
 
         public override void Execute(CombatContext context)
         {
+            if (context == null) return;
+
             if (context.targetPlayer != null && context.sourceCard != null)
             {
                 int amount = strengthAmount;

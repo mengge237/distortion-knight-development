@@ -8,6 +8,14 @@ namespace MutationChess.Battle
     {
         public List<CardDataAsset> allCards { get; private set; } = new List<CardDataAsset>();
 
+        /// <summary>
+        ///
+        /// </summary>
+        private static readonly HashSet<string> BasicCardNames = new HashSet<string>
+        {
+            "", "", "", "", "", "", ""
+        };
+
         public void LoadAllCards()
         {
             allCards.Clear();
@@ -16,6 +24,18 @@ namespace MutationChess.Battle
             {
                 allCards.Add(asset);
             }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public List<CardDataAsset> GetRewardableCardsByRarity(CardRarity rarity)
+        {
+            return allCards.FindAll(a =>
+                !BasicCardNames.Contains(a.cardName) &&
+                a.rarity == rarity &&
+                a.rarity != CardRarity.Cursed
+            );
         }
 
         public List<CardDataAsset> GetColoredCardsByRarity(CardRarity rarity)
@@ -32,6 +52,14 @@ namespace MutationChess.Battle
                 a.isColorless &&
                 a.rarity == rarity
             );
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public static bool IsBasicCard(string cardName)
+        {
+            return BasicCardNames.Contains(cardName);
         }
     }
 

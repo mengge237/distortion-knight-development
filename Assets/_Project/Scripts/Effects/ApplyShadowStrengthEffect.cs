@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -17,6 +17,8 @@ namespace MutationChess.Core
 
         public override void Execute(CombatContext context)
         {
+            if (context == null) return;
+
             if (context.targetPlayer != null)
             {
                 int amount = strengthAmount;
@@ -35,7 +37,7 @@ namespace MutationChess.Core
                     isShadow = true
                 };
                 context.targetPlayer.AddBuff(buff);
-                GameLogger.Log($"[ApplyShadowStrength]  {amount} 㰵");
+                GameLogger.Log($"[ApplyShadowStrength]  {amount} ?");
             }
             else if (context.targetEnemy != null)
             {

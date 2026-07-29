@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -17,6 +17,8 @@ namespace MutationChess.Core
 
         public override void Execute(CombatContext context)
         {
+            if (context == null) return;
+
             if (context.targetPlayer == null)
             {
                 GameLogger.LogError("ShadowBurstEffect: targetPlayer ");
@@ -50,7 +52,7 @@ namespace MutationChess.Core
 
 
             int removed = context.targetPlayer.RemoveShadowStrengthBuffs();
-            GameLogger.Log($"[ShadowBurst]  {removed} 㰵");
+            GameLogger.Log($"[ShadowBurst]  {removed} ?");
         }
     }
 }

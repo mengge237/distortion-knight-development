@@ -1,4 +1,4 @@
-﻿﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.UI;
 
 namespace MutationChess.Core
@@ -11,6 +11,7 @@ namespace MutationChess.Core
 
         public override void Execute(CombatContext context)
         {
+            if (context == null) return;
             if (context.sourceCard == null) return;
 
             if (applyToAllHand)
@@ -18,7 +19,16 @@ namespace MutationChess.Core
                 var handManager = UI.HandManager.Instance;
                 if (handManager != null)
                 {
-                    // 修改手牌中所有卡牌的费用（保留原实现）
+                    var handCards = handManager.GetHandCards();
+                    foreach (var card in handCards)
+                    {
+                        if (card != null)
+                        {
+                            card.cost = Mathf.Max(0, card.cost + costModifier);
+                        }
+                    }
+                    GameLogger.Log($"[ModifyCostEffect] {handCards.Count} : {costModifier}");
+                    handManager.UpdateHandUI();
                 }
             }
             else

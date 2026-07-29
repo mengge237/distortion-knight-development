@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using MutationChess.UI;
 using MutationChess.Battle;
@@ -6,35 +6,32 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
+    ///
     /// </summary>
     [CreateAssetMenu(fileName = "GiftEffect", menuName = "MutationChess/Card Effects/Gift")]
     public class GiftEffect : CardEffect
     {
         public enum GiftTriggerTime
         {
-            TurnStart,   // ??????
-            TurnEnd,     // ???????
+            TurnStart,   //
+            TurnEnd,     //
         }
 
-        [Header("????????")]
-        [Tooltip("???????")]
+        [Header("")]
+        [Tooltip("")]
         public GiftTriggerTime triggerTime = GiftTriggerTime.TurnStart;
 
-        [Tooltip("?????????????????????????????????")]
+        [Tooltip("")]
         public bool discardAfterTrigger = true;
 
         public override void Execute(CombatContext context)
         {
-            // ????????????????????????? HandManager ??????/????????
-            GameLogger.Log("[GiftEffect] ????????? HandManager ????????????????? Execute");
+            //
+            GameLogger.Log("[GiftEffect] Execute HandManager ");
         }
 
         /// <summary>
-
-
+        ///
         /// </summary>
         public static List<Card> CheckAndTriggerGifts(GiftTriggerTime time)
         {
@@ -104,14 +101,14 @@ namespace MutationChess.Core
             if (triggeredCards.Count > 0)
             {
                 handManager.UpdatePileCountUI();
-                GameLogger.Log($"[GiftEffect]  {triggeredCards.Count} ");
+                GameLogger.Log($"[GiftEffect] {triggeredCards.Count} ");
             }
 
             return triggeredCards;
         }
 
         /// <summary>
-
+        ///
         /// </summary>
         private static GiftEffect FindGiftEffect(Card card, GiftTriggerTime time)
         {
@@ -128,5 +125,3 @@ namespace MutationChess.Core
         }
     }
 }
-
-

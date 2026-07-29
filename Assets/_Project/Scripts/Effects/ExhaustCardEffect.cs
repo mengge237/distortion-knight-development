@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace MutationChess.Core
 {
@@ -8,8 +8,10 @@ namespace MutationChess.Core
         public override void Execute(CombatContext context)
         {
             if (context.sourceCard == null) return;
-            // 标记为已消耗，在HandManager中特殊处理
-            // 实际逻辑在HandManager中实现移除
+            //
+            //
+            context.sourceCard.exhaust = true;
+            GameLogger.Log($"[ExhaustCardEffect] {context.sourceCard.cardName} ");
         }
     }
 }

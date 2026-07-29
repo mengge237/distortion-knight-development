@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Core;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,7 +66,7 @@ namespace MutationChess.Battle
 
             if (enemySprite == null)
             {
-                GameLogger.LogWarning($"未找到敌人图片: {fullPath}");
+                GameLogger.LogWarning($": {fullPath}");
             }
         }
 
@@ -107,7 +107,7 @@ namespace MutationChess.Battle
                 }
                 else
                 {
-                    GameLogger.LogWarning($"未找到敌人二阶段图片: {secondFormSpriteName}");
+                    GameLogger.LogWarning($": {secondFormSpriteName}");
                 }
             }
 
@@ -215,7 +215,18 @@ namespace MutationChess.Battle
             turnCount++;
             ReduceBuffDurations();
 
-            if (enemyName.Contains("深渊领主") && !isSecondForm && GetHealthPercentage() < 0.5f)
+            //
+            if (enemyName.Contains("") || enemyName.Contains(""))
+            {
+                int bonus = GetKingPowerBonus();
+                if (bonus > 0)
+                {
+                    currentAttackDamage += bonus;
+                    GameLogger.Log($"[Enemy] {enemyName} +{bonus}: {currentAttackDamage}");
+                }
+            }
+
+            if (enemyName.Contains("") && !isSecondForm && GetHealthPercentage() < 0.5f)
             {
                 SwitchToSecondForm();
             }
@@ -233,11 +244,6 @@ namespace MutationChess.Battle
             int weak = GetBuffAmount(BuffType.Weak);
 
             int damage = currentAttackDamage + strength;
-
-            if (enemyName.Contains("腐化国王"))
-            {
-                damage += GetKingPowerBonus();
-            }
 
             damage += UnityEngine.Random.Range(-3, 4);
 
@@ -301,7 +307,7 @@ namespace MutationChess.Battle
         {
             for (int i = buffs.Count - 1; i >= 0; i--)
             {
-                // 暗影临时力量在 ShadowStrengthNoDecay=true 时不流失
+                //
                 if (ConversionModifier.ShadowStrengthNoDecay && buffs[i].isShadow)
                 {
                     continue;
@@ -354,77 +360,77 @@ namespace MutationChess.Battle
 
         public static Enemy CreateCorruptedSoldier()
         {
-            var data = new EnemyData("腐化士兵", 30, 7, EnemyType.Normal);
+            var data = new EnemyData("", 30, 7, EnemyType.Normal);
             data.aiPatternName = "CorruptedSoldier";
-            data.spriteName = "腐化士兵";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreateMutantHound()
         {
-            var data = new EnemyData("变异猎犬", 25, 9, EnemyType.Normal);
+            var data = new EnemyData("", 25, 9, EnemyType.Normal);
             data.aiPatternName = "MutantHound";
-            data.spriteName = "变异猎犬";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreatePlagueAcolyte()
         {
-            var data = new EnemyData("瘟疫信徒", 28, 6, EnemyType.Normal);
+            var data = new EnemyData("", 28, 6, EnemyType.Normal);
             data.aiPatternName = "PlagueAcolyte";
-            data.spriteName = "瘟疫信徒";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssGrub()
         {
-            var data = new EnemyData("深渊幼虫", 22, 8, EnemyType.Normal);
+            var data = new EnemyData("", 22, 8, EnemyType.Normal);
             data.aiPatternName = "AbyssGrub";
-            data.spriteName = "深渊幼虫";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedKnight()
         {
-            var data = new EnemyData("腐化骑士", 65, 14, EnemyType.Elite);
+            var data = new EnemyData("", 65, 14, EnemyType.Elite);
             data.aiPatternName = "CorruptedKnight";
-            data.spriteName = "腐化骑士";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreateHellInquisitor()
         {
-            var data = new EnemyData("地狱审判官", 60, 16, EnemyType.Elite);
+            var data = new EnemyData("", 60, 16, EnemyType.Elite);
             data.aiPatternName = "HellInquisitor";
-            data.spriteName = "地狱审判官";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreateVoidWizard()
         {
-            var data = new EnemyData("虚空法师", 55, 12, EnemyType.Elite);
+            var data = new EnemyData("", 55, 12, EnemyType.Elite);
             data.aiPatternName = "VoidWizard";
-            data.spriteName = "虚空法师";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedGolem()
         {
-            var data = new EnemyData("腐化魔像", 80, 13, EnemyType.Elite);
+            var data = new EnemyData("", 80, 13, EnemyType.Elite);
             data.aiPatternName = "CorruptedGolem";
-            data.spriteName = "腐化魔像";
+            data.spriteName = "";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssLord()
         {
-            var data = new EnemyData("深渊领主", 150, 22, EnemyType.Boss);
+            var data = new EnemyData("", 150, 22, EnemyType.Boss);
             data.aiPatternName = "AbyssLord";
-            data.spriteName = "深渊领主";
+            data.spriteName = "";
 
             var enemy = new Enemy(data);
-            enemy.firstFormSpriteName = "深渊领主";
-            enemy.secondFormSpriteName = "深渊领主第二形态";
+            enemy.firstFormSpriteName = "";
+            enemy.secondFormSpriteName = "";
 
             return enemy;
         }
@@ -436,7 +442,7 @@ namespace MutationChess.Battle
         public BuffType type;
         public int amount;
         public int duration;
-        // 暗影标记：为 true 时表示该 buff 是暗影临时力量，回合开始时不会流失
+        //
         public bool isShadow;
 
         public void ReduceDuration() { if (duration > 0) duration--; }

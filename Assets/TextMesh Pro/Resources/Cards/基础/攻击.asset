@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6, type: 3}
+  m_Script: {fileID: 11500000, guid: 9acc8e158a2a46d8898b425d6810d5b7, type: 3}
   m_Name: "\u653B\u51FB"
   m_EditorClassIdentifier: 
   cardName: "\u653B\u51FB"
@@ -20,7 +20,14 @@ MonoBehaviour:
   damage: 6
   block: 0
   magicNumber: 0
+  exhaust: 0
+  tags: []
+  bloodPerEnergy: 0
+  blockPerEnergy: 0
   description: "\u9020\u62106\u70B9\u4F24\u5BB3"
   effectIds:
-  - DealDamage
+  - DealDamageEffect
+  inherentEffectIds: []
+  isColorless: 0
+  isFactionLocked: 0
   cardArtPath: "CardArt/\u653B\u51FB"

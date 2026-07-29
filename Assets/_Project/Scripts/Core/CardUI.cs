@@ -1,4 +1,4 @@
-﻿﻿using DG.Tweening;
+using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using TMPro;
@@ -21,10 +21,7 @@ namespace MutationChess.UI
         [Header("")]
         [SerializeField] private Image costIcon;
 
-        [Header("")]
-        [SerializeField] private Image glowImage;
-
-        [Header("")]
+        [Header("Hover")]
         [SerializeField] private float hoverScale = 1.08f;
         [SerializeField] private float hoverFloatAmount = 15f;
         [SerializeField] private float hoverDuration = 0.15f;
@@ -49,7 +46,6 @@ namespace MutationChess.UI
         private bool isDragging = false;
         private bool isBigCardShowing = false;
         private Tween hoverTween;
-        private Tween glowTween;
         private float pressTimer = 0f;
         private bool isPointerDown = false;
         private GameObject bigCardInstance;
@@ -74,12 +70,6 @@ namespace MutationChess.UI
             {
                 originalScale = Vector3.one;
                 originalPosition = Vector3.zero;
-            }
-
-            if (glowImage != null)
-            {
-                glowImage.gameObject.SetActive(false);
-                glowImage.color = new Color(1f, 1f, 1f, 0f);
             }
         }
 
@@ -168,12 +158,6 @@ namespace MutationChess.UI
                 }
             }
 
-            if (glowImage != null)
-            {
-                glowImage.gameObject.SetActive(false);
-                glowImage.color = new Color(1f, 1f, 1f, 0f);
-            }
-
             SetInteractable(isInteractable);
         }
 
@@ -203,15 +187,6 @@ namespace MutationChess.UI
                 .Join(rectTransform.DOScale(targetScale, hoverDuration).SetEase(Ease.OutQuad))
                 .Join(rectTransform.DOAnchorPos3D(targetPos, hoverDuration).SetEase(Ease.OutQuad))
                 .OnStart(() => {
-                    if (glowImage != null && isInteractable)
-                    {
-                        glowImage.gameObject.SetActive(true);
-                        glowTween?.Kill();
-                        Color glowColor = CardVisualConfig.GetRarityColor(cardData.rarity);
-                        glowColor.a = 0.5f;
-                        glowImage.color = glowColor;
-                        glowImage.DOFade(0.5f, 0.2f).SetEase(Ease.OutQuad);
-                    }
                     transform.SetAsLastSibling();
                 })
                 .Play();
@@ -227,16 +202,6 @@ namespace MutationChess.UI
             DOTween.Sequence()
                 .Join(rectTransform.DOScale(originalScale, hoverDuration).SetEase(Ease.OutQuad))
                 .Join(rectTransform.DOAnchorPos3D(originalPosition, hoverDuration).SetEase(Ease.OutQuad))
-                .OnStart(() => {
-                    if (glowImage != null)
-                    {
-                        glowTween?.Kill();
-                        glowImage.DOFade(0f, 0.15f).SetEase(Ease.OutQuad)
-                            .OnComplete(() => {
-                                glowImage.gameObject.SetActive(false);
-                            });
-                    }
-                })
                 .Play();
         }
 
@@ -455,11 +420,6 @@ namespace MutationChess.UI
             {
                 costIcon.enabled = true;
             }
-            if (glowImage != null)
-            {
-                glowImage.gameObject.SetActive(false);
-                glowImage.color = new Color(1f, 1f, 1f, 0f);
-            }
             if (rectTransform != null)
             {
                 rectTransform.localScale = originalScale;
@@ -511,11 +471,6 @@ namespace MutationChess.UI
         public void ResetCard()
         {
             ResetCardState();
-            if (glowImage != null)
-            {
-                glowImage.gameObject.SetActive(false);
-                glowImage.color = new Color(1f, 1f, 1f, 0f);
-            }
             if (isBigCardShowing)
             {
                 HideBigCard();

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using MutationChess.Core;
 using System.Collections.Generic;
@@ -6,28 +6,34 @@ using System.Collections.Generic;
 namespace MutationChess.UI
 {
     /// <summary>
-
-
+    ///
+    ///
     /// </summary>
+    [RequireComponent(typeof(HorizontalLayoutGroup))]
     public class RelicBarUI : MonoBehaviour
     {
-        [Header("===  ===")]
+        [Header("Icon Settings")]
         [SerializeField] private Transform iconContainer;
         [SerializeField] private GameObject iconPrefab;
 
-        [Header("===  ===")]
+        [Header("Layout")]
         [SerializeField] private float iconSize = 90f;
         [SerializeField] private float spacing = 4f;
 
         private List<GameObject> spawnedIcons = new List<GameObject>();
+        private HorizontalLayoutGroup layoutGroup;
 
         void Start()
         {
-
-            if (iconContainer != null)
+            layoutGroup = GetComponent<HorizontalLayoutGroup>();
+            if (layoutGroup != null)
             {
-                var layout = iconContainer.GetComponent<LayoutGroup>();
-                if (layout != null) Destroy(layout);
+                layoutGroup.childAlignment = TextAnchor.MiddleLeft;
+                layoutGroup.spacing = spacing;
+                layoutGroup.childControlWidth = false;
+                layoutGroup.childControlHeight = false;
+                layoutGroup.childForceExpandWidth = false;
+                layoutGroup.childForceExpandHeight = false;
             }
 
             var relicManager = RelicManager.Instance;
@@ -48,7 +54,6 @@ namespace MutationChess.UI
         public void Refresh()
         {
             if (iconContainer == null) return;
-
 
             foreach (var icon in spawnedIcons)
                 Destroy(icon);
@@ -76,15 +81,10 @@ namespace MutationChess.UI
                     iconObj.transform.SetParent(iconContainer, false);
                 }
 
-
                 RectTransform rt = iconObj.GetComponent<RectTransform>();
                 if (rt != null)
                 {
-                    rt.anchorMin = new Vector2(0, 0.5f);
-                    rt.anchorMax = new Vector2(0, 0.5f);
-                    rt.pivot = new Vector2(0, 0.5f);
                     rt.sizeDelta = new Vector2(iconSize, iconSize);
-                    rt.anchoredPosition = new Vector2(i * (iconSize + spacing), 0);
                     rt.localScale = Vector3.one;
                 }
 

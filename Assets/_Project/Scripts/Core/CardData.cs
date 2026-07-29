@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MutationChess.Core;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,8 +13,7 @@ namespace MutationChess.Core
         private static bool allCardsLoaded = false;
 
         /// <summary>
-
-        /// ??? Resources.LoadAll ?????? Cards ???????? CardDataAsset??
+        ///
         /// </summary>
         private static void LoadAllCards()
         {
@@ -30,7 +29,7 @@ namespace MutationChess.Core
             }
 
             allCardsLoaded = true;
-            GameLogger.Log($"[CardData] ???????????????: {allAssets.Length} ??");
+            GameLogger.Log($"[CardData] : {allAssets.Length} ??");
         }
 
         private static CardDataAsset LoadAsset(CardName cardName)
@@ -39,13 +38,21 @@ namespace MutationChess.Core
             if (assetCache.TryGetValue(key, out CardDataAsset cached))
                 return cached;
 
-
+            //
             LoadAllCards();
 
             if (assetCache.TryGetValue(key, out CardDataAsset loaded))
                 return loaded;
 
-            GameLogger.LogError($"[CardData] ?????????????: {key}??????? Cards ??????????????????? .asset ???");
+            //
+            allCardsLoaded = false;
+            assetCache.Clear();
+            LoadAllCards();
+
+            if (assetCache.TryGetValue(key, out CardDataAsset retry))
+                return retry;
+
+            GameLogger.LogError($"[CardData] : {key} Cards .asset ");
             return null;
         }
 
@@ -59,7 +66,7 @@ namespace MutationChess.Core
             CardDataAsset asset = LoadAsset(cardName);
             if (asset == null)
             {
-                GameLogger.LogError($"???????: {cardName}");
+                GameLogger.LogError($": {cardName}");
                 return null;
             }
 
@@ -75,7 +82,7 @@ namespace MutationChess.Core
             card.description = asset.description;
             card.faction = asset.faction;
 
-            // ???????
+            //
             if (asset.tags != null && asset.tags.Count > 0)
             {
                 foreach (var tag in asset.tags)
@@ -84,11 +91,11 @@ namespace MutationChess.Core
                 }
             }
 
-            // ?????????????
+            //
             card.bloodPerEnergy = asset.bloodPerEnergy;
             card.blockPerEnergy = asset.blockPerEnergy;
 
-            // 设置消耗标志
+            //
             card.exhaust = asset.exhaust;
             if (card.HasTag(CardTag.Corrupt))
             {
@@ -101,16 +108,16 @@ namespace MutationChess.Core
                 if (originalSprite != null)
                 {
                     card.cardArt = originalSprite;
-                    GameLogger.Log($"[CardData] ????????????: {asset.cardArtPath}");
+                    GameLogger.Log($"[CardData] : {asset.cardArtPath}");
                 }
                 else
                 {
-                    GameLogger.LogWarning($"[CardData] ?????????: {asset.cardArtPath}??????? Resources/CardArt/ ?????????");
+                    GameLogger.LogWarning($"[CardData] : {asset.cardArtPath} Resources/CardArt/ ");
                 }
             }
             else
             {
-                GameLogger.LogWarning($"[CardData] ???? {asset.cardName} ?? cardArtPath ???");
+                GameLogger.LogWarning($"[CardData] {asset.cardName} cardArtPath");
             }
 
             if (asset.effectIds != null && asset.effectIds.Count > 0)
@@ -124,7 +131,7 @@ namespace MutationChess.Core
                     }
                     else
                     {
-                        GameLogger.LogError($"?????????: {effectId}?????? {asset.cardName}");
+                        GameLogger.LogError($": {effectId}, {asset.cardName}");
                     }
                 }
             }
@@ -141,7 +148,7 @@ namespace MutationChess.Core
                     }
                     else
                     {
-                        GameLogger.LogError($"????????????: {inherentId}?????? {asset.cardName}");
+                        GameLogger.LogError($": {inherentId}, {asset.cardName}");
                     }
                 }
             }
@@ -182,7 +189,7 @@ namespace MutationChess.Core
             }
             else
             {
-                GameLogger.LogError($"????????????: {effectId}");
+                GameLogger.LogError($": {effectId}");
             }
 
             return effect;
@@ -209,23 +216,20 @@ namespace MutationChess.Core
             }
             else
             {
-                GameLogger.LogError($"???????????????: {effectId}");
+                GameLogger.LogError($": {effectId}");
             }
 
             return inherent;
         }
 
         /// <summary>
-
-
-
-
+        ///
         /// </summary>
         private static void InjectDefaultInherentEffects(Card card)
         {
             if (card == null) return;
 
-            // ??????????
+            //
             var existingTags = new HashSet<CardTag>();
             if (card.inherentEffects != null)
             {
@@ -239,14 +243,13 @@ namespace MutationChess.Core
 
             if (card.HasTag(CardTag.Slime) && !existingTags.Contains(CardTag.Slime))
             {
-                var inherent = LoadInherentEffect("SlimeInherent");
+                var inherent = LoadInherentEffect("SlimeInherentEffect");
                 if (inherent != null) card.inherentEffects.Add(inherent);
             }
 
-            // ??????????????????????? DrawCardsEffect ???????壩
             if (card.HasTag(CardTag.Reluctant) && !existingTags.Contains(CardTag.Reluctant))
             {
-                var inherent = LoadInherentEffect("ReluctantInherent");
+                var inherent = LoadInherentEffect("ReluctantInherentEffect");
                 if (inherent != null) card.inherentEffects.Add(inherent);
             }
 
@@ -259,6 +262,3 @@ namespace MutationChess.Core
         }
     }
 }
-
-
-

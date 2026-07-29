@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MutationChess.Core;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,12 +138,25 @@ namespace MutationChess.Core
                 var capturedRelic = relic;
                 var capturedEffect = effect;
 
-                effectManager.Register(capturedEntry.trigger, (ctx) =>
+                if (IsValueModifierTrigger(capturedEntry.trigger))
                 {
-                    if (!ownedRelics.Contains(capturedRelic)) return;
-                    capturedEffect.Execute(ctx);
-                });
-
+                    effectManager.RegisterValueModifier(capturedEntry.trigger, (ctx, currentValue) =>
+                    {
+                        if (!ownedRelics.Contains(capturedRelic)) return currentValue;
+                        ctx.baseValue = currentValue;
+                        ctx.finalValue = currentValue;
+                        capturedEffect.Execute(ctx);
+                        return ctx.finalValue;
+                    });
+                }
+                else
+                {
+                    effectManager.Register(capturedEntry.trigger, (ctx) =>
+                    {
+                        if (!ownedRelics.Contains(capturedRelic)) return;
+                        capturedEffect.Execute(ctx);
+                    });
+                }
 
                 relic.relicEffects.Add(new RelicEffectInstance
                 {
@@ -190,7 +203,7 @@ namespace MutationChess.Core
                     if (existing.rarity == RelicRarity.Legendary)
                         continue;
 
-                    GameLogger.Log($"[RelicManager]  {newRelic.relicName} 滻 {existing.relicName}");
+                    GameLogger.Log($"[RelicManager]  {newRelic.relicName} ?I {existing.relicName}");
                     toRemove.Add(existing);
                 }
                 else
@@ -198,7 +211,7 @@ namespace MutationChess.Core
 
                     if (UnityEngine.Random.value < 0.5f)
                     {
-                        GameLogger.Log($"[RelicManager]  {newRelic.relicName} 滻 {existing.relicName}");
+                        GameLogger.Log($"[RelicManager]  {newRelic.relicName} ?I {existing.relicName}");
                         toRemove.Add(existing);
                     }
                 }
@@ -305,11 +318,25 @@ namespace MutationChess.Core
                 var capturedEntry = entry;
                 var capturedRelic = relic;
 
-                effectManager.Register(capturedEntry.trigger, (ctx) =>
+                if (IsValueModifierTrigger(capturedEntry.trigger))
                 {
-                    if (!ownedRelics.Contains(capturedRelic)) return;
-                    capturedEntry.effect.Execute(ctx);
-                });
+                    effectManager.RegisterValueModifier(capturedEntry.trigger, (ctx, currentValue) =>
+                    {
+                        if (!ownedRelics.Contains(capturedRelic)) return currentValue;
+                        ctx.baseValue = currentValue;
+                        ctx.finalValue = currentValue;
+                        capturedEntry.effect.Execute(ctx);
+                        return ctx.finalValue;
+                    });
+                }
+                else
+                {
+                    effectManager.Register(capturedEntry.trigger, (ctx) =>
+                    {
+                        if (!ownedRelics.Contains(capturedRelic)) return;
+                        capturedEntry.effect.Execute(ctx);
+                    });
+                }
 
                 GameLogger.Log($"[RelicManager] {relic.relicName} : {capturedEntry.effect.GetType().Name} ({capturedEntry.trigger})");
             }
@@ -462,6 +489,21 @@ namespace MutationChess.Core
             return relic;
         }
 
+        private static bool IsValueModifierTrigger(EffectTrigger trigger)
+        {
+            switch (trigger)
+            {
+                case EffectTrigger.CalculateAttackDamage:
+                case EffectTrigger.CalculateBlock:
+                case EffectTrigger.CalculateCardCost:
+                case EffectTrigger.CalculatePlayerDamage:
+                case EffectTrigger.CalculatePotionDropChance:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private CardEffect LoadEffect(string effectId)
         {
             string effectPath = $"Effects/{effectId}";
@@ -476,9 +518,9 @@ namespace MutationChess.Core
             if (effect == null)
             {
                 GameLogger.LogError(
-                    $"[RelicManager] 遗物效果加载失败：找不到 effectId='{effectId}' 的资源。" +
-                    $"请确认以下路径存在 .asset 文件：Resources/Effects/{effectId} " +
-                    $"或 Resources/CardEffects/{effectId} 或 Resources/{effectId}"
+                    $"[RelicManager] effectId='{effectId}' " +
+                    $".asset Resources/Effects/{effectId} " +
+                    $"?? Resources/CardEffects/{effectId} ?? Resources/{effectId}"
                 );
             }
 

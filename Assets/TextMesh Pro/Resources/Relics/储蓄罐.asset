@@ -18,9 +18,9 @@ MonoBehaviour:
   faction: 0
   effectType: 3
   effectValue: 0.1
-  description: "\u6BCF\u6B21\u6218\u6597\u80DC\u5229\u65F6\u83B7\u5F97\u5F53\u524D\u62E5\u6709\u91D1\u5E01\u6570\u91CF\u768410%"
+  description: 每次战斗胜利时获得当前金币的10%
   price: 150
-  iconPath: "RelicsArt/\u50A8\u84C4\u7F50"
+  iconPath: RelicsArt/储蓄罐
   effectIds: []
   isFactionUnlocker: 0
   unlockedFaction: 0

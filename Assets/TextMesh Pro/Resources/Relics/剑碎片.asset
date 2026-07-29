@@ -18,9 +18,9 @@ MonoBehaviour:
   faction: 0
   effectType: 1
   effectValue: 2
-  description: "\u653B\u51FB\u65F6\u989D\u5916\u9020\u62102\u70B9\u4F24\u5BB3\uFF08\u53EF\u4E0E\u5251\u67C4\u788E\u7247\u5408\u6210\uFF09"
+  description: 攻击时额外造成2点伤害（可与剑柄碎片合成）
   price: 150
-  iconPath: "RelicsArt/\u5251\u788E\u7247"
+  iconPath: RelicsArt/剑碎片
   effectIds: []
   isFactionUnlocker: 0
   unlockedFaction: 0

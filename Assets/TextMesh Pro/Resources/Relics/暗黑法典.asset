@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b8888e08f2d9274abb9bc2eaf6ee423, type: 3}
+  m_Name: 暗黑法典
+  m_EditorClassIdentifier: 
+  relicId: Corrupt_DarkTome
+  relicName: 暗黑法典
+  rarity: 1
+  faction: 6
+  description: 卡牌消耗时回复1点能量（隐藏：回复+1）
+  price: 150
+  iconPath: RelicsArt/暗黑法典
+  baseEffectIds:
+    - effectId: ExhaustEnergyEffect
+      trigger: 0
+      value1: 0
+      value2: 0
+  hiddenActivatorRelicId: Boss_CorruptLiver
+  hiddenEffectIds:
+  relicEffects: []
+  isShopRelic: false
+  isBossRelic: false
+  isStartingRelic: false
+  isSynthesisTarget: 0
+  isFactionUnlocker: 0

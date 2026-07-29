@@ -1,20 +1,19 @@
-﻿﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Core;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
     /// <summary>
-
-    /// ?????????????? CalculateBlock??????????0??
-    /// ???? duration ????????????
-    /// ???? EffectManager.RegisterValueModifier ???????????
+    ///
+    /// 
+    /// EffectManager.RegisterValueModifier 
     /// </summary>
     [CreateAssetMenu(fileName = "BlockLockNextTurnEffect", menuName = "MutationChess/Potion Effects/Block Lock Next Turn")]
     public class BlockLockNextTurnEffect : CardEffect
     {
-        [Header("??????")]
-        [Tooltip("???????????2=?????+?????")]
+        [Header("")]
+        [Tooltip("2=+")]
         public int duration = 2;
 
         [System.NonSerialized]
@@ -44,7 +43,7 @@ namespace MutationChess.Core
             if (isActive)
             {
                 remainingTurns = Mathf.Max(remainingTurns, duration);
-                GameLogger.Log($"[BlockLock]  {remainingTurns}");
+                GameLogger.Log($"[BlockLock] : {remainingTurns}");
                 return;
             }
 
@@ -62,7 +61,7 @@ namespace MutationChess.Core
             modifierRef = (ctx, baseValue) =>
             {
                 if (!isActive) return baseValue;
-                GameLogger.Log($"[BlockLock] : {baseValue}  0");
+                GameLogger.Log($"[BlockLock] : {baseValue} ?? 0");
                 return 0;
             };
 
@@ -72,15 +71,14 @@ namespace MutationChess.Core
             turnEndHandlerRef = (ctx) => OnTurnEnd();
             effectManager.Register(EffectTrigger.PlayerTurnEnd, turnEndHandlerRef);
 
-            GameLogger.Log($"[BlockLock]  {remainingTurns} ");
+            GameLogger.Log($"[BlockLock] {remainingTurns} ");
 
             if (battleManager != null)
                 battleManager.AddBattleLog($"{duration} ");
         }
 
         /// <summary>
-
-
+        ///
         /// </summary>
         public void OnTurnEnd()
         {
@@ -105,5 +103,3 @@ namespace MutationChess.Core
         }
     }
 }
-
-

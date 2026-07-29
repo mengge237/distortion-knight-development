@@ -1,4 +1,4 @@
-﻿﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Map;
 using MutationChess.Battle;
 using MutationChess.Core;
@@ -48,6 +48,9 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        //
+        MutationChess.Debug.DebugConsole.EnsureExists();
+
         var dataManager = PlayerDataManager.Instance;
         if (dataManager == null)
         {
@@ -358,6 +361,14 @@ public class GameManager : MonoBehaviour
         {
             GameLogger.Log($"[GameManager] Battle won. Enemy type: {currentEnemyType}");
 
+            //
+            if (dataManager != null)
+            {
+                int healAmount = Mathf.RoundToInt(dataManager.GetPlayerData().maxHealth * 0.2f);
+                dataManager.Heal(healAmount);
+                GameLogger.Log($"[GameManager] {healAmount} ");
+            }
+
             if (wasBossBattle)
             {
                 AdvanceToNextFloor();
@@ -368,6 +379,7 @@ public class GameManager : MonoBehaviour
             GameLogger.Log("[GameManager] Battle lost.");
         }
 
+        //
         if (mapView == null)
         {
             mapView = FindObjectOfType<MapView>();
@@ -384,9 +396,13 @@ public class GameManager : MonoBehaviour
 
         if (mapView != null)
             mapView.RefreshAllNodes();
+
+        //
+        if (dataManager != null)
+            dataManager.UpdateUI();
     }
 
-    private void AdvanceToNextFloor()
+    public void AdvanceToNextFloor()
     {
         if (currentFloor >= maxFloor)
         {

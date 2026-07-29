@@ -863,7 +863,7 @@ namespace MutationChess.UI
             UpdatePileCountUI();
         }
 
-        void UpdateHandUI()
+        public void UpdateHandUI()
         {
             CreateCardUIs(Vector3.zero);
         }

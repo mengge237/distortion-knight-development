@@ -18,9 +18,9 @@ MonoBehaviour:
   faction: 0
   effectType: 4
   effectValue: 20
-  description: "\u6218\u6597\u4E2D\u653B\u51FB\u8840\u91CF\u226420\u7684\u654C\u4EBA\u65F6\u76F4\u63A5\u65A9\u6740\uFF08\u6BCF\u573A\u6218\u65971\u6B21\uFF09"
+  description: 斩杀血量低于20的敌人（每场战斗1次）
   price: 400
-  iconPath: "RelicsArt/\u80DC\u5229\u8A93\u7EA6\u4E4B\u5251"
+  iconPath: RelicsArt/胜利誓约之剑
   effectIds: []
   isFactionUnlocker: 0
   unlockedFaction: 0

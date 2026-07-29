@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using MutationChess.Core;
@@ -8,43 +8,44 @@ namespace MutationChess.UI
 {
     public class RewardPanel : MonoBehaviour
     {
-        [Header("===  ===")]
+        [Header("Panel Root")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private GameObject rewardOverview;
         [SerializeField] private GameObject cardSelectionPanel;
 
-        [Header("===  ===")]
+        [Header("Overview")]
         [SerializeField] private TMP_Text goldAmountText;
         [SerializeField] private Button cardRewardButton;
         [SerializeField] private TMP_Text cardRewardLabel;
 
-        [Header("===  ===")]
+        [Header("Card Selection")]
         [SerializeField] private Transform cardContainer;
         [SerializeField] private GameObject cardPrefab;
         [SerializeField] private Button skipCardButton;
 
-        [Header("===  ===")]
+        [Header("Skip")]
         [SerializeField] private Button skipOverviewButton;
 
-        [Header("===  ===")]
+        [Header("Title")]
         [SerializeField] private TMP_Text titleText;
 
-        [Header("===  ===")]
+        [Header("Reward Objects")]
         [SerializeField] private GameObject goldRewardObject;
         [SerializeField] private GameObject relicRewardObject;
         [SerializeField] private GameObject potionRewardObject;
         [SerializeField] private GameObject cardRewardObject;
 
-        [Header("===  ===")]
+        [Header("Relic Display")]
         [SerializeField] private Image relicIconImage;
         [SerializeField] private TMP_Text relicNameText;
 
-        [Header("===  ===")]
+        [Header("Potion Display")]
         [SerializeField] private Image potionIconImage;
         [SerializeField] private TMP_Text potionNameText;
 
-        [Header("===  ===")]
+        [Header("Layout")]
         [SerializeField] private Vector2 cardContainerOffset = new Vector2(0, -50);
+        [SerializeField] private bool useAutoLayout = true;
 
         private Card selectedCard = null;
         private int currentGoldReward = 0;
@@ -170,20 +171,22 @@ namespace MutationChess.UI
             if (goldRewardObject != null)
             {
                 goldRewardObject.SetActive(true);
-                RectTransform goldRect = goldRewardObject.GetComponent<RectTransform>();
-                if (goldRect != null)
+                if (!useAutoLayout)
                 {
-                    goldRect.anchoredPosition = new Vector2(0, 250);
+                    RectTransform goldRect = goldRewardObject.GetComponent<RectTransform>();
+                    if (goldRect != null)
+                        goldRect.anchoredPosition = new Vector2(0, 250);
                 }
             }
 
             if (cardRewardObject != null)
             {
                 cardRewardObject.SetActive(true);
-                RectTransform cardRect = cardRewardObject.GetComponent<RectTransform>();
-                if (cardRect != null)
+                if (!useAutoLayout)
                 {
-                    cardRect.anchoredPosition = new Vector2(0, 150);
+                    RectTransform cardRect = cardRewardObject.GetComponent<RectTransform>();
+                    if (cardRect != null)
+                        cardRect.anchoredPosition = new Vector2(0, 150);
                 }
             }
 
@@ -198,9 +201,12 @@ namespace MutationChess.UI
                     if (relicNameText != null)
                         relicNameText.text = $"{currentRelicReward.relicName} ({currentRelicReward.GetRarityName()})";
 
-                    RectTransform relicRect = relicRewardObject.GetComponent<RectTransform>();
-                    if (relicRect != null)
-                        relicRect.anchoredPosition = new Vector2(0, 50);
+                    if (!useAutoLayout)
+                    {
+                        RectTransform relicRect = relicRewardObject.GetComponent<RectTransform>();
+                        if (relicRect != null)
+                            relicRect.anchoredPosition = new Vector2(0, 50);
+                    }
                 }
                 else
                 {
@@ -229,9 +235,12 @@ namespace MutationChess.UI
                     if (potionNameText != null)
                         potionNameText.text = $"{currentPotionReward.potionName} ({currentPotionReward.GetRarityName()})";
 
-                    RectTransform potionRect = potionRewardObject.GetComponent<RectTransform>();
-                    if (potionRect != null)
-                        potionRect.anchoredPosition = new Vector2(0, -50);
+                    if (!useAutoLayout)
+                    {
+                        RectTransform potionRect = potionRewardObject.GetComponent<RectTransform>();
+                        if (potionRect != null)
+                            potionRect.anchoredPosition = new Vector2(0, -50);
+                    }
                 }
                 else
                 {
@@ -264,22 +273,28 @@ namespace MutationChess.UI
 
         private void ArrangeRewards()
         {
+            if (useAutoLayout)
+            {
+                // 
+                if (relicRewardObject != null)
+                    relicRewardObject.SetActive(currentRelicReward != null);
+                if (potionRewardObject != null)
+                    potionRewardObject.SetActive(currentPotionReward != null);
+                return;
+            }
+
             if (goldRewardObject != null && goldRewardObject.activeSelf)
             {
                 RectTransform goldRect = goldRewardObject.GetComponent<RectTransform>();
                 if (goldRect != null)
-                {
                     goldRect.anchoredPosition = new Vector2(0, 250);
-                }
             }
 
             if (cardRewardObject != null && cardRewardObject.activeSelf)
             {
                 RectTransform cardRect = cardRewardObject.GetComponent<RectTransform>();
                 if (cardRect != null)
-                {
                     cardRect.anchoredPosition = new Vector2(0, 150);
-                }
             }
 
             if (relicRewardObject != null && currentRelicReward != null)
@@ -333,13 +348,14 @@ namespace MutationChess.UI
         {
             if (panelRoot == null)
             {
-                GameLogger.LogError("RewardPanel: panelRoot ");
+                GameLogger.LogError("RewardPanel: panelRoot is null");
                 return;
             }
 
             if (!gameObject.activeSelf)
                 gameObject.SetActive(true);
 
+            //
             Transform parent = transform.parent;
             while (parent != null)
             {
@@ -348,23 +364,24 @@ namespace MutationChess.UI
                 parent = parent.parent;
             }
 
-            SetActiveRecursive(panelRoot, true);
+            panelRoot.SetActive(true);
 
             if (rewardOverview != null)
-                SetActiveRecursive(rewardOverview, true);
+                rewardOverview.SetActive(true);
 
             ArrangeRewards();
 
             if (cardContainer != null && cardContainer.gameObject != null)
             {
                 RectTransform containerRect = cardContainer.GetComponent<RectTransform>();
-                if (containerRect != null)
+                if (containerRect != null && !useAutoLayout)
                     containerRect.anchoredPosition = cardContainerOffset;
             }
 
             if (cardSelectionPanel != null)
                 cardSelectionPanel.SetActive(false);
 
+            //
             Canvas canvas = GetComponentInParent<Canvas>();
             if (canvas != null)
             {
@@ -379,41 +396,13 @@ namespace MutationChess.UI
                 canvasGroup.interactable = true;
                 canvasGroup.blocksRaycasts = true;
             }
-
-        }
-
-        private void SetActiveRecursive(GameObject obj, bool active)
-        {
-            if (obj == null) return;
-
-            if (obj == cardSelectionPanel)
-                return;
-
-            if (obj == relicRewardObject || obj == potionRewardObject)
-                return;
-
-            if (obj.activeSelf != active)
-                obj.SetActive(active);
-
-            List<Transform> children = new List<Transform>();
-            foreach (Transform child in obj.transform)
-            {
-                if (child != null && child.gameObject != null)
-                    children.Add(child);
-            }
-
-            foreach (Transform child in children)
-            {
-                if (child != null && child.gameObject != null)
-                    SetActiveRecursive(child.gameObject, active);
-            }
         }
 
         private void GenerateCards(List<Card> rewards)
         {
             if (cardContainer == null)
             {
-                GameLogger.LogError("RewardPanel: cardContainer ");
+                GameLogger.LogError("RewardPanel: cardContainer ???");
                 return;
             }
 
@@ -425,7 +414,7 @@ namespace MutationChess.UI
 
             if (cardPrefab == null)
             {
-                GameLogger.LogError("RewardPanel: cardPrefab ");
+                GameLogger.LogError("RewardPanel: cardPrefab ???");
                 return;
             }
 
@@ -525,7 +514,7 @@ namespace MutationChess.UI
         public void ShowOverview()
         {
             if (rewardOverview != null)
-                SetActiveRecursive(rewardOverview, true);
+                rewardOverview.SetActive(true);
 
             if (cardSelectionPanel != null)
                 cardSelectionPanel.SetActive(false);
@@ -539,12 +528,11 @@ namespace MutationChess.UI
 
         public void ShowCardSelection()
         {
-
             if (cardSelectionPanel != null)
                 cardSelectionPanel.SetActive(true);
 
             if (titleText != null)
-                titleText.text = "...";
+                titleText.text = "";
 
             isCardSelectionActive = true;
         }

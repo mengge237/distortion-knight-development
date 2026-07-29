@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -16,6 +16,8 @@ namespace MutationChess.Core
 
         public override void Execute(CombatContext context)
         {
+            if (context == null) return;
+
             if (context.battleManager == null)
             {
                 GameLogger.LogError("BlockToAttackEffect: battleManager ");

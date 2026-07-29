@@ -1,37 +1,37 @@
-﻿using UnityEngine;
+using UnityEngine;
 using MutationChess.Core;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
-
+    ///
+    ///
     /// </summary>
     [CreateAssetMenu(fileName = "BloodCostReductionEffect", menuName = "MutationChess/Relic Effects/Blood Cost Reduction")]
     public class BloodCostReductionEffect : CardEffect
     {
         [Header("")]
-        [Tooltip("1 32")]
-        public int rateReduction = 1;
+        [Tooltip("")]
+        public int costReduction = 1;
 
         public override void Execute(CombatContext context)
         {
-
-            ApplyReduction();
+            //
         }
 
         public override void Execute(EffectContext context)
         {
-            ApplyReduction();
-        }
+            if (context == null || context.trigger != EffectTrigger.CalculateCardCost) return;
 
-        private void ApplyReduction()
-        {
-            ConversionModifier.PermanentBloodRateReduction += rateReduction;
-            GameLogger.Log($"[BloodCostReduction]  {rateReduction}: {ConversionModifier.PermanentBloodRateReduction}");
+            Card card = context.tag as Card;
+            if (card == null) return;
+
+            bool isBloodCard = card.HasTag(CardTag.Blood) || card.faction == CardFaction.Blood;
+            if (!isBloodCard) return;
+
+            context.finalValue = Mathf.Max(0, context.baseValue - costReduction);
+            GameLogger.Log($"[BloodCostReduction] {card.cardName} {context.baseValue} -> {context.finalValue} (-{costReduction})");
         }
     }
 }
