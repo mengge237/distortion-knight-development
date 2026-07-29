@@ -1,8 +1,10 @@
-using MutationChess.Core;
+Ôªøusing MutationChess.Core;
+using MutationChess.Map;
 using MutationChess.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -13,43 +15,43 @@ namespace MutationChess.Battle
     {
         public static BattleManager Instance { get; private set; }
 
-        [Header("=== UI“˝”√ ===")]
+        [Header("UI???")]
         [SerializeField] private GameObject battlePanel;
         [SerializeField] private GameObject handPanel;
 
-        [Header("===  ”Õº«–ªª ===")]
+        [Header("?????")]
         [SerializeField] private Button toggleViewButton;
 
-        [Header("=== Ω· ¯ªÿ∫œ ===")]
+        [Header("???????")]
         [SerializeField] private Button endTurnButton;
 
-        [Header("=== µ–»À“‚Õº ===")]
+        [Header("???????")]
         [SerializeField] private EnemyIntentUI enemyIntentUI;
 
-        [Header("=== µ–»À–≈œ¢ ===")]
+        [Header("???????")]
         [SerializeField] private TMP_Text enemyNameText;
         [SerializeField] private TMP_Text enemyHpText;
         [SerializeField] private Image enemyImage;
 
-        [Header("=== ÕÊº“–≈œ¢ ===")]
+        [Header("??????")]
         [SerializeField] private TMP_Text playerHpText;
         [SerializeField] private TMP_Text playerBlockText;
         [SerializeField] private Image playerImage;
 
-        [Header("=== ’Ω∂∑»’÷æ ===")]
+        [Header("??????")]
         [SerializeField] private TMP_Text battleLogText;
         [SerializeField] private BattleIntroUI battleIntroUI;
 
-        [Header("=== ÕÊº“Debuff ===")]
+        [Header("???Debuff")]
         [SerializeField] private TMP_Text playerDebuffText;
 
-        [Header("=== ––∂ØÃ· æ ===")]
+        [Header("?????")]
         [SerializeField] private TMP_Text actionHintText;
 
-        [Header("=== Ω±¿¯√Ê∞Â ===")]
+        [Header("???????")]
         [SerializeField] private RewardPanel rewardPanel;
 
-        [Header("=== ±≥æ∞…Ë÷√ ===")]
+        [Header("????????")]
         [SerializeField] private Image backgroundImage;
         [SerializeField] private BackgroundConfig backgroundConfig;
 
@@ -70,6 +72,11 @@ namespace MutationChess.Battle
 
         private GameManager gameManager;
         private Relic pendingRelicReward;
+        private Relic pendingBonusRelic;
+        private Card pendingBossFactionCard;
+        private Potion pendingPotionReward;
+        private int bossRewardGold;
+        private EffectManager effectManager;
 
         public Relic PendingRelicReward => pendingRelicReward;
 
@@ -91,8 +98,10 @@ namespace MutationChess.Battle
 
             if (gameManager == null)
             {
-                Debug.LogWarning("BattleManager: Œ¥’“µΩ GameManager“˝”√ ≤ø∑÷π¶ƒ‹ø…ƒ‹Œﬁ∑®’˝≥£π§◊˜");
+                GameLogger.LogWarning("BattleManager: ??? GameManager???????????????????????");
             }
+
+            effectManager = EffectManager.Instance;
 
             if (battlePanel != null) battlePanel.SetActive(false);
             if (handPanel != null) handPanel.SetActive(false);
@@ -117,6 +126,7 @@ namespace MutationChess.Battle
             if (turnManager != null)
             {
                 turnManager.OnPlayerTurnStart += OnPlayerTurnStart;
+                turnManager.OnPlayerTurnEnd += OnPlayerTurnEnd;
                 turnManager.OnEnemyTurnStart += OnEnemyTurnStart;
                 turnManager.OnEnemyTurnEnd += OnEnemyTurnEnd;
             }
@@ -141,7 +151,7 @@ namespace MutationChess.Battle
             else
             {
                 playerImage.gameObject.SetActive(false);
-                Debug.LogWarning("Œ¥…Ë÷√ÕÊº“Õº∆¨");
+                GameLogger.LogWarning("?????????");
             }
         }
 
@@ -151,6 +161,7 @@ namespace MutationChess.Battle
             if (turnManager != null)
             {
                 turnManager.OnPlayerTurnStart -= OnPlayerTurnStart;
+                turnManager.OnPlayerTurnEnd -= OnPlayerTurnEnd;
                 turnManager.OnEnemyTurnStart -= OnEnemyTurnStart;
                 turnManager.OnEnemyTurnEnd -= OnEnemyTurnEnd;
             }
@@ -177,22 +188,12 @@ namespace MutationChess.Battle
             if (playerData != null)
             {
                 playerData.OnTurnStart();
+            }
 
-                // “≈ŒÔ–ßπ˚£∫√øªÿ∫œªÿ∏¥◊Ó¥Û…˙√¸÷µ∞Ÿ∑÷±»
-                var relicManager = RelicManager.Instance;
-                if (relicManager != null)
-                {
-                    float healPercent = relicManager.GetHealPercentEachTurn();
-                    if (healPercent > 0)
-                    {
-                        int healAmount = Mathf.RoundToInt(playerData.maxHealth * healPercent);
-                        if (healAmount > 0)
-                        {
-                            playerData.Heal(healAmount);
-                            AddLog($"“≈ŒÔªÿ∏¥ {healAmount} µ„…˙√¸÷µ");
-                        }
-                    }
-                }
+            if (effectManager != null)
+            {
+                EffectContext ctx = new EffectContext(this);
+                effectManager.Trigger(EffectTrigger.PlayerTurnStart, ctx);
             }
 
             if (endTurnButton != null)
@@ -200,7 +201,7 @@ namespace MutationChess.Battle
 
             if (actionHintText != null)
             {
-                actionHintText.text = "—°‘Ò“ª∏ˆµ–»À ◊˜Œ™π•ª˜ƒø±Í";
+                actionHintText.text = "????????? ??????????";
                 actionHintText.color = Color.white;
             }
 
@@ -226,6 +227,15 @@ namespace MutationChess.Battle
             UpdatePlayerDebuffDisplay();
         }
 
+        void OnPlayerTurnEnd()
+        {
+            if (effectManager != null)
+            {
+                EffectContext ctx = new EffectContext(this);
+                effectManager.Trigger(EffectTrigger.PlayerTurnEnd, ctx);
+            }
+        }
+
         void OnEnemyTurnStart()
         {
             waitingForPlayerInput = false;
@@ -236,7 +246,7 @@ namespace MutationChess.Battle
 
             if (actionHintText != null)
             {
-                actionHintText.text = "µ»¥˝÷∏¡Ó...";
+                actionHintText.text = "??????...";
                 actionHintText.color = Color.gray;
             }
 
@@ -308,7 +318,7 @@ namespace MutationChess.Battle
             }
             else
             {
-                Debug.LogWarning("EnemyIntentUI Œ¥’“µΩ");
+                GameLogger.LogWarning("EnemyIntentUI ???");
             }
         }
 
@@ -347,7 +357,7 @@ namespace MutationChess.Battle
                     break;
 
                 case EnemyIntentType.Wait:
-                    AddLog($"{currentEnemy.enemyName} ø™ º÷¥––––∂Ø...");
+                    AddLog($"{currentEnemy.enemyName} ????????...");
                     yield return new WaitForSeconds(0.5f);
                     break;
             }
@@ -389,19 +399,21 @@ namespace MutationChess.Battle
             int actual = Mathf.Max(0, dmg - playerBlock);
 
             if (playerBlock > 0)
-                AddLog($"∏Òµ≤µ÷œ˚ {Mathf.Min(dmg, playerBlock)}…À∫¶");
+                AddLog($"??? {Mathf.Min(dmg, playerBlock)}???");
 
             playerBlock = 0;
 
             if (actual > 0)
             {
+                // ??? EffectManager ??????????????? DamageReductionEffect ???
+                actual = CalculatePlayerDamage(actual);
                 playerData.TakeDamage(actual);
-                AddLog($"{currentEnemy.enemyName} ‘Ï≥…¡À {actual} µ„…À∫¶");
+                AddLog($"{currentEnemy.enemyName} ????? {actual} ?????");
                 currentEnemy.PlayAttack();
             }
             else
             {
-                AddLog("…À∫¶±ªÕÍ»´∏Òµ≤");
+                AddLog("?????????");
                 currentEnemy.PlayHurt();
             }
 
@@ -414,7 +426,7 @@ namespace MutationChess.Battle
         {
             int healAmount = currentIntentValue;
             currentEnemy.currentHealth = Mathf.Min(currentEnemy.maxHealth, currentEnemy.currentHealth + healAmount);
-            AddLog($"{currentEnemy.enemyName} ª÷∏¥¡À {healAmount} µ„…˙√¸÷µ");
+            AddLog($"{currentEnemy.enemyName} ????? {healAmount} ???????");
             currentEnemy.PlayIdle();
 
             RefreshAllUI();
@@ -429,13 +441,15 @@ namespace MutationChess.Battle
 
             if (actualSpecial > 0)
             {
+                // ??? EffectManager ???????????
+                actualSpecial = CalculatePlayerDamage(actualSpecial);
                 playerData.TakeDamage(actualSpecial);
-                AddLog($"{currentEnemy.enemyName} ‘Ï≥…¡À {actualSpecial} µ„Ãÿ ‚…À∫¶");
+                AddLog($"{currentEnemy.enemyName} ????? {actualSpecial} ?????????");
                 currentEnemy.PlayAttack();
             }
             else
             {
-                AddLog("Ãÿ ‚…À∫¶±ªÕÍ»´∏Òµ≤");
+                AddLog("?????????????");
                 currentEnemy.PlayHurt();
             }
 
@@ -448,7 +462,7 @@ namespace MutationChess.Battle
         {
             int buffAmount = currentIntentValue;
             currentEnemy.currentAttackDamage += buffAmount;
-            AddLog($"{currentEnemy.enemyName} ªÒµ√¡À“◊…À {buffAmount}");
+            AddLog($"{currentEnemy.enemyName} ???????????? {buffAmount}");
             currentEnemy.PlayHurt();
             yield return new WaitForSeconds(0.5f);
         }
@@ -480,15 +494,15 @@ namespace MutationChess.Battle
                 if (actionHintText != null)
                 {
                     var turnManager = TurnManager.Instance;
-                    actionHintText.text = (turnManager != null && turnManager.IsPlayerTurn) ? "—°‘Ò“ª∏ˆµ–»À ◊˜Œ™π•ª˜ƒø±Í" : "µ»¥˝÷∏¡Ó...";
+                    actionHintText.text = (turnManager != null && turnManager.IsPlayerTurn) ? "????????? ??????????" : "??????...";
                     actionHintText.color = (turnManager != null && turnManager.IsPlayerTurn) ? Color.white : Color.gray;
                 }
-                AddLog("ªÿ∫œΩ· ¯");
+                AddLog("??????");
             }
             else
             {
                 ShowMapView();
-                AddLog("’Ω∂∑...");
+                AddLog("???...");
             }
         }
 
@@ -538,25 +552,24 @@ namespace MutationChess.Battle
             waitingForPlayerInput = false;
             currentAction = null;
 
-            // ’Ω∂∑ø™ º ± ºÏ≤È RelicManager “≈ŒÔ
+            // ????????????? RelicManager ????
             var relicManager = RelicManager.Instance;
             if (relicManager != null)
             {
                 relicManager.OnBattleStart();
-
-                // ºÏ≤È «∑Ò”–√Î…±“≈ŒÔ£® §¿˚ ƒ‘º÷ÆΩ££©£¨»Áπ˚”–‘Ú÷±Ω”ªÒ §
-                string instantKillId = relicManager.GetInstantKillRelicId();
-                if (!string.IsNullOrEmpty(instantKillId))
-                {
-                    Debug.Log($"[BattleManager] √Î…±“≈ŒÔ“—“∆≥˝: {instantKillId}");
-                    AddLog(" §¿˚ ƒ‘º÷ÆΩ£∑¢∂Ø£°√Î…±µ–»À");
-                    currentEnemy.currentHealth = 0;
-                    relicManager.RemoveRelic(instantKillId);
-                    StartCoroutine(InstantKillSequence());
-                    return;
-                }
             }
 
+            if (effectManager != null)
+            {
+                EffectContext ctx = new EffectContext(this);
+                effectManager.Trigger(EffectTrigger.BattleStart, ctx);
+            }
+
+            ContinueBattleStartAfterEffects();
+        }
+
+        private void ContinueBattleStartAfterEffects()
+        {
             if (enemyImage != null)
             {
                 Sprite sprite = currentEnemy.GetSprite();
@@ -568,7 +581,7 @@ namespace MutationChess.Battle
                 else
                 {
                     enemyImage.gameObject.SetActive(false);
-                    Debug.LogWarning("Enemy has no image: " + currentEnemy.enemyName);
+                    GameLogger.LogWarning("Enemy has no image: " + currentEnemy.enemyName);
                 }
             }
 
@@ -602,13 +615,13 @@ namespace MutationChess.Battle
         {
             if (backgroundImage == null)
             {
-                Debug.LogWarning("±≥æ∞Õº∆¨◊Èº˛Œ¥…Ë÷√");
+                GameLogger.LogWarning("?????????????");
                 return;
             }
 
             if (backgroundConfig == null)
             {
-                Debug.LogWarning("±≥æ∞≈‰÷√Œ¥…Ë÷√");
+                GameLogger.LogWarning("????????????");
                 return;
             }
 
@@ -627,7 +640,7 @@ namespace MutationChess.Battle
             else
             {
                 backgroundImage.enabled = false;
-                Debug.LogWarning($"Œ¥’“µΩµ–»À {enemyName} µƒ±≥æ∞≈‰÷√");
+                GameLogger.LogWarning($"??????? {enemyName} ??????");
             }
         }
 
@@ -639,7 +652,7 @@ namespace MutationChess.Battle
             switch (action)
             {
                 case "attack":
-                    AddLog("ÕÊº“π•ª˜");
+                    AddLog("??????");
                     PlayerAttack(8 + UnityEngine.Random.Range(0, 5));
                     break;
                 case "defend":
@@ -648,7 +661,7 @@ namespace MutationChess.Battle
                     break;
                 case "skill":
                     int skillDmg = 12 + UnityEngine.Random.Range(0, 6);
-                    AddLog("ººƒ‹π•ª˜ -" + skillDmg + "HP");
+                    AddLog("??????? -" + skillDmg + "HP");
                     if (currentEnemy != null)
                     {
                         currentEnemy.TakeDamage(skillDmg);
@@ -663,7 +676,7 @@ namespace MutationChess.Battle
         {
             if (currentEnemy == null)
             {
-                Debug.LogWarning($"PlayerAttack: currentEnemy “—±ªª˜∞‹ {damage} Œ¥…˙–ß");
+                GameLogger.LogWarning($"PlayerAttack: currentEnemy ????????{damage} ??");
                 waitingForPlayerInput = true;
                 return;
             }
@@ -676,24 +689,11 @@ namespace MutationChess.Battle
 
             int finalDamage = Mathf.Max(1, damage + UnityEngine.Random.Range(-1, 2));
 
-            // °Ô “≈ŒÔ–ßπ˚£∫π•ª˜ ±µ˛º”“≈ŒÔ∂ÓÕ‚…À∫¶
-            var relicManager = RelicManager.Instance;
-            if (relicManager != null)
+            if (effectManager != null)
             {
-                int bonusDamage = relicManager.GetBonusDamage();
-                if (bonusDamage > 0)
-                {
-                    finalDamage += bonusDamage;
-                    AddLog($"“≈ŒÔº”≥… ∂ÓÕ‚‘Ï≥… {bonusDamage} µ„…À∫¶");
-                }
-
-                // °Ô “≈ŒÔ–ßπ˚£∫Ã˙Ω‰÷∏ - √ø≥°’Ω∂∑1¥Œ +∂ÓÕ‚π•ª˜¡¶
-                float attackBoost = relicManager.TryGetOncePerBattleAttackBoost();
-                if (attackBoost > 0)
-                {
-                    finalDamage += Mathf.RoundToInt(attackBoost);
-                    AddLog($"Ã˙Ω‰÷∏∑¢∂Ø ∂ÓÕ‚π•ª˜¡¶ +{attackBoost}");
-                }
+                EffectContext ctx = new EffectContext(this);
+                finalDamage = effectManager.CalculateModifiedValue(
+                    EffectTrigger.CalculateAttackDamage, ctx, finalDamage);
             }
 
             int weak = playerData.GetBuffAmount(BuffType.Weak);
@@ -702,9 +702,15 @@ namespace MutationChess.Battle
                 finalDamage = Mathf.RoundToInt(finalDamage * (1 - weak * 0.2f));
             }
 
+            if (effectManager != null)
+            {
+                EffectContext ctx = new EffectContext(this);
+                effectManager.Trigger(EffectTrigger.PlayerAttack, ctx);
+            }
+
             currentEnemy.TakeDamage(finalDamage);
 
-            AddLog($"‘Ï≥…¡À {finalDamage} µ„…À∫¶");
+            AddLog($"????? {finalDamage} ?????");
 
             RefreshAllUI();
 
@@ -726,8 +732,17 @@ namespace MutationChess.Battle
             if (currentEnemy == null || currentEnemy.IsDead()) return;
 
             int finalBlock = playerData.GetModifiedBlock(blockAmount);
+
+            // ??? EffectManager ????????????? BlockLockNextTurnEffect ???
+            if (effectManager != null)
+            {
+                EffectContext ctx = new EffectContext(this);
+                finalBlock = effectManager.CalculateModifiedValue(
+                    EffectTrigger.CalculateBlock, ctx, finalBlock);
+            }
+
             playerBlock += finalBlock;
-            AddLog($"ªÒµ√¡À {finalBlock} µ„∏Òµ≤ (µ±«∞: {playerBlock})");
+            AddLog($"??? {finalBlock} ?? (???: {playerBlock})");
 
             RefreshAllUI();
             waitingForPlayerInput = true;
@@ -744,13 +759,12 @@ namespace MutationChess.Battle
             var turnManager = TurnManager.Instance;
             if (turnManager != null) turnManager.EndBattle();
             var dataManager = PlayerDataManager.Instance;
-            var relicManager = RelicManager.Instance;
 
-            AddLog(victory ? "===  §¿˚ ===" : "=== ’Ω∞‹ ===");
+            AddLog(victory ? "=== ??? ===" : "=== ??? ===");
 
             if (actionHintText != null)
             {
-                actionHintText.text = victory ? " §¿˚!" : "’Ω∞‹...";
+                actionHintText.text = victory ? "???!" : "???...";
                 actionHintText.color = victory ? Color.green : Color.red;
             }
 
@@ -767,24 +781,15 @@ namespace MutationChess.Battle
 
             if (victory)
             {
-                // °Ô “≈ŒÔ–ßπ˚£∫¥¢–Óπﬁ - ªÒµ√µ±«∞Ω±“µƒ∞Ÿ∑÷±»
-                if (relicManager != null && dataManager != null)
+                if (effectManager != null)
                 {
-                    float goldPercent = relicManager.GetVictoryGoldPercent();
-                    if (goldPercent > 0)
-                    {
-                        int bonusGold = Mathf.RoundToInt(dataManager.GetGold() * goldPercent);
-                        if (bonusGold > 0)
-                        {
-                            dataManager.AddGold(bonusGold);
-                            AddLog($"¥¢–Óπﬁ∑¢∂Ø£°∂ÓÕ‚ªÒµ√ {bonusGold} Ω±“ ({goldPercent * 100}%)");
-                        }
-                    }
+                    EffectContext ctx = new EffectContext(this);
+                    effectManager.Trigger(EffectTrigger.Victory, ctx);
                 }
 
                 if (rewardPanel == null)
                 {
-                    Debug.LogError("BattleManager: rewardPanel Œ¥…Ë÷√");
+                    GameLogger.LogError("BattleManager: rewardPanel ????");
                     OnBattleEnd?.Invoke(victory);
                     StartCoroutine(DelayedExit());
                     return;
@@ -799,64 +804,18 @@ namespace MutationChess.Battle
                     }
                 }
 
-                if (gameManager == null)
+                EnemyType enemyType = gameManager != null
+                    ? gameManager.GetCurrentEnemyType()
+                    : EnemyType.Normal;
+
+                if (enemyType == EnemyType.Boss)
                 {
-                    Debug.LogError("BattleManager: Ω±¿¯œµÕ≥ GameManager“˝”√Œﬁ∑®’˝≥£π§◊˜");
-                    int defaultGold = UnityEngine.Random.Range(10, 30);
-                    List<Card> defaultCards = GetDefaultCardRewards();
-
-                    rewardPanel.ShowRewards(
-                        defaultGold,
-                        defaultCards,
-                        null,
-                        OnRewardsConfirmed,
-                        OnPanelClosed
-                    );
-
-                    Time.timeScale = 0f;
-                    return;
-                }
-
-                EnemyType enemyType = gameManager.GetCurrentEnemyType();
-
-                Vector2Int goldRange = gameManager.GetGoldRangeForEnemy(enemyType);
-                int goldReward = UnityEngine.Random.Range(goldRange.x, goldRange.y + 1);
-
-                RewardPool pool = gameManager.GetRewardPoolForEnemy(enemyType);
-                List<Card> cardRewards = new List<Card>();
-
-                if (pool != null)
-                {
-                    cardRewards = pool.GetRewards();
+                    HandleBossVictory();
                 }
                 else
                 {
-                    Debug.LogWarning("RewardPool Œ™ø’  π”√ƒ¨»œΩ±¿¯");
-                    cardRewards = GetDefaultCardRewards();
+                    HandleNormalVictory(enemyType);
                 }
-
-                // ∆’Õ®π÷ŒÔµÙ¬ 35%
-                pendingRelicReward = null;
-                if (relicManager != null)
-                {
-                    switch (enemyType)
-                    {
-                        case EnemyType.Normal:
-                            pendingRelicReward = relicManager.TryNormalMonsterRelicDrop();
-                            break;
-                        case EnemyType.Elite:
-                            pendingRelicReward = relicManager.GetEliteMonsterRelicDrop();
-                            break;
-                    }
-                }
-
-                rewardPanel.ShowRewards(
-                    goldReward,
-                    cardRewards,
-                    pendingRelicReward,
-                    OnRewardsConfirmed,
-                    OnPanelClosed
-                );
 
                 Time.timeScale = 0f;
                 return;
@@ -870,15 +829,273 @@ namespace MutationChess.Battle
         {
             List<Card> result = new List<Card>();
 
-            Card attack = CardData.CreateCard(CardName.π•ª˜);
-            Card defend = CardData.CreateCard(CardName.∑¿”˘);
-            Card bash = CardData.CreateCard(CardName.Õ¥ª˜);
+            Card attack = CardData.CreateCard(CardName.ÊîªÂáª);
+            Card defend = CardData.CreateCard(CardName.Èò≤Âæ°);
+            Card bash = CardData.CreateCard(CardName.ÁóõÂáª);
 
             if (attack != null) result.Add(attack);
             if (defend != null) result.Add(defend);
             if (bash != null) result.Add(bash);
 
             return result;
+        }
+
+        private List<Card> GetRewardCardsForEnemy(EnemyType enemyType)
+        {
+            List<Card> cards = new List<Card>();
+
+            var poolConfig = RewardPoolManager.Config;
+            if (poolConfig == null) return cards;
+
+            var unlockService = FactionUnlockService.Instance;
+
+            int cardCount = 3;
+            float rareChance;
+            float uncommonChance;
+
+            // ?????????????????0~1??
+            float floorProgress = GetFloorProgressFromManager();
+
+            float nodeProgress = GetNodeProgress();
+
+
+            float rareFloorBonus = floorProgress * 0.20f;
+
+            float rareNodeBonus = nodeProgress * 0.15f;
+            float uncommonNodeBonus = nodeProgress * 0.10f;
+
+            switch (enemyType)
+            {
+                case EnemyType.Elite:
+                    // ?????????? 45%??????? + ?????
+                    rareChance = 0.45f + rareFloorBonus + rareNodeBonus;
+                    uncommonChance = 0.35f + uncommonNodeBonus;
+                    break;
+                case EnemyType.Boss:
+
+                    rareChance = 1f;
+                    uncommonChance = 0f;
+                    break;
+                default:
+                    // ?????????? 8%??????? + ?????
+                    rareChance = 0.08f + rareFloorBonus + rareNodeBonus;
+                    uncommonChance = 0.25f + uncommonNodeBonus;
+                    break;
+            }
+
+            rareChance = Mathf.Clamp01(rareChance);
+            uncommonChance = Mathf.Clamp01(uncommonChance);
+
+            GameLogger.Log($"[BattleManager] ??????? - ????:{enemyType} ??????:{floorProgress:F2} ??????:{nodeProgress:F2} ???:{rareChance:P0} ????:{uncommonChance:P0}");
+
+            var allCommon = poolConfig.GetColoredCardsByRarity(CardRarity.Common)
+                .Where(a => a.faction == CardFaction.None || unlockService == null || unlockService.IsFactionUnlocked(a.faction))
+                .ToList();
+            var allUncommon = poolConfig.GetColoredCardsByRarity(CardRarity.Uncommon)
+                .Where(a => a.faction == CardFaction.None || unlockService == null || unlockService.IsFactionUnlocked(a.faction))
+                .ToList();
+            var allRare = poolConfig.GetColoredCardsByRarity(CardRarity.Rare)
+                .Where(a => a.faction == CardFaction.None || unlockService == null || unlockService.IsFactionUnlocked(a.faction))
+                .ToList();
+
+            for (int i = 0; i < cardCount; i++)
+            {
+                float roll = UnityEngine.Random.value;
+                List<CardDataAsset> pool;
+
+                if (roll < rareChance)
+                    pool = allRare;
+                else if (roll < rareChance + uncommonChance)
+                    pool = allUncommon;
+                else
+                    pool = allCommon;
+
+                if (pool.Count == 0)
+                {
+                    if (allCommon.Count > 0) pool = allCommon;
+                    else if (allUncommon.Count > 0) pool = allUncommon;
+                    else pool = allRare;
+                }
+
+                if (pool.Count > 0)
+                {
+                    var asset = pool[UnityEngine.Random.Range(0, pool.Count)];
+                    CardName cardName;
+                    if (System.Enum.TryParse(asset.name, out cardName))
+                    {
+                        var card = CardData.CreateCard(cardName);
+                        if (card != null) cards.Add(card);
+                    }
+                }
+            }
+
+            return cards;
+        }
+
+        private float GetFloorProgress()
+        {
+            return GetFloorProgressFromManager();
+        }
+
+        private float GetFloorProgressFromManager()
+        {
+            if (gameManager == null)
+            {
+                gameManager = FindObjectOfType<GameManager>();
+                if (gameManager == null) return 0f;
+            }
+            return gameManager.GetFloorProgress();
+        }
+
+        private float GetNodeProgress()
+        {
+            var mapGen = FindObjectOfType<Map.MapGenerator>();
+            if (mapGen == null || mapGen.CurrentNode == null) return 0f;
+
+            int totalRows = 8;
+            var mapConfig = Resources.Load<Map.MapConfig>("MapConfig");
+            if (mapConfig != null)
+                totalRows = Mathf.Max(1, mapConfig.rows);
+
+            return Mathf.Clamp01((float)mapGen.CurrentNode.point.y / totalRows);
+        }
+
+        private void HandleBossVictory()
+        {
+            BossRewardService bossService = BossRewardService.Instance;
+            if (bossService == null || bossService.Config == null)
+            {
+                GameLogger.LogWarning("[BattleManager] BossRewardService ????????????????");
+                HandleNormalVictory(EnemyType.Boss);
+                return;
+            }
+
+            var bossReward = bossService.GenerateBossRewards();
+
+            // ??????BOSS???????????
+            int baseBossGold = bossReward.goldAmount;
+            float goldMultiplier = 1f;
+            if (gameManager != null)
+                goldMultiplier = gameManager.GetGoldMultiplier();
+            int finalBossGold = Mathf.RoundToInt(baseBossGold * goldMultiplier);
+            GameLogger.Log($"[BattleManager] BOSS??? - ????:{baseBossGold} ?????:{goldMultiplier:F2} ????:{finalBossGold}");
+
+            pendingRelicReward = bossReward.factionUnlockRelic;
+            pendingBonusRelic = bossReward.bonusRelic;
+            pendingBossFactionCard = bossReward.factionCard;
+            bossRewardGold = finalBossGold;
+
+            // Boss ???????????????? GeneratePotion ???? TryDropPotion??
+            pendingPotionReward = null;
+            var potionService = PotionDropService.Instance;
+            if (potionService != null && gameManager != null)
+            {
+                int currentFloor = gameManager.GetCurrentFloor();
+                int maxFloor = gameManager.GetMaxFloor();
+                float nodeProgress = 1f;
+                pendingPotionReward = potionService.GeneratePotion(currentFloor, maxFloor, nodeProgress);
+            }
+
+            List<Card> cardRewards = GetRewardCardsForEnemy(EnemyType.Boss);
+
+            if (bossReward.factionCard != null)
+            {
+                cardRewards.Add(bossReward.factionCard);
+            }
+
+            rewardPanel.ShowRewards(
+                finalBossGold,
+                cardRewards,
+                bossReward.factionUnlockRelic,
+                pendingPotionReward,
+                OnRewardsConfirmed,
+                OnPanelClosed
+            );
+        }
+
+        private void HandleNormalVictory(EnemyType enemyType)
+        {
+            int goldReward = 0;
+            if (gameManager != null)
+            {
+                Vector2Int goldRange = gameManager.GetGoldRangeForEnemy(enemyType);
+                int baseGold = UnityEngine.Random.Range(goldRange.x, goldRange.y + 1);
+                // ?????????? +15% ???
+                float goldMultiplier = gameManager.GetGoldMultiplier();
+                goldReward = Mathf.RoundToInt(baseGold * goldMultiplier);
+                GameLogger.Log($"[BattleManager] ?????? - ????:{enemyType} ????:{baseGold} ?????:{goldMultiplier:F2} ????:{goldReward}");
+            }
+            else
+            {
+                goldReward = UnityEngine.Random.Range(10, 30);
+            }
+
+            List<Card> cardRewards = GetRewardCardsForEnemy(enemyType);
+
+
+            var relicMgrChk = RelicManager.Instance;
+            if (relicMgrChk != null && enemyType == EnemyType.Elite && relicMgrChk.HasRelic("Shop_TreasureChest"))
+            {
+                List<Card> extraCards = GetRewardCardsForEnemy(enemyType);
+                if (extraCards != null && extraCards.Count > 0)
+                {
+                    GameLogger.Log($"[BattleManager] È¢ùÂ§ñÂç°ÁâåÂ•ñÂä± {extraCards.Count} Âº†");
+                    cardRewards.AddRange(extraCards);
+                }
+            }
+
+            pendingRelicReward = null;
+            pendingPotionReward = null;
+            var relicMgr = RelicManager.Instance;
+            if (relicMgr != null)
+            {
+                switch (enemyType)
+                {
+                    case EnemyType.Normal:
+                        pendingRelicReward = relicMgr.TryNormalMonsterRelicDrop();
+                        break;
+                    case EnemyType.Elite:
+                        pendingRelicReward = relicMgr.GetEliteMonsterRelicDrop();
+                        break;
+                }
+            }
+
+            // ??????????????????????????
+            pendingPotionReward = TryDropPotion(enemyType);
+
+            rewardPanel.ShowRewards(
+                goldReward,
+                cardRewards,
+                pendingRelicReward,
+                pendingPotionReward,
+                OnRewardsConfirmed,
+                OnPanelClosed
+            );
+        }
+
+        private Potion TryDropPotion(EnemyType enemyType)
+        {
+            // Boss ??????????????? BossRewardService ??????
+            if (enemyType == EnemyType.Boss) return null;
+
+            var potionService = PotionDropService.Instance;
+            if (potionService == null)
+            {
+                GameLogger.LogWarning("[BattleManager] PotionDropService ??????");
+                return null;
+            }
+
+            if (gameManager == null)
+            {
+                gameManager = FindObjectOfType<GameManager>();
+                if (gameManager == null) return null;
+            }
+
+            int currentFloor = gameManager.GetCurrentFloor();
+            int maxFloor = gameManager.GetMaxFloor();
+            float nodeProgress = GetNodeProgress();
+
+            return potionService.TryDropPotion(enemyType, currentFloor, maxFloor, nodeProgress);
         }
 
         private void OnRewardsConfirmed(int gold, Card card)
@@ -890,13 +1107,13 @@ namespace MutationChess.Battle
             if (gold > 0 && dataManager != null)
             {
                 dataManager.AddGold(gold);
-                AddLog($"ªÒµ√ {gold} Ω±“");
+                AddLog($"??? {gold} ???");
             }
 
             if (card != null && dataManager != null)
             {
                 dataManager.AddCardToDeck(card);
-                AddLog($"ªÒµ√ø®≈∆: {card.cardName}");
+                AddLog($"??????: {card.cardName}");
             }
 
             if (pendingRelicReward != null)
@@ -905,10 +1122,54 @@ namespace MutationChess.Battle
                 if (relicManager != null)
                 {
                     relicManager.AddRelic(pendingRelicReward);
-                    AddLog($"ªÒµ√“≈ŒÔ: {pendingRelicReward.relicName}");
+                    AddLog($"???????: {pendingRelicReward.relicName}");
+
+                    if (pendingRelicReward.faction != CardFaction.None)
+                    {
+                        var unlockService = FactionUnlockService.Instance;
+                        if (unlockService != null)
+                        {
+                            unlockService.UnlockFaction(pendingRelicReward.faction);
+                            AddLog($"???????: {unlockService.GetFactionDisplayName(pendingRelicReward.faction)}");
+                        }
+                    }
                 }
                 pendingRelicReward = null;
             }
+
+            if (pendingBonusRelic != null)
+            {
+                var relicManager = RelicManager.Instance;
+                if (relicManager != null)
+                {
+                    relicManager.AddRelic(pendingBonusRelic);
+                    AddLog($"??????????: {pendingBonusRelic.relicName}");
+                }
+                pendingBonusRelic = null;
+            }
+
+            if (pendingPotionReward != null)
+            {
+                if (dataManager != null)
+                {
+                    bool added = dataManager.AddPotion(pendingPotionReward);
+                    if (added)
+                    {
+                        AddLog($"?????: {pendingPotionReward.potionName}");
+                    }
+                    else
+                    {
+                        // ??????????????????
+                        int refund = pendingPotionReward.price;
+                        dataManager.AddGold(refund);
+                        AddLog($"???????????{pendingPotionReward.potionName} ???? {refund} ???");
+                    }
+                }
+                pendingPotionReward = null;
+            }
+
+            pendingBossFactionCard = null;
+            bossRewardGold = 0;
 
             OnBattleEnd?.Invoke(true);
             StartCoroutine(DelayedExit());
@@ -917,35 +1178,6 @@ namespace MutationChess.Battle
         private void OnPanelClosed()
         {
             Time.timeScale = 1f;
-        }
-
-        /// <summary>
-        /// √Î…±“≈ŒÔ£® §¿˚ ƒ‘º÷ÆΩ££©øÏÀŸΩ· ¯’Ω∂∑¡˜≥Ã
-        /// </summary>
-        IEnumerator InstantKillSequence()
-        {
-            // µ»¥˝Ãÿ–ß≤•∑≈
-            yield return new WaitForSeconds(1f);
-
-            isEnemyTurn = false;
-            waitingForPlayerInput = false;
-
-            var turnManager = TurnManager.Instance;
-            if (turnManager != null) turnManager.EndBattle();
-
-            if (actionHintText != null)
-            {
-                actionHintText.text = " §¿˚!";
-                actionHintText.color = Color.yellow;
-            }
-
-            ShowBattleView();
-            RefreshAllUI();
-
-            yield return new WaitForSeconds(1.5f);
-
-            // ÷±Ω”Ω· ¯’Ω∂∑
-            EndBattle(true);
         }
 
         IEnumerator DelayedExit()
@@ -980,7 +1212,7 @@ namespace MutationChess.Battle
             {
                 playerBlockText.gameObject.SetActive(playerBlock > 0);
                 if (playerBlock > 0)
-                    playerBlockText.text = $"∏Òµ≤: {playerBlock}";
+                    playerBlockText.text = $"??: {playerBlock}";
             }
         }
 
@@ -1009,16 +1241,16 @@ namespace MutationChess.Battle
                     switch (buff.type)
                     {
                         case BuffType.Vulnerability:
-                            debuffStrings.Add($"“◊…À {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"???? {buff.amount}({buff.duration})");
                             break;
                         case BuffType.Weak:
-                            debuffStrings.Add($"–È»ı {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"???? {buff.amount}({buff.duration})");
                             break;
                         case BuffType.Frail:
-                            debuffStrings.Add($"¥‡»ı {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"???? {buff.amount}({buff.duration})");
                             break;
                         case BuffType.Poison:
-                            debuffStrings.Add($"÷–∂æ {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"?? {buff.amount}({buff.duration})");
                             break;
                     }
                 }
@@ -1041,9 +1273,50 @@ namespace MutationChess.Battle
             if (BattleLogManager.Instance != null) BattleLogManager.Instance.AddLog(msg);
         }
 
+        public void AddBattleLog(string msg)
+        {
+            AddLog(msg);
+        }
+
         public bool IsInBattle() => isInBattle;
         public bool IsViewingMap() => isViewingMap;
         public Enemy GetCurrentEnemy() => currentEnemy;
         public int GetPlayerBlock() => playerBlock;
+
+        /// <summary>
+        /// ????????????????????????????????????
+        /// </summary>
+        public void ConsumePlayerBlock(int amount)
+        {
+            if (amount <= 0) return;
+            int consumed = Mathf.Min(amount, playerBlock);
+            playerBlock -= consumed;
+            GameLogger.Log($"[BattleManager] ????? {consumed}????? {playerBlock}");
+            RefreshAllUI();
+        }
+        public PlayerData GetPlayerData() => playerData;
+
+        /// <summary>
+
+
+        /// ??? EffectTrigger.CalculatePlayerDamage ?????????????/?????????
+        /// </summary>
+        public int CalculatePlayerDamage(int baseDamage)
+        {
+            if (effectManager == null) return baseDamage;
+
+            EffectContext ctx = new EffectContext(this);
+            int finalDamage = effectManager.CalculateModifiedValue(
+                EffectTrigger.CalculatePlayerDamage, ctx, baseDamage);
+
+            if (finalDamage != baseDamage)
+            {
+                GameLogger.Log($"[BattleManager] ???????: {baseDamage} ?? {finalDamage}");
+            }
+
+            return Mathf.Max(0, finalDamage);
+        }
     }
 }
+
+

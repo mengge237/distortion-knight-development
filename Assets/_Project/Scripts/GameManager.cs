@@ -1,4 +1,4 @@
-using UnityEngine;
+锘匡豢using UnityEngine;
 using MutationChess.Map;
 using MutationChess.Battle;
 using MutationChess.Core;
@@ -7,50 +7,65 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("核心属性")]
+    [Header("Core References")]
     [SerializeField] private MapGenerator mapGenerator;
     [SerializeField] private PlayerController playerController;
     [SerializeField] private GameObject playerPrefab;
 
-    [Header("战斗")]
+    [Header("Battle")]
     [SerializeField] private BattleManager battleManager;
 
-    [Header("摄像机跟随")]
+    [Header("Camera Follow")]
     [SerializeField] private CameraFollowController cameraFollow;
 
-    [Header("地图视图")]
+    [Header("Map View")]
     [SerializeField] private MapView mapView;
 
-    [Header("玩家参数")]
+    [Header("Player Offset")]
     [SerializeField] private float playerYOffset = 0.5f;
 
-    [Header("=== 奖励池组件 (Inspector中设置) ===")]
-    [SerializeField] private RewardPool commonRewardPool;
-    [SerializeField] private RewardPool eliteRewardPool;
-    [SerializeField] private RewardPool bossRewardPool;
-
-    [Header("=== 商店 ===")]
+    [Header("=== UI ===")]
     [SerializeField] private ShopPanel shopPanel;
 
-    [Header("=== 金币掉落范围 ===")]
+    [Header("=== Gold Ranges ===")]
     [SerializeField] private Vector2Int commonGoldRange = new Vector2Int(10, 25);
     [SerializeField] private Vector2Int eliteGoldRange = new Vector2Int(20, 40);
     [SerializeField] private Vector2Int bossGoldRange = new Vector2Int(50, 80);
 
+    [Header("=== Floor ===")]
+    [SerializeField] private int startFloor = 1;
+    [SerializeField] private int maxFloor = 3;
+    [SerializeField] private float goldBonusPerFloor = 0.15f;
+    [SerializeField] private float relicRarityBonusPerFloor = 0.15f;
+
     private bool isMoving = false;
     private bool isInBattle = false;
     private EnemyType currentEnemyType = EnemyType.Normal;
+    private int currentFloor = 1;
+
+    public event System.Action<int> OnFloorChanged;
+    public event System.Action OnGameComplete;
 
     void Start()
     {
         var dataManager = PlayerDataManager.Instance;
         if (dataManager == null)
         {
-            Debug.LogError("PlayerDataManager 未设置！请在场景中添加 PlayerDataManager 组件");
+            GameLogger.LogError("[GameManager] PlayerDataManager instance not found. Please ensure there is a PlayerDataManager in the scene.");
             return;
         }
 
-        RewardPoolManager.InitializeAllPools(commonRewardPool, eliteRewardPool, bossRewardPool);
+        // Override defaults from GameConfig if values still match originals (so Inspector overrides are respected)
+        var config = GameConfig.Instance;
+        if (config != null)
+        {
+            if (maxFloor == 3) maxFloor = config.maxFloor;
+            if (Mathf.Approximately(goldBonusPerFloor, 0.15f)) goldBonusPerFloor = config.goldBonusPerFloor;
+            if (Mathf.Approximately(relicRarityBonusPerFloor, 0.15f)) relicRarityBonusPerFloor = config.relicRarityBonusPerFloor;
+        }
+
+        currentFloor = Mathf.Max(1, startFloor);
+        GameLogger.Log($"[GameManager] Start floor: {currentFloor}, max floor: {maxFloor}");
 
         if (mapGenerator == null)
             mapGenerator = FindObjectOfType<MapGenerator>();
@@ -65,7 +80,7 @@ public class GameManager : MonoBehaviour
             mapView = FindObjectOfType<MapView>();
 
         if (mapGenerator == null)
-            Debug.LogError("[GameManager] MapGenerator 未设置！请在场景中搜索 MapGenerator 对象...");
+            GameLogger.LogError("[GameManager] MapGenerator instance not found. Please add a MapGenerator component to the scene.");
 
         if (mapGenerator != null)
         {
@@ -194,7 +209,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 isMoving = false;
-                Debug.LogError("场景中找不到PlayerController 或 CameraFollowController 组件");
+                GameLogger.LogError("[GameManager] Failed to start node movement: PlayerController or CameraFollowController not assigned.");
             }
         }
     }
@@ -205,14 +220,14 @@ public class GameManager : MonoBehaviour
         {
             mapView = FindObjectOfType<MapView>();
             if (mapView != null)
-                Debug.Log("[GameManager] 进入场景 切换到 MapView");
+                GameLogger.Log("[GameManager] OnNodeReached: late-assigned MapView");
         }
 
         if (mapGenerator == null)
         {
             mapGenerator = FindObjectOfType<MapGenerator>();
             if (mapGenerator != null)
-                Debug.Log("[GameManager] 切换到场景 MapGenerator");
+                GameLogger.Log("[GameManager] OnNodeReached: late-assigned MapGenerator");
         }
 
         if (mapView != null)
@@ -233,7 +248,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("BattleManager 为空！场景中必须有 BattleManager 组件");
+                    GameLogger.LogError("[GameManager] Cannot start normal battle: BattleManager not assigned in scene.");
                 }
                 break;
 
@@ -247,7 +262,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("BattleManager 为空！场景中必须有 BattleManager 组件");
+                    GameLogger.LogError("[GameManager] Cannot start elite battle: BattleManager not assigned in scene.");
                 }
                 break;
 
@@ -260,27 +275,27 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("BattleManager 为空！场景中必须有 BattleManager 组件");
+                    GameLogger.LogError("[GameManager] Cannot start boss battle: BattleManager not assigned in scene.");
                 }
                 break;
 
             case NodeType.MysteryEvent:
-                if (Random.value < 0.5f)
-                    dataManager.AddGold(Random.Range(20, 51));
+                if (UnityEngine.Random.value < 0.5f)
+                    dataManager.AddGold(UnityEngine.Random.Range(20, 51));
                 else
-                    dataManager.TakeDamage(Random.Range(5, 13));
+                    dataManager.TakeDamage(UnityEngine.Random.Range(5, 13));
                 break;
 
             case NodeType.Shop:
-                Debug.Log("[GameManager] 进入战斗模式");
+                GameLogger.Log("[GameManager] Entering shop node");
                 if (shopPanel != null)
                 {
-                    Debug.Log("[GameManager] 正在打开 ShopPanel...");
+                    GameLogger.Log("[GameManager] Opening ShopPanel...");
                     shopPanel.OpenShop();
                 }
                 else
                 {
-                    Debug.LogError("[GameManager] ShopPanel 未设置！请在 Inspector 中给 GameManager 的 Shop Panel 字段拖入 ShopPanel 对象");
+                    GameLogger.LogError("[GameManager] ShopPanel is not assigned. Please drag the Shop Panel object into the GameManager's shopPanel field in the Inspector.");
                 }
                 break;
 
@@ -292,9 +307,6 @@ public class GameManager : MonoBehaviour
                 dataManager.Heal(20);
                 break;
 
-            case NodeType.Start:
-                break;
-
             default:
                 break;
         }
@@ -302,7 +314,7 @@ public class GameManager : MonoBehaviour
 
     private Enemy GetRandomNormalEnemy()
     {
-        int index = Random.Range(0, 4);
+        int index = UnityEngine.Random.Range(0, 4);
         switch (index)
         {
             case 0:
@@ -320,7 +332,7 @@ public class GameManager : MonoBehaviour
 
     private Enemy GetRandomEliteEnemy()
     {
-        int index = Random.Range(0, 4);
+        int index = UnityEngine.Random.Range(0, 4);
         switch (index)
         {
             case 0:
@@ -338,33 +350,79 @@ public class GameManager : MonoBehaviour
 
     void OnBattleEnd(bool victory)
     {
+        bool wasBossBattle = (currentEnemyType == EnemyType.Boss);
         isInBattle = false;
         var dataManager = PlayerDataManager.Instance;
 
         if (victory)
         {
+            GameLogger.Log($"[GameManager] Battle won. Enemy type: {currentEnemyType}");
+
+            if (wasBossBattle)
+            {
+                AdvanceToNextFloor();
+            }
         }
         else
         {
-            Debug.Log("游戏结束");
+            GameLogger.Log("[GameManager] Battle lost.");
         }
 
         if (mapView == null)
         {
             mapView = FindObjectOfType<MapView>();
             if (mapView != null)
-                Debug.Log("[GameManager] 游戏结束 切换回场景 MapView");
+                GameLogger.Log("[GameManager] OnBattleEnd: late-assigned MapView");
         }
 
         if (mapGenerator == null)
         {
             mapGenerator = FindObjectOfType<MapGenerator>();
             if (mapGenerator != null)
-                Debug.Log("[GameManager] 游戏结束 切换回场景 MapGenerator");
+                GameLogger.Log("[GameManager] OnBattleEnd: late-assigned MapGenerator");
         }
 
         if (mapView != null)
             mapView.RefreshAllNodes();
+    }
+
+    private void AdvanceToNextFloor()
+    {
+        if (currentFloor >= maxFloor)
+        {
+            GameLogger.Log($"[GameManager] === All floors cleared! Max floor reached: {maxFloor} ===");
+            OnGameComplete?.Invoke();
+            return;
+        }
+
+        currentFloor++;
+        GameLogger.Log($"[GameManager] === Advancing to floor {currentFloor}/{maxFloor} ===");
+        OnFloorChanged?.Invoke(currentFloor);
+
+        if (mapGenerator != null)
+        {
+            mapGenerator.GenerateMap();
+            GameLogger.Log("[GameManager] New floor map regenerated.");
+
+            SetupPlayer();
+
+            if (mapView != null)
+                mapView.RefreshAllNodes();
+        }
+        else
+        {
+            GameLogger.LogWarning("[GameManager] MapGenerator is null, cannot regenerate next floor map.");
+        }
+    }
+
+    public int GetCurrentFloor() => currentFloor;
+    public int GetMaxFloor() => maxFloor;
+    public float GetFloorProgress() => Mathf.Clamp01((float)(currentFloor - 1) / Mathf.Max(1, maxFloor - 1));
+    public float GetGoldBonusPerFloor() => goldBonusPerFloor;
+
+    public float GetGoldMultiplier()
+    {
+        return 1f + (currentFloor - 1) * goldBonusPerFloor;
     }
 
     public Vector2Int GetGoldRangeForEnemy(EnemyType enemyType)
@@ -382,22 +440,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public RewardPool GetRewardPoolForEnemy(EnemyType enemyType)
-    {
-        switch (enemyType)
-        {
-            case EnemyType.Normal:
-                return commonRewardPool;
-            case EnemyType.Elite:
-                return eliteRewardPool;
-            case EnemyType.Boss:
-                return bossRewardPool;
-            default:
-                return commonRewardPool;
-        }
-    }
-
     public bool IsInBattle() => isInBattle;
     public bool IsMoving() => isMoving;
     public EnemyType GetCurrentEnemyType() => currentEnemyType;
 }
+

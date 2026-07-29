@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MutationChess.Core;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -10,19 +11,19 @@ namespace MutationChess.Core
         {
             if (context.battleManager == null)
             {
-                Debug.LogError("DealDamageEffect: battleManager 为空！");
+                GameLogger.LogError("DealDamageEffect: battleManager 为空！");
                 return;
             }
 
             if (context.targetEnemy == null)
             {
-                Debug.LogError("DealDamageEffect: targetEnemy 为空！");
+                GameLogger.LogError("DealDamageEffect: targetEnemy 为空！");
                 return;
             }
 
             if (context.sourceCard == null)
             {
-                Debug.LogError("DealDamageEffect: sourceCard 为空！");
+                GameLogger.LogError("DealDamageEffect: sourceCard 为空！");
                 return;
             }
 

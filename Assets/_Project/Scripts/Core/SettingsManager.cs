@@ -9,18 +9,18 @@ namespace MutationChess.Core
     {
         public static SettingsManager Instance { get; private set; }
 
-        [Header("=== 设置面板 ===")]
+        [Header("")]
         [SerializeField] private GameObject settingsPanel;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button saveButton;
         [SerializeField] private Button resetButton;
 
-        [Header("--- 分辨率 ---")]
+        [Header("")]
         [SerializeField] private TMP_Dropdown resolutionDropdown;
         [SerializeField] private Toggle fullscreenToggle;
 
-        [Header("--- 音量 ---")]
+        [Header("")]
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private Slider musicVolumeSlider;
         [SerializeField] private Slider sfxVolumeSlider;
@@ -28,10 +28,10 @@ namespace MutationChess.Core
         [SerializeField] private TMP_Text musicVolumeText;
         [SerializeField] private TMP_Text sfxVolumeText;
 
-        [Header("--- UI主题 ---")]
+        [Header("UI")]
         [SerializeField] private TMP_Dropdown uiStyleDropdown;
 
-        [Header("--- 其他 ---")]
+        [Header("")]
         [SerializeField] private Toggle showFpsToggle;
         [SerializeField] private TMP_Text fpsText;
 
@@ -41,13 +41,13 @@ namespace MutationChess.Core
         private bool settingsOpen = false;
         private bool isInitialized = false;
 
-        private readonly string[] uiStyleOptions = { "默认风格", "暗色主题", "亮色主题", "复古风格" };
+        private readonly string[] uiStyleOptions = { "", "", "", "" };
 
         void Awake()
         {
             if (Instance != null && Instance != this)
             {
-                // 直接销毁，不调用任何其他操作
+
                 Destroy(gameObject);
                 return;
             }

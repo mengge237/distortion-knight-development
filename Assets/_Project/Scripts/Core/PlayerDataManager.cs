@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
+using MutationChess.Core;
 using UnityEngine;
 using TMPro;
 
@@ -19,18 +20,18 @@ namespace MutationChess.Core
             }
         }
 
-        [Header("=== Êý¾Ý ===")]
+        [Header("===  ===")]
         [SerializeField] private PlayerData playerData;
 
-        [Header("=== TopBar ÒýÓÃ ===")]
+        [Header("=== TopBar  ===")]
         [SerializeField] private TMP_Text healthText;
         [SerializeField] private TMP_Text goldText;
 
-        [Header("=== ÅÆ×é ===")]
+        [Header("===  ===")]
         [SerializeField] private DeckData initialDeck;
         private List<Card> runtimeDeck = new List<Card>();
 
-        [Header("=== ÊÂ¼þ»Øµ÷ ===")]
+        [Header("===  ===")]
         public System.Action<PlayerData> OnDataChanged;
 
         public PlayerData PlayerData => playerData;
@@ -46,7 +47,10 @@ namespace MutationChess.Core
             _instance = this;
 
             if (playerData == null)
+            {
                 playerData = new PlayerData();
+                playerData.InitFromConfig();
+            }
 
             if (initialDeck != null)
             {
@@ -59,8 +63,6 @@ namespace MutationChess.Core
             if (_instance != this) return;
             UpdateUI();
         }
-
-        // ==================== ÅÆ×é¹ÜÀí ====================
 
         public void InitializeDeck(DeckData deckTemplate)
         {
@@ -77,7 +79,7 @@ namespace MutationChess.Core
             else
             {
                 runtimeDeck = new List<Card>();
-                Debug.LogWarning("Î´ÉèÖÃ³õÊ¼ÅÆ×é£¬½«Ê¹ÓÃ¿ÕÅÆ×é");
+                GameLogger.LogWarning("é£¬");
             }
         }
 
@@ -90,8 +92,6 @@ namespace MutationChess.Core
         {
             return runtimeDeck;
         }
-
-        // ==================== ¿¨ÅÆ¹ÜÀí ====================
 
         public void AddCardToDeck(Card card)
         {
@@ -118,8 +118,6 @@ namespace MutationChess.Core
             return removed;
         }
 
-        // ==================== ÉúÃüÖµ ====================
-
         public void Heal(int amount)
         {
             playerData.Heal(amount);
@@ -133,8 +131,6 @@ namespace MutationChess.Core
             OnDataChanged?.Invoke(playerData);
             UpdateUI();
         }
-
-        // ==================== ½ð±Ò ====================
 
         public void AddGold(int amount)
         {
@@ -154,7 +150,21 @@ namespace MutationChess.Core
             return success;
         }
 
-        // ==================== UI¸üÐÂ ====================
+        public bool AddPotion(Potion potion)
+        {
+            if (potion == null) return false;
+            bool success = playerData.AddPotion(potion);
+            if (success)
+            {
+                OnDataChanged?.Invoke(playerData);
+            }
+            return success;
+        }
+
+        public List<Potion> GetPotions()
+        {
+            return playerData.GetPotions();
+        }
 
         public void UpdateUI()
         {
@@ -171,15 +181,11 @@ namespace MutationChess.Core
             }
         }
 
-        // ==================== ²éÑ¯ ====================
-
         public PlayerData GetPlayerData() => playerData;
         public int GetHealth() => playerData.currentHealth;
         public int GetMaxHealth() => playerData.maxHealth;
         public int GetGold() => playerData.gold;
         public bool IsDead() => playerData.IsDead();
-
-        // ==================== ÖØÖÃ ====================
 
         public void ResetData()
         {
@@ -196,3 +202,4 @@ namespace MutationChess.Core
         }
     }
 }
+

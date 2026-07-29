@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b8888e08f2d9274abb9bc2eaf6ee423, type: 3}
+  m_Name: "\u5251\u67C4\u788E\u7247"
+  m_EditorClassIdentifier: 
+  relicId: "06"
+  relicName: "\u5251\u67C4\u788E\u7247"
+  rarity: 1
+  faction: 0
+  effectType: 12
+  effectValue: 5
+  description: "\u83B7\u5F97\u65F6\u6700\u5927\u751F\u547D\u503C+5\uFF08\u53EF\u4E0E\u5251\u788E\u7247\u5408\u6210\uFF09"
+  price: 150
+  iconPath: "RelicsArt/\u5251\u67C4\u788E\u7247"
+  effectIds: []
+  isFactionUnlocker: 0
+  unlockedFaction: 0

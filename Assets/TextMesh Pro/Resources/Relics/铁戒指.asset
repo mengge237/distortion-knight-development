@@ -16,8 +16,11 @@ MonoBehaviour:
   relicName: "\u94C1\u6212\u6307"
   rarity: 2
   faction: 0
-  effectType: 2
-  effectValue: 1
-  description: "+1\u653B\u51FB\u529B\uFF0C\u6BCF\u573A\u6218\u6597\u96501\u6B21"
-  price: 100
+  effectType: 12
+  effectValue: 3
+  description: "\u6218\u6597\u5F00\u59CB\u65F6\u83B7\u5F973\u70B9\u4E34\u65F6\u529B\u91CF"
+  price: 250
   iconPath: "RelicsArt/\u94C1\u6212\u6307"
+  effectIds: []
+  isFactionUnlocker: 0
+  unlockedFaction: 0

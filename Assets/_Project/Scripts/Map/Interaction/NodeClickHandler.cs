@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MutationChess.Core;
 using UnityEngine.EventSystems;
 
 namespace MutationChess.Map
@@ -32,7 +33,7 @@ namespace MutationChess.Map
             }
             else
             {
-                Debug.LogError("GameManager not found!");
+                GameLogger.LogError("GameManager not found!");
             }
         }
     }

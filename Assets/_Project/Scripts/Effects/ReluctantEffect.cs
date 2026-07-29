@@ -1,46 +1,50 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using MutationChess.UI;
 using System.Collections.Generic;
 
 namespace MutationChess.Core
 {
+    /// <summary>
+
+
+
+    /// </summary>
     [CreateAssetMenu(fileName = "ReluctantEffect", menuName = "MutationChess/Card Effects/Reluctant Effect")]
     public class ReluctantEffect : CardEffect
     {
+        [Tooltip("Èø®")]
+        public int drawCount = 1;
+
         public override void Execute(CombatContext context)
         {
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                Debug.LogWarning("ReluctantEffect: HandManager Œ¥’“µΩ");
+                GameLogger.LogWarning("ReluctantEffect: HandManager ");
                 return;
             }
 
-            Card reluctantCard = null;
-            int reluctantIndex = -1;
 
             List<Card> drawPile = handManager.GetDrawPile();
+            int drawn = 0;
 
-            for (int i = 0; i < drawPile.Count; i++)
+            for (int i = 0; i < drawPile.Count && drawn < drawCount; i++)
             {
-                if (drawPile[i] != null && drawPile[i].faction == CardFaction.Reluctant)
+                Card c = drawPile[i];
+                if (c != null && (c.HasTag(CardTag.Reluctant) || c.faction == CardFaction.Reluctant))
                 {
-                    reluctantCard = drawPile[i];
-                    reluctantIndex = i;
-                    break;
+                    handManager.RemoveCardFromDrawPile(i);
+                    handManager.AddCardToHand(c);
+                    GameLogger.Log($"ReluctantEffect: ÈµΩ {c.cardName}");
+                    drawn++;
+                    i--;
                 }
             }
 
-            if (reluctantCard != null && reluctantIndex >= 0)
-            {
-                handManager.RemoveCardFromDrawPile(reluctantIndex);
-                handManager.AddCardToHand(reluctantCard);
-                Debug.Log($"ReluctantEffect: ¥”≈∆ø‚÷–≥ÈµΩ¡À {reluctantCard.cardName}");
-            }
-            else
-            {
-                Debug.Log("ReluctantEffect: ≈∆ø‚÷–√ª”–≤ª…·ø®≈∆");
-            }
+            if (drawn == 0)
+                GameLogger.Log("ReluctantEffect: ");
         }
     }
 }
+
+

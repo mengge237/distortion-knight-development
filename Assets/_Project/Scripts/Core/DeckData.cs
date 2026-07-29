@@ -6,14 +6,14 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "DeckData", menuName = "MutationChess/Deck Data")]
     public class DeckData : ScriptableObject
     {
-        [Header("=== 卡组名称 ===")]
-        public string deckName = "初始卡组";
+        [Header("")]
+        public string deckName = "";
 
-        [Header("=== 卡牌列表（点击下拉选择） ===")]
-        [Tooltip("从下拉菜单中选择卡牌名称")]
+        [Header("")]
+        [Tooltip("")]
         public List<CardName> cardNames = new List<CardName>();
 
-        [Header("=== 卡组统计（只读） ===")]
+        [Header("")]
         [SerializeField] private int totalCards;
 
         public List<Card> GetAllCards()

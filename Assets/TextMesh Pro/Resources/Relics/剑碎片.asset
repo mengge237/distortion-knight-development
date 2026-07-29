@@ -14,10 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: "01"
   relicName: "\u5251\u788E\u7247"
-  rarity: 2
+  rarity: 1
   faction: 0
   effectType: 1
-  effectValue: 3
-  description: "\u653B\u51FB\u65F6\u989D\u5916\u9020\u62103\u70B9\u4F24\u5BB3"
+  effectValue: 2
+  description: "\u653B\u51FB\u65F6\u989D\u5916\u9020\u62102\u70B9\u4F24\u5BB3\uFF08\u53EF\u4E0E\u5251\u67C4\u788E\u7247\u5408\u6210\uFF09"
   price: 150
   iconPath: "RelicsArt/\u5251\u788E\u7247"
+  effectIds: []
+  isFactionUnlocker: 0
+  unlockedFaction: 0

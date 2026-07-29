@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MutationChess.Core;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -10,13 +11,13 @@ namespace MutationChess.Core
         {
             if (context.battleManager == null)
             {
-                Debug.LogError("ApplyBlockEffect: battleManager 为空！");
+                GameLogger.LogError("ApplyBlockEffect: battleManager 为空！");
                 return;
             }
 
             if (context.sourceCard == null)
             {
-                Debug.LogError("ApplyBlockEffect: sourceCard 为空！");
+                GameLogger.LogError("ApplyBlockEffect: sourceCard 为空！");
                 return;
             }
 

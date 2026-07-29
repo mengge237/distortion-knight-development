@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -84,10 +84,8 @@ namespace MutationChess.Battle
 
         private static void InitializePatterns()
         {
-            // ==================== 普通敌人 ====================
-
             patterns["CorruptedSoldier"] = new EnemyAIPattern(
-                "腐化士兵",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -99,7 +97,7 @@ namespace MutationChess.Battle
             );
 
             patterns["MutantHound"] = new EnemyAIPattern(
-                "畸变猎犬",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -111,7 +109,7 @@ namespace MutationChess.Battle
             );
 
             patterns["PlagueAcolyte"] = new EnemyAIPattern(
-                "瘟疫侍僧",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -123,7 +121,7 @@ namespace MutationChess.Battle
             );
 
             patterns["AbyssGrub"] = new EnemyAIPattern(
-                "深渊蛆虫",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -134,10 +132,8 @@ namespace MutationChess.Battle
                 false, -1, true
             );
 
-            // ==================== 精英敌人 ====================
-
             patterns["CorruptedKnight"] = new EnemyAIPattern(
-                "腐蚀骑士",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -151,7 +147,7 @@ namespace MutationChess.Battle
             );
 
             patterns["HellInquisitor"] = new EnemyAIPattern(
-                "地狱审判官",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -164,7 +160,7 @@ namespace MutationChess.Battle
             );
 
             patterns["VoidWizard"] = new EnemyAIPattern(
-                "虚空巫师",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -178,7 +174,7 @@ namespace MutationChess.Battle
             );
 
             patterns["CorruptedGolem"] = new EnemyAIPattern(
-                "腐化巨兽",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -191,11 +187,9 @@ namespace MutationChess.Battle
                 false, -1, true
             );
 
-            // ==================== Boss敌人 ====================
 
-            // 深渊之主：两个形态
             patterns["AbyssLord"] = new EnemyAIPattern(
-                "深渊之主·克苏鲁之影",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -205,19 +199,19 @@ namespace MutationChess.Battle
                     new EnemyAction(EnemyIntentType.Special, 25, 5),
                     new EnemyAction(EnemyIntentType.Attack, 22, 4),
                     new EnemyAction(EnemyIntentType.Buff, 3, 0),
-                    // 血量低于50%：切换到第二形态
+
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 50),
                     new EnemyAction(EnemyIntentType.Special, 35, 5, ConditionType.EnemyHealthBelow, 50),
-                    // 血量低于30%：强化攻击
+
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 30),
                     new EnemyAction(EnemyIntentType.Special, 45, 5, ConditionType.EnemyHealthBelow, 30),
                 },
                 false, -1, true
             );
 
-            // 腐化君王：血量越少越强
+
             patterns["CorruptedKing"] = new EnemyAIPattern(
-                "腐化君王·最后的哀鸣",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -227,7 +221,7 @@ namespace MutationChess.Battle
                     new EnemyAction(EnemyIntentType.Attack, 22, 4),
                     new EnemyAction(EnemyIntentType.Special, 20, 5),
                     new EnemyAction(EnemyIntentType.Buff, 2, 0),
-                    // 血量越低攻击越强（通过条件触发实现）
+
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 70),
                     new EnemyAction(EnemyIntentType.Attack, 28, 4, ConditionType.EnemyHealthBelow, 70),
                     new EnemyAction(EnemyIntentType.Wait, 0, 0, ConditionType.EnemyHealthBelow, 50),
@@ -285,7 +279,7 @@ namespace MutationChess.Battle
         private static EnemyAIPattern GetDefaultPattern()
         {
             return new EnemyAIPattern(
-                "默认模式",
+                "",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -295,11 +289,6 @@ namespace MutationChess.Battle
                 },
                 false, -1, true
             );
-        }
-
-        public static List<string> GetAllPatternNames()
-        {
-            return new List<string>(patterns.Keys);
         }
     }
 }

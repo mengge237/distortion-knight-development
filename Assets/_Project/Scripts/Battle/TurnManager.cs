@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using MutationChess.Core;
 
 namespace MutationChess.Battle
 {
@@ -65,6 +66,8 @@ namespace MutationChess.Battle
             }
 
             isPlayerTurn = true;
+
+            ConversionModifier.ResetTemporary();
             OnPlayerTurnStart?.Invoke();
         }
 

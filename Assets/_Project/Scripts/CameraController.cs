@@ -2,20 +2,20 @@
 
 public class CameraController : MonoBehaviour
 {
-    [Header("缩放")]
+    [Header("缩放设置")]
     [SerializeField] private float minZoom = 3f;
     [SerializeField] private float maxZoom = 15f;
     [SerializeField] private float zoomSpeed = 2f;
 
-    [Header("旋转（像人转头一样）")]
+    [Header("旋转设置（转头一下转一下）")]
     [SerializeField] private float rotateSpeed = 2f;
-    [SerializeField] private float minAngle = -60f;   // 左转最大角度
-    [SerializeField] private float maxAngle = 60f;    // 右转最大角度
+    [SerializeField] private float minAngle = -60f;   // 旋转最小角度
+    [SerializeField] private float maxAngle = 60f;    // 旋转最大角度
 
     [Header("拖拽平移")]
     [SerializeField] private float dragSpeed = 0.5f;
 
-    [Header("平滑回正")]
+    [Header("平移回归开关")]
     [SerializeField] private bool enableSmoothReturn = true;
     [SerializeField] private float returnSpeed = 3f;
 
@@ -30,7 +30,7 @@ public class CameraController : MonoBehaviour
     private Vector3 originalPosition;
     private Quaternion originalRotation;
 
-    // 当前摄像机距离地面的高度（用于保持视角高度不变）
+    // 保存相机初始的观察高度，用于拖拽平移和透视缩放时保持高度不变
     private float fixedHeight;
 
     void Start()
@@ -51,7 +51,6 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        // --- 滚轮缩放 ---
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0f && cam != null)
         {
@@ -62,7 +61,7 @@ public class CameraController : MonoBehaviour
             }
             else
             {
-                // 透视相机：沿视线方向移动
+                // 透视相机缩放：沿相机方向前后移动
                 Vector3 forward = transform.forward;
                 float distance = Vector3.Distance(transform.position, GetLookAtPoint());
                 float newDistance = distance - scroll * zoomSpeed;
@@ -71,7 +70,6 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        // --- 鼠标左键旋转视角（像人转头） ---
         if (Input.GetMouseButtonDown(0))
         {
             if (UnityEngine.EventSystems.EventSystem.current != null &&
@@ -101,7 +99,6 @@ public class CameraController : MonoBehaviour
             isRotating = false;
         }
 
-        // --- 鼠标中键拖拽平移 ---
         if (Input.GetMouseButtonDown(2))
         {
             dragOrigin = GetMouseWorldPosition();
@@ -120,13 +117,11 @@ public class CameraController : MonoBehaviour
             isDragging = false;
         }
 
-        // --- 空格键回正 ---
         if (Input.GetKeyDown(KeyCode.Space))
         {
             ResetView();
         }
 
-        // --- 平滑回正（可选） ---
         if (enableSmoothReturn && !isRotating && Mathf.Abs(currentAngle) > 0.5f)
         {
             targetAngle = Mathf.Lerp(targetAngle, 0, Time.deltaTime * returnSpeed);
@@ -138,7 +133,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// 应用旋转 - 摄像机围绕自身Y轴旋转（像人转头）
+    /// 应用相机旋转
     /// </summary>
     void ApplyRotation(float angle)
     {
@@ -148,7 +143,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// 获取鼠标在世界空间中的位置（用于拖拽）
+    /// 获取鼠标在地面平面（相机初始高度）上的世界坐标，用于平移拖拽
     /// </summary>
     Vector3 GetMouseWorldPosition()
     {
@@ -166,11 +161,11 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// 获取摄像机看向的点（透视相机用）
+    /// 获取相机正前方的地面注视点（透视相机缩放用）
     /// </summary>
     Vector3 GetLookAtPoint()
     {
-        // 简单实现：从摄像机位置沿前进方向投射
+        // 实际实现：以相机位置为起点、朝向为射线，与地面相交
         Ray ray = new Ray(transform.position, transform.forward);
         Plane plane = new Plane(Vector3.up, new Vector3(0, fixedHeight, 0));
         float distance;
@@ -182,7 +177,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// 重置视角
+    /// 重置相机视角
     /// </summary>
     public void ResetView()
     {
@@ -190,7 +185,7 @@ public class CameraController : MonoBehaviour
         currentAngle = 0f;
         ApplyRotation(0f);
 
-        // 重置位置（保持高度不变）
+        // 重置位置：保持高度不变
         Vector3 pos = transform.position;
         pos.x = originalPosition.x;
         pos.z = originalPosition.z;
@@ -203,7 +198,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// 设置摄像机位置（外部调用）
+    /// 把相机直接设置到指定位置和朝向，外部调用
     /// </summary>
     public void SetPosition(Vector3 position)
     {

@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using MutationChess.Core;
@@ -8,44 +8,49 @@ namespace MutationChess.UI
 {
     public class RewardPanel : MonoBehaviour
     {
-        [Header("=== 面板引用 ===")]
+        [Header("===  ===")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private GameObject rewardOverview;
         [SerializeField] private GameObject cardSelectionPanel;
 
-        [Header("=== 金币奖励 ===")]
+        [Header("===  ===")]
         [SerializeField] private TMP_Text goldAmountText;
         [SerializeField] private Button cardRewardButton;
         [SerializeField] private TMP_Text cardRewardLabel;
 
-        [Header("=== 卡牌奖励 ===")]
+        [Header("===  ===")]
         [SerializeField] private Transform cardContainer;
         [SerializeField] private GameObject cardPrefab;
         [SerializeField] private Button skipCardButton;
 
-        [Header("=== 遗物奖励 ===")]
+        [Header("===  ===")]
         [SerializeField] private Button skipOverviewButton;
 
-        [Header("=== 标题 ===")]
+        [Header("===  ===")]
         [SerializeField] private TMP_Text titleText;
 
-        [Header("=== 奖励物体引用 ===")]
+        [Header("===  ===")]
         [SerializeField] private GameObject goldRewardObject;
         [SerializeField] private GameObject relicRewardObject;
         [SerializeField] private GameObject potionRewardObject;
         [SerializeField] private GameObject cardRewardObject;
 
-        [Header("=== 遗物显示 ===")]
+        [Header("===  ===")]
         [SerializeField] private Image relicIconImage;
         [SerializeField] private TMP_Text relicNameText;
 
-        [Header("=== 布局偏移 ===")]
+        [Header("===  ===")]
+        [SerializeField] private Image potionIconImage;
+        [SerializeField] private TMP_Text potionNameText;
+
+        [Header("===  ===")]
         [SerializeField] private Vector2 cardContainerOffset = new Vector2(0, -50);
 
         private Card selectedCard = null;
         private int currentGoldReward = 0;
         private List<Card> currentCardRewards = new List<Card>();
         private Relic currentRelicReward = null;
+        private Potion currentPotionReward = null;
         private System.Action<int, Card> onRewardsConfirmed;
         private System.Action onPanelClosed;
         private bool goldClaimed = false;
@@ -62,7 +67,7 @@ namespace MutationChess.UI
             }
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "选择奖励卡牌";
+                cardRewardLabel.text = "";
 
             if (goldAmountText != null)
             {
@@ -124,10 +129,18 @@ namespace MutationChess.UI
                                 System.Action<int, Card> onConfirmed,
                                 System.Action onClosed = null)
         {
+            ShowRewards(goldReward, cardRewards, relicReward, null, onConfirmed, onClosed);
+        }
+
+        public void ShowRewards(int goldReward, List<Card> cardRewards, Relic relicReward, Potion potionReward,
+                                System.Action<int, Card> onConfirmed,
+                                System.Action onClosed = null)
+        {
 
             currentGoldReward = goldReward;
             currentCardRewards = cardRewards ?? new List<Card>();
             currentRelicReward = relicReward;
+            currentPotionReward = potionReward;
             onRewardsConfirmed = onConfirmed;
             onPanelClosed = onClosed;
 
@@ -140,7 +153,7 @@ namespace MutationChess.UI
                 goldAmountText.text = goldReward.ToString();
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "选择奖励卡牌";
+                cardRewardLabel.text = "";
 
             HideAllRewardObjects();
 
@@ -174,7 +187,7 @@ namespace MutationChess.UI
                 }
             }
 
-            // 设置遗物奖励
+
             if (relicRewardObject != null)
             {
                 if (currentRelicReward != null)
@@ -192,6 +205,37 @@ namespace MutationChess.UI
                 else
                 {
                     relicRewardObject.SetActive(false);
+                }
+            }
+
+
+            if (potionRewardObject != null)
+            {
+                if (currentPotionReward != null)
+                {
+                    potionRewardObject.SetActive(true);
+                    if (potionIconImage != null)
+                    {
+                        if (currentPotionReward.icon != null)
+                        {
+                            potionIconImage.sprite = currentPotionReward.icon;
+                            potionIconImage.gameObject.SetActive(true);
+                        }
+                        else
+                        {
+                            potionIconImage.gameObject.SetActive(false);
+                        }
+                    }
+                    if (potionNameText != null)
+                        potionNameText.text = $"{currentPotionReward.potionName} ({currentPotionReward.GetRarityName()})";
+
+                    RectTransform potionRect = potionRewardObject.GetComponent<RectTransform>();
+                    if (potionRect != null)
+                        potionRect.anchoredPosition = new Vector2(0, -50);
+                }
+                else
+                {
+                    potionRewardObject.SetActive(false);
                 }
             }
 
@@ -241,12 +285,23 @@ namespace MutationChess.UI
             if (relicRewardObject != null && currentRelicReward != null)
             {
                 relicRewardObject.SetActive(true);
+                RectTransform relicRect = relicRewardObject.GetComponent<RectTransform>();
+                if (relicRect != null)
+                    relicRect.anchoredPosition = new Vector2(0, 50);
             }
             else if (relicRewardObject != null)
             {
                 relicRewardObject.SetActive(false);
             }
-            if (potionRewardObject != null && potionRewardObject.activeSelf)
+
+            if (potionRewardObject != null && currentPotionReward != null)
+            {
+                potionRewardObject.SetActive(true);
+                RectTransform potionRect = potionRewardObject.GetComponent<RectTransform>();
+                if (potionRect != null)
+                    potionRect.anchoredPosition = new Vector2(0, -50);
+            }
+            else if (potionRewardObject != null)
             {
                 potionRewardObject.SetActive(false);
             }
@@ -278,7 +333,7 @@ namespace MutationChess.UI
         {
             if (panelRoot == null)
             {
-                Debug.LogError("RewardPanel: panelRoot 为空");
+                GameLogger.LogError("RewardPanel: panelRoot ");
                 return;
             }
 
@@ -358,19 +413,19 @@ namespace MutationChess.UI
         {
             if (cardContainer == null)
             {
-                Debug.LogError("RewardPanel: cardContainer 为空");
+                GameLogger.LogError("RewardPanel: cardContainer ");
                 return;
             }
 
             if (rewards == null || rewards.Count == 0)
             {
-                Debug.LogWarning("RewardPanel: 无可用的卡牌奖励");
+                GameLogger.LogWarning("RewardPanel: ");
                 return;
             }
 
             if (cardPrefab == null)
             {
-                Debug.LogError("RewardPanel: cardPrefab 为空");
+                GameLogger.LogError("RewardPanel: cardPrefab ");
                 return;
             }
 
@@ -402,7 +457,7 @@ namespace MutationChess.UI
                 }
                 else
                 {
-                    Debug.LogError("RewardPanel: CardUI 组件未找到");
+                    GameLogger.LogError("RewardPanel: CardUI ");
                 }
             }
         }
@@ -417,7 +472,7 @@ namespace MutationChess.UI
 
             if (goldRewardObject != null)
             {
-                // 更新金币文本
+
                 goldRewardObject.SetActive(false);
             }
 
@@ -464,7 +519,7 @@ namespace MutationChess.UI
             ArrangeRewards();
 
             if (cardRewardLabel != null)
-                cardRewardLabel.text = "选择奖励卡牌 ?";
+                cardRewardLabel.text = "";
         }
 
         public void ShowOverview()
@@ -476,7 +531,7 @@ namespace MutationChess.UI
                 cardSelectionPanel.SetActive(false);
 
             if (titleText != null)
-                titleText.text = "战斗奖励！";
+                titleText.text = "";
 
             isCardSelectionActive = false;
             ArrangeRewards();
@@ -489,7 +544,7 @@ namespace MutationChess.UI
                 cardSelectionPanel.SetActive(true);
 
             if (titleText != null)
-                titleText.text = "战斗失败...";
+                titleText.text = "...";
 
             isCardSelectionActive = true;
         }
@@ -554,3 +609,5 @@ namespace MutationChess.UI
         }
     }
 }
+
+

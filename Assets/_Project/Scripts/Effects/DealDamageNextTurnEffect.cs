@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -6,7 +6,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "DealDamageNextTurn", menuName = "MutationChess/Effects/Deal Damage Next Turn")]
     public class DealDamageNextTurnEffect : CardEffect
     {
-        // 从 Card 的 magicNumber 或 damage 获取延迟伤害值
+
 
         public override void Execute(CombatContext context)
         {

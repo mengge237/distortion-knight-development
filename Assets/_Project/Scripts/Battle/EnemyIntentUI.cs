@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MutationChess.Core;
 using TMPro;
 using UnityEngine.UI;
 
@@ -15,12 +16,12 @@ namespace MutationChess.Battle
 
     public class EnemyIntentUI : MonoBehaviour
     {
-        [Header("=== UI组件 ===")]
+        [Header("UI")]
         [SerializeField] private GameObject intentPanel;
         [SerializeField] private Image intentIcon;
         [SerializeField] private TMP_Text intentText;
 
-        [Header("=== 意图图标 ===")]
+        [Header("")]
         [SerializeField] private Sprite attackIcon;
         [SerializeField] private Sprite defendIcon;
         [SerializeField] private Sprite specialIcon;
@@ -32,7 +33,7 @@ namespace MutationChess.Battle
             if (intentPanel != null)
                 intentPanel.SetActive(false);
             else
-                Debug.LogError("EnemyIntentUI: intentPanel 未设置！");
+                GameLogger.LogError("EnemyIntentUI: intentPanel ");
         }
 
         public void ShowIntent(EnemyIntentType intent, int value)
@@ -43,7 +44,7 @@ namespace MutationChess.Battle
             }
             else
             {
-                Debug.LogError("intentPanel 为空！无法显示意图");
+                GameLogger.LogError("intentPanel ");
                 return;
             }
 
@@ -60,19 +61,19 @@ namespace MutationChess.Battle
                 else
                 {
                     intentIcon.enabled = false;
-                    Debug.LogWarning($"意图 {intent} 没有配置图标！请检查 Inspector");
+                    GameLogger.LogWarning($" {intent}  Inspector");
                 }
             }
             else
             {
-                Debug.LogError("intentIcon 为空！");
+                GameLogger.LogError("intentIcon ");
             }
 
             if (intentText != null)
             {
                 if (intent == EnemyIntentType.Wait)
                 {
-                    intentText.text = "";  // 等待不显示任何文本
+                    intentText.text = "";
                 }
                 else
                 {
@@ -81,7 +82,7 @@ namespace MutationChess.Battle
             }
             else
             {
-                Debug.LogError("intentText 为空！");
+                GameLogger.LogError("intentText ");
             }
         }
 
@@ -114,14 +115,16 @@ namespace MutationChess.Battle
 
         void OnValidate()
         {
-            if (attackIcon == null) Debug.LogWarning("Attack Icon 未设置！");
-            if (defendIcon == null) Debug.LogWarning("Defend Icon 未设置！");
-            if (specialIcon == null) Debug.LogWarning("Special Icon 未设置！");
-            if (buffIcon == null) Debug.LogWarning("Buff Icon 未设置！");
-            if (waitIcon == null) Debug.LogWarning("Wait Icon 未设置！");
-            if (intentPanel == null) Debug.LogWarning("Intent Panel 未设置！");
-            if (intentIcon == null) Debug.LogWarning("Intent Icon 未设置！");
-            if (intentText == null) Debug.LogWarning("Intent Text 未设置！");
+            if (attackIcon == null) GameLogger.LogWarning("Attack Icon ");
+            if (defendIcon == null) GameLogger.LogWarning("Defend Icon ");
+            if (specialIcon == null) GameLogger.LogWarning("Special Icon ");
+            if (buffIcon == null) GameLogger.LogWarning("Buff Icon ");
+            if (waitIcon == null) GameLogger.LogWarning("Wait Icon ");
+            if (intentPanel == null) GameLogger.LogWarning("Intent Panel ");
+            if (intentIcon == null) GameLogger.LogWarning("Intent Icon ");
+            if (intentText == null) GameLogger.LogWarning("Intent Text ");
         }
     }
 }
+
+

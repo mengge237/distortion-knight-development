@@ -1,9 +1,15 @@
-using UnityEngine;
+锘縰sing UnityEngine;
+using MutationChess.Core;
 using MutationChess.UI;
 using System.Collections.Generic;
 
 namespace MutationChess.Core
 {
+    /// <summary>
+
+
+
+    /// </summary>
     [CreateAssetMenu(fileName = "SlimeEffect", menuName = "MutationChess/Card Effects/Slime Effect")]
     public class SlimeEffect : CardEffect
     {
@@ -11,73 +17,53 @@ namespace MutationChess.Core
         {
             if (context == null || context.sourceCard == null)
             {
-                Debug.LogWarning("SlimeEffect: 上下文无效");
+                GameLogger.LogWarning("SlimeEffect: ");
                 return;
             }
 
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                Debug.LogWarning("SlimeEffect: HandManager 未找到");
+                GameLogger.LogWarning("SlimeEffect: HandManager ");
                 return;
             }
+
+
 
             Card playedCard = context.sourceCard;
-            int playedCardIndex = -1;
-
             List<Card> handCards = handManager.GetHandCards();
-            for (int i = 0; i < handCards.Count; i++)
+            int playedIndex = handCards.IndexOf(playedCard);
+            if (playedIndex < 0)
             {
-                if (handCards[i] == playedCard)
-                {
-                    playedCardIndex = i;
-                    break;
-                }
-            }
-
-            if (playedCardIndex < 0)
-            {
-                Debug.LogWarning("SlimeEffect: 在手中未找到卡牌");
+                GameLogger.LogWarning("SlimeEffect: ");
                 return;
             }
 
-            List<Card> adjacentCards = new List<Card>();
+            int range = SlimeExpandEffect.SlimeTriggerRange > 0
+                ? SlimeExpandEffect.SlimeTriggerRange : 1;
 
-            int leftIndex = playedCardIndex - 1;
-            int rightIndex = playedCardIndex + 1;
-
-            if (leftIndex >= 0 && leftIndex < handCards.Count)
+            for (int offset = -range; offset <= range; offset++)
             {
-                adjacentCards.Add(handCards[leftIndex]);
-            }
-
-            if (rightIndex >= 0 && rightIndex < handCards.Count)
-            {
-                adjacentCards.Add(handCards[rightIndex]);
-            }
-
-            if (adjacentCards.Count == 0)
-            {
-                Debug.Log("SlimeEffect: 没有相邻卡牌");
-                return;
-            }
-
-            foreach (var adjCard in adjacentCards)
-            {
-                if (adjCard != null && adjCard.faction == CardFaction.Slime)
+                if (offset == 0) continue;
+                int idx = playedIndex + offset;
+                if (idx >= 0 && idx < handCards.Count)
                 {
-                    Debug.Log($"SlimeEffect: 触发相邻粘液卡牌 {adjCard.cardName} 的效果");
-
-                    CombatContext tempContext = new CombatContext(
-                        context.battleManager,
-                        context.targetEnemy,
-                        context.targetPlayer,
-                        adjCard
-                    );
-
-                    adjCard.ExecuteEffects(tempContext);
+                    Card adj = handCards[idx];
+                    if (adj != null && (adj.HasTag(CardTag.Slime) || adj.faction == CardFaction.Slime))
+                    {
+                        GameLogger.Log($"SlimeEffect:  {adj.cardName} ( {offset})");
+                        CombatContext adjCtx = new CombatContext(
+                            context.battleManager,
+                            context.targetEnemy,
+                            context.targetPlayer,
+                            adj
+                        );
+                        adj.ExecuteEffects(adjCtx);
+                    }
                 }
             }
         }
     }
 }
+
+

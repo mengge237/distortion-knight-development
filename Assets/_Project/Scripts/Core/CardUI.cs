@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+﻿﻿using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using TMPro;
@@ -10,7 +10,7 @@ namespace MutationChess.UI
 {
     public class CardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        [Header("=== UI组件 ===")]
+        [Header("UI")]
         [SerializeField] private Image cardBackground;
         [SerializeField] private Image borderImage;
         [SerializeField] private Image cardArt;
@@ -18,13 +18,13 @@ namespace MutationChess.UI
         [SerializeField] private TMP_Text costText;
         [SerializeField] private TMP_Text descriptionText;
 
-        [Header("=== 能量图标 ===")]
+        [Header("")]
         [SerializeField] private Image costIcon;
 
-        [Header("=== 发光效果 ===")]
+        [Header("")]
         [SerializeField] private Image glowImage;
 
-        [Header("=== 动画参数 ===")]
+        [Header("")]
         [SerializeField] private float hoverScale = 1.08f;
         [SerializeField] private float hoverFloatAmount = 15f;
         [SerializeField] private float hoverDuration = 0.15f;
@@ -32,10 +32,10 @@ namespace MutationChess.UI
         [SerializeField] private float dragFloatAmount = 50f;
         [SerializeField] private float dragThreshold = 50f;
 
-        [Header("=== 状态 ===")]
+        [Header("")]
         [SerializeField] private Color disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
 
-        [Header("=== 大图预览 ===")]
+        [Header("")]
         [SerializeField] private GameObject bigCardPrefab;
         [SerializeField] private Transform bigCardParent;
         [SerializeField] private float longPressDelay = 0.5f;
@@ -100,19 +100,19 @@ namespace MutationChess.UI
             cardData = card;
 
             if (cardNameText == null)
-                Debug.LogError("CardUI: cardNameText 为空！请检查预制体");
+                GameLogger.LogError("CardUI: cardNameText ");
             if (costText == null)
-                Debug.LogError("CardUI: costText 为空！请检查预制体");
+                GameLogger.LogError("CardUI: costText ");
             if (descriptionText == null)
-                Debug.LogError("CardUI: descriptionText 为空！请检查预制体");
+                GameLogger.LogError("CardUI: descriptionText ");
             if (borderImage == null)
-                Debug.LogError("CardUI: borderImage 为空！请检查预制体");
+                GameLogger.LogError("CardUI: borderImage ");
             if (cardBackground == null)
-                Debug.LogError("CardUI: cardBackground 为空！请检查预制体");
+                GameLogger.LogError("CardUI: cardBackground ");
             if (cardArt == null)
-                Debug.LogError("CardUI: cardArt 为空！请检查预制体");
+                GameLogger.LogError("CardUI: cardArt ");
             if (costIcon == null)
-                Debug.LogError("CardUI: costIcon 为空！请检查预制体");
+                GameLogger.LogError("CardUI: costIcon ");
 
             UpdateUI();
 
@@ -164,7 +164,7 @@ namespace MutationChess.UI
                 else
                 {
                     cardArt.enabled = false;
-                    Debug.LogWarning($"卡牌 {cardData.cardName} 没有图片");
+                    GameLogger.LogWarning($" {cardData.cardName} ");
                 }
             }
 
@@ -532,3 +532,4 @@ namespace MutationChess.UI
         public void SetOriginalPosition(Vector3 pos) { originalPosition = pos; }
     }
 }
+

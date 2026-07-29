@@ -1,17 +1,17 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using DG.Tweening;
 
 namespace MutationChess.Map
 {
     public class CameraFollowController : MonoBehaviour
     {
-        [Header("è·Ÿéšè®¾ç½®")]
+        [Header("¸úËæÉèÖÃ")]
         [SerializeField] private float moveDuration = 0.6f;
         [SerializeField] private Ease moveEase = Ease.InOutQuad;
         [SerializeField] private Vector3 cameraOffset = new Vector3(0, 8, -8);
         [SerializeField] private Vector3 lookOffset = new Vector3(0, 0, 0);
 
-        [Header("æ—‹è½¬è®¾ç½®")]
+        [Header("Ğı×ªÉèÖÃ")]
         [SerializeField] private bool enableRotation = true;
         [SerializeField] private float rotationDuration = 0.5f;
 
@@ -75,13 +75,6 @@ namespace MutationChess.Map
                 mainCamera.transform.rotation = targetRot;
 
             CurrentTargetNode = targetNode;
-        }
-
-        public void StopMoving()
-        {
-            moveTween?.Kill();
-            rotationTween?.Kill();
-            isMoving = false;
         }
 
         void OnDestroy()

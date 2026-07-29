@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MutationChess.Core;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -11,7 +12,7 @@ namespace MutationChess.Core
             if (context.targetPlayer != null && context.sourceCard != null)
             {
                 int amount = context.sourceCard.magicNumber > 0 ? context.sourceCard.magicNumber : 3;
-                Debug.LogWarning("ApplyDexterityEffect 对玩家的 Buff 功能尚未实现");
+                GameLogger.LogWarning("ApplyDexterityEffect 对玩家的 Buff 功能尚未实现");
             }
             else if (context.targetEnemy != null)
             {

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MutationChess.Core;
 
 namespace MutationChess.Map
 {
@@ -33,7 +34,7 @@ namespace MutationChess.Map
                 }
                 else
                 {
-                    Debug.LogError("找不到 MapGenerator！");
+                    GameLogger.LogError("找不到 MapGenerator！");
                 }
             }
         }

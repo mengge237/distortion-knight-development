@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 using MutationChess.UI;
 
 namespace MutationChess.Core
@@ -16,7 +16,7 @@ namespace MutationChess.Core
             {
                 int index = Random.Range(0, handCards.Count);
                 Card cardToDiscard = handCards[index];
-                // 需要 HandManager 提供弃牌方法
+
                 handManager.DiscardCard(cardToDiscard);
             }
         }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using UnityEngine;
+using MutationChess.Core;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
@@ -10,19 +11,19 @@ namespace MutationChess.UI
     {
         public static BattleLogManager Instance { get; private set; }
 
-        [Header("=== Toast ===")]
+        [Header("Toast")]
         [SerializeField] private TMP_Text toastText;
         [SerializeField] private CanvasGroup toastCanvasGroup;
         [SerializeField] private float toastDuration = 1.2f;
         [SerializeField] private float toastFadeInDuration = 0.25f;
         [SerializeField] private float toastFadeOutDuration = 0.4f;
 
-        [Header("=== History Panel ===")]
+        [Header("History Panel")]
         [SerializeField] private GameObject historyPanel;
         [SerializeField] private TMP_Text historyText;
         [SerializeField] private ScrollRect historyScrollRect;
 
-        [Header("=== Toggle Button ===")]
+        [Header("Toggle Button")]
         [SerializeField] private Button toggleHistoryButton;
 
         private List<string> logHistory = new List<string>();
@@ -35,7 +36,7 @@ namespace MutationChess.UI
                 return;
             }
             Instance = this;
-            Debug.Log("[BattleLogManager] Instance initialized");
+            GameLogger.Log("[BattleLogManager] Instance initialized");
         }
 
         private void Start()
@@ -47,12 +48,12 @@ namespace MutationChess.UI
             if (toggleHistoryButton != null)
                 toggleHistoryButton.onClick.AddListener(ToggleHistoryPanel);
 
-            Debug.Log($"[BattleLogManager] Start - toastText:{toastText != null}, toastCanvas:{toastCanvasGroup != null}, historyPanel:{historyPanel != null}, toggleBtn:{toggleHistoryButton != null}");
+            GameLogger.Log($"[BattleLogManager] Start - toastText:{toastText != null}, toastCanvas:{toastCanvasGroup != null}, historyPanel:{historyPanel != null}, toggleBtn:{toggleHistoryButton != null}");
         }
 
         public void AddLog(string msg)
         {
-            Debug.Log($"[BattleLogManager] AddLog: {msg}");
+            GameLogger.Log($"[BattleLogManager] AddLog: {msg}");
             logHistory.Add(msg);
             UpdateHistoryText();
             ShowToast(msg);
@@ -62,7 +63,7 @@ namespace MutationChess.UI
         {
             if (toastText == null || toastCanvasGroup == null)
             {
-                Debug.LogWarning($"[BattleLogManager] ShowToast skipped - toastText:{toastText != null}, toastCanvasGroup:{toastCanvasGroup != null}");
+                GameLogger.LogWarning($"[BattleLogManager] ShowToast skipped - toastText:{toastText != null}, toastCanvasGroup:{toastCanvasGroup != null}");
                 return;
             }
 
@@ -90,13 +91,13 @@ namespace MutationChess.UI
         {
             if (historyPanel == null)
             {
-                Debug.LogWarning("[BattleLogManager] ToggleHistoryPanel - historyPanel is null!");
+                GameLogger.LogWarning("[BattleLogManager] ToggleHistoryPanel - historyPanel is null!");
                 return;
             }
 
             bool isActive = historyPanel.activeSelf;
             historyPanel.SetActive(!isActive);
-            Debug.Log($"[BattleLogManager] ToggleHistoryPanel - opening:{!isActive}, logCount:{logHistory.Count}");
+            GameLogger.Log($"[BattleLogManager] ToggleHistoryPanel - opening:{!isActive}, logCount:{logHistory.Count}");
 
             if (!isActive)
             {
@@ -111,11 +112,11 @@ namespace MutationChess.UI
         {
             if (historyText == null)
             {
-                Debug.LogWarning("[BattleLogManager] UpdateHistoryText - historyText is null!");
+                GameLogger.LogWarning("[BattleLogManager] UpdateHistoryText - historyText is null!");
                 return;
             }
             historyText.text = string.Join("\n", logHistory);
-            Debug.Log($"[BattleLogManager] UpdateHistoryText - lines:{logHistory.Count}, text length:{historyText.text.Length}");
+            GameLogger.Log($"[BattleLogManager] UpdateHistoryText - lines:{logHistory.Count}, text length:{historyText.text.Length}");
         }
 
         public void ClearLogs()

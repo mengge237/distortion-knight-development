@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 using UnityEngine.UI;
 using MutationChess.Core;
 using System.Collections.Generic;
@@ -6,16 +6,16 @@ using System.Collections.Generic;
 namespace MutationChess.UI
 {
     /// <summary>
-    /// 在 HUD 上显示已拥有遗物的图标（水平排列）。
-    /// 挂载到手动创建的 UI 面板上使用。
+
+
     /// </summary>
     public class RelicBarUI : MonoBehaviour
     {
-        [Header("=== 容器 ===")]
+        [Header("===  ===")]
         [SerializeField] private Transform iconContainer;
         [SerializeField] private GameObject iconPrefab;
 
-        [Header("=== 排列 ===")]
+        [Header("===  ===")]
         [SerializeField] private float iconSize = 90f;
         [SerializeField] private float spacing = 4f;
 
@@ -23,7 +23,7 @@ namespace MutationChess.UI
 
         void Start()
         {
-            // 确保容器没有 LayoutGroup 干扰手动排列
+
             if (iconContainer != null)
             {
                 var layout = iconContainer.GetComponent<LayoutGroup>();
@@ -49,7 +49,7 @@ namespace MutationChess.UI
         {
             if (iconContainer == null) return;
 
-            // 清除旧图标
+
             foreach (var icon in spawnedIcons)
                 Destroy(icon);
             spawnedIcons.Clear();
@@ -76,7 +76,7 @@ namespace MutationChess.UI
                     iconObj.transform.SetParent(iconContainer, false);
                 }
 
-                // 设置图标尺寸和位置（水平向右排列）
+
                 RectTransform rt = iconObj.GetComponent<RectTransform>();
                 if (rt != null)
                 {
@@ -101,3 +101,5 @@ namespace MutationChess.UI
         }
     }
 }
+
+

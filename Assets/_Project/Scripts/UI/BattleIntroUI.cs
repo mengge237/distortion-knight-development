@@ -4,34 +4,35 @@ using TMPro;
 using DG.Tweening;
 using System;
 using System.Collections;
+using MutationChess.Battle;
 
 namespace MutationChess.UI
 {
     public class BattleIntroUI : MonoBehaviour
     {
-        [Header("=== Overlay ===")]
+        [Header("Overlay")]
         [SerializeField] private CanvasGroup overlayCanvasGroup;
         [SerializeField] private Image backgroundImage;
 
-        [Header("=== Player Info ===")]
+        [Header("Player Info")]
         [SerializeField] private RectTransform playerInfoGroup;
         [SerializeField] private CanvasGroup playerInfoCanvasGroup;
         [SerializeField] private TMP_Text playerNameText;
         [SerializeField] private TMP_Text playerHpText;
         [SerializeField] private Image playerImage;
 
-        [Header("=== Enemy Info ===")]
+        [Header("Enemy Info")]
         [SerializeField] private RectTransform enemyInfoGroup;
         [SerializeField] private CanvasGroup enemyInfoCanvasGroup;
         [SerializeField] private TMP_Text enemyNameText;
         [SerializeField] private TMP_Text enemyHpText;
         [SerializeField] private Image enemyImage;
 
-        [Header("=== Battle Start Text ===")]
+        [Header("Battle Start Text")]
         [SerializeField] private TMP_Text battleStartText;
         [SerializeField] private CanvasGroup battleStartCanvasGroup;
 
-        [Header("=== Animation Settings ===")]
+        [Header("Animation Settings")]
         [SerializeField] private float bgFadeInDuration = 0.4f;
         [SerializeField] private float infoZoomInDuration = 0.6f;
         [SerializeField] private float infoHoldDuration = 1.0f;

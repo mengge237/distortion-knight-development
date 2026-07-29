@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MutationChess.Core;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -65,7 +66,7 @@ namespace MutationChess.Battle
 
             if (enemySprite == null)
             {
-                Debug.LogWarning($"未找到敌人图片: {fullPath}");
+                GameLogger.LogWarning($"未找到敌人图片: {fullPath}");
             }
         }
 
@@ -106,7 +107,7 @@ namespace MutationChess.Battle
                 }
                 else
                 {
-                    Debug.LogWarning($"未找到第二形态图片: {secondFormSpriteName}");
+                    GameLogger.LogWarning($"未找到敌人二阶段图片: {secondFormSpriteName}");
                 }
             }
 
@@ -214,7 +215,7 @@ namespace MutationChess.Battle
             turnCount++;
             ReduceBuffDurations();
 
-            if (enemyName.Contains("深渊之主") && !isSecondForm && GetHealthPercentage() < 0.5f)
+            if (enemyName.Contains("深渊领主") && !isSecondForm && GetHealthPercentage() < 0.5f)
             {
                 SwitchToSecondForm();
             }
@@ -233,7 +234,7 @@ namespace MutationChess.Battle
 
             int damage = currentAttackDamage + strength;
 
-            if (enemyName.Contains("腐化君王"))
+            if (enemyName.Contains("腐化国王"))
             {
                 damage += GetKingPowerBonus();
             }
@@ -251,16 +252,6 @@ namespace MutationChess.Battle
             }
 
             return Mathf.Max(1, damage);
-        }
-
-        public int GetModifiedBlock(int baseBlock)
-        {
-            int frail = GetBuffAmount(BuffType.Frail);
-            if (frail > 0)
-            {
-                return Mathf.RoundToInt(baseBlock * (1 - frail * 0.2f));
-            }
-            return baseBlock;
         }
 
         public void TakeDamage(int damage)
@@ -287,6 +278,7 @@ namespace MutationChess.Battle
             {
                 existing.amount += buff.amount;
                 existing.duration = Mathf.Max(existing.duration, buff.duration);
+                if (buff.isShadow) existing.isShadow = true;
             }
             else
             {
@@ -309,6 +301,11 @@ namespace MutationChess.Battle
         {
             for (int i = buffs.Count - 1; i >= 0; i--)
             {
+                // 暗影临时力量在 ShadowStrengthNoDecay=true 时不流失
+                if (ConversionModifier.ShadowStrengthNoDecay && buffs[i].isShadow)
+                {
+                    continue;
+                }
                 buffs[i].ReduceDuration();
                 if (buffs[i].IsExpired())
                 {
@@ -344,18 +341,6 @@ namespace MutationChess.Battle
             return enemySprite;
         }
 
-        public GameObject SpawnModel(Transform parent)
-        {
-            if (data == null || data.enemyPrefab == null) return null;
-
-            modelInstance = Object.Instantiate(data.enemyPrefab, parent);
-            modelInstance.transform.localPosition = data.modelOffset;
-            modelInstance.transform.localScale = data.modelScale;
-            modelInstance.transform.localRotation = Quaternion.Euler(0, data.modelRotationY, 0);
-
-            return modelInstance;
-        }
-
         public void PlayAnimation(string animationName)
         {
             if (modelInstance == null) return;
@@ -366,14 +351,6 @@ namespace MutationChess.Battle
         public void PlayIdle() => PlayAnimation(data?.idleAnimationName ?? "Idle");
         public void PlayAttack() => PlayAnimation(data?.attackAnimationName ?? "Attack");
         public void PlayHurt() => PlayAnimation(data?.hurtAnimationName ?? "Hurt");
-        public void PlayDeath() => PlayAnimation(data?.deathAnimationName ?? "Death");
-
-        public List<Buff> GetBuffs()
-        {
-            return new List<Buff>(buffs);
-        }
-
-        // ==================== 工厂方法 ====================
 
         public static Enemy CreateCorruptedSoldier()
         {
@@ -385,33 +362,33 @@ namespace MutationChess.Battle
 
         public static Enemy CreateMutantHound()
         {
-            var data = new EnemyData("畸变猎犬", 25, 9, EnemyType.Normal);
+            var data = new EnemyData("变异猎犬", 25, 9, EnemyType.Normal);
             data.aiPatternName = "MutantHound";
-            data.spriteName = "畸变猎犬";
+            data.spriteName = "变异猎犬";
             return new Enemy(data);
         }
 
         public static Enemy CreatePlagueAcolyte()
         {
-            var data = new EnemyData("瘟疫侍僧", 28, 6, EnemyType.Normal);
+            var data = new EnemyData("瘟疫信徒", 28, 6, EnemyType.Normal);
             data.aiPatternName = "PlagueAcolyte";
-            data.spriteName = "瘟疫侍僧";
+            data.spriteName = "瘟疫信徒";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssGrub()
         {
-            var data = new EnemyData("深渊蛆虫", 22, 8, EnemyType.Normal);
+            var data = new EnemyData("深渊幼虫", 22, 8, EnemyType.Normal);
             data.aiPatternName = "AbyssGrub";
-            data.spriteName = "深渊蛆虫";
+            data.spriteName = "深渊幼虫";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedKnight()
         {
-            var data = new EnemyData("腐蚀骑士", 65, 14, EnemyType.Elite);
+            var data = new EnemyData("腐化骑士", 65, 14, EnemyType.Elite);
             data.aiPatternName = "CorruptedKnight";
-            data.spriteName = "腐蚀骑士";
+            data.spriteName = "腐化骑士";
             return new Enemy(data);
         }
 
@@ -425,44 +402,32 @@ namespace MutationChess.Battle
 
         public static Enemy CreateVoidWizard()
         {
-            var data = new EnemyData("虚空巫师", 55, 12, EnemyType.Elite);
+            var data = new EnemyData("虚空法师", 55, 12, EnemyType.Elite);
             data.aiPatternName = "VoidWizard";
-            data.spriteName = "虚空巫师";
+            data.spriteName = "虚空法师";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedGolem()
         {
-            var data = new EnemyData("腐化巨兽", 80, 13, EnemyType.Elite);
+            var data = new EnemyData("腐化魔像", 80, 13, EnemyType.Elite);
             data.aiPatternName = "CorruptedGolem";
-            data.spriteName = "腐化巨兽";
+            data.spriteName = "腐化魔像";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssLord()
         {
-            var data = new EnemyData("深渊之主", 150, 22, EnemyType.Boss);
+            var data = new EnemyData("深渊领主", 150, 22, EnemyType.Boss);
             data.aiPatternName = "AbyssLord";
-            data.spriteName = "深渊之主";
+            data.spriteName = "深渊领主";
 
             var enemy = new Enemy(data);
-            enemy.firstFormSpriteName = "深渊之主";
-            enemy.secondFormSpriteName = "深渊之主·克苏鲁之影";
+            enemy.firstFormSpriteName = "深渊领主";
+            enemy.secondFormSpriteName = "深渊领主第二形态";
 
             return enemy;
         }
-
-        public static Enemy CreateCorruptedKing()
-        {
-            var data = new EnemyData("腐化君王·最后的哀鸣", 200, 28, EnemyType.Boss);
-            data.aiPatternName = "CorruptedKing";
-            data.spriteName = "腐化君王";
-            return new Enemy(data);
-        }
-
-        public static Enemy CreateGoblin() => CreateCorruptedSoldier();
-        public static Enemy CreateElite() => CreateCorruptedKnight();
-        public static Enemy CreateBoss() => CreateAbyssLord();
     }
 
     [System.Serializable]
@@ -471,9 +436,11 @@ namespace MutationChess.Battle
         public BuffType type;
         public int amount;
         public int duration;
+        // 暗影标记：为 true 时表示该 buff 是暗影临时力量，回合开始时不会流失
+        public bool isShadow;
 
-        public void ReduceDuration() { duration--; }
-        public bool IsExpired() => duration <= 0;
+        public void ReduceDuration() { if (duration > 0) duration--; }
+        public bool IsExpired() => duration == 0;
     }
 
     public enum BuffType
@@ -484,7 +451,8 @@ namespace MutationChess.Battle
         Poison,
         Vulnerability,
         Weak,
-        Frail
+        Frail,
+        Thorns
     }
 
     [System.Serializable]
@@ -493,3 +461,4 @@ namespace MutationChess.Battle
         public int damageAmount;
     }
 }
+

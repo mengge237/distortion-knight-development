@@ -1,4 +1,5 @@
-using System;
+ï»¿using System;
+using MutationChess.Core;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +9,29 @@ namespace MutationChess.Core
     {
         private static Dictionary<string, CardDataAsset> assetCache = new Dictionary<string, CardDataAsset>();
         private static Dictionary<string, CardEffect> effectCache = new Dictionary<string, CardEffect>();
+        private static Dictionary<string, InherentEffect> inherentEffectCache = new Dictionary<string, InherentEffect>();
+        private static bool allCardsLoaded = false;
+
+        /// <summary>
+
+        /// ??? Resources.LoadAll ?????? Cards ???????? CardDataAsset??
+        /// </summary>
+        private static void LoadAllCards()
+        {
+            if (allCardsLoaded) return;
+
+            CardDataAsset[] allAssets = Resources.LoadAll<CardDataAsset>("Cards");
+            foreach (var asset in allAssets)
+            {
+                if (asset != null && !string.IsNullOrEmpty(asset.cardName))
+                {
+                    assetCache[asset.cardName] = asset;
+                }
+            }
+
+            allCardsLoaded = true;
+            GameLogger.Log($"[CardData] ???????????????: {allAssets.Length} ??");
+        }
 
         private static CardDataAsset LoadAsset(CardName cardName)
         {
@@ -15,20 +39,14 @@ namespace MutationChess.Core
             if (assetCache.TryGetValue(key, out CardDataAsset cached))
                 return cached;
 
-            string path = $"Cards/{key}";
-            CardDataAsset asset = Resources.Load<CardDataAsset>(path);
 
-            if (asset != null)
-            {
-                assetCache[key] = asset;
-                Debug.Log($"[CardData] ÔØÈë¿¨ÅÆ×Ê²ú: {path} | cardArtPath={asset.cardArtPath ?? "null"} | effects={asset.effectIds?.Count ?? 0}");
-            }
-            else
-            {
-                Debug.LogError($"[CardData] ÎÞ·¨¼ÓÔØ¿¨ÅÆ×Ê²ú: {path}£¬ÇëÔÚ Unity ÖÐÈ·ÈÏ .asset ÎÄ¼þ´æÔÚ²¢ÒÑ Reimport");
-            }
+            LoadAllCards();
 
-            return asset;
+            if (assetCache.TryGetValue(key, out CardDataAsset loaded))
+                return loaded;
+
+            GameLogger.LogError($"[CardData] ?????????????: {key}??????? Cards ??????????????????? .asset ???");
+            return null;
         }
 
         public static CardDataAsset GetTemplate(CardName cardName)
@@ -41,7 +59,7 @@ namespace MutationChess.Core
             CardDataAsset asset = LoadAsset(cardName);
             if (asset == null)
             {
-                Debug.LogError($"Î´ÕÒµ½¿¨ÅÆ: {cardName}");
+                GameLogger.LogError($"???????: {cardName}");
                 return null;
             }
 
@@ -57,22 +75,42 @@ namespace MutationChess.Core
             card.description = asset.description;
             card.faction = asset.faction;
 
+            // ???????
+            if (asset.tags != null && asset.tags.Count > 0)
+            {
+                foreach (var tag in asset.tags)
+                {
+                    card.AddTag(tag);
+                }
+            }
+
+            // ?????????????
+            card.bloodPerEnergy = asset.bloodPerEnergy;
+            card.blockPerEnergy = asset.blockPerEnergy;
+
+            // è®¾ç½®æ¶ˆè€—æ ‡å¿—
+            card.exhaust = asset.exhaust;
+            if (card.HasTag(CardTag.Corrupt))
+            {
+                card.exhaust = true;
+            }
+
             if (!string.IsNullOrEmpty(asset.cardArtPath))
             {
                 Sprite originalSprite = Resources.Load<Sprite>(asset.cardArtPath);
                 if (originalSprite != null)
                 {
                     card.cardArt = originalSprite;
-                    Debug.Log($"[CardData] ¿¨ÅÆÍ¼Æ¬¼ÓÔØ³É¹¦: {asset.cardArtPath}");
+                    GameLogger.Log($"[CardData] ????????????: {asset.cardArtPath}");
                 }
                 else
                 {
-                    Debug.LogWarning($"[CardData] Î´ÕÒµ½¿¨ÅÆÍ¼Æ¬: {asset.cardArtPath}£¬ÇëÈ·ÈÏ Resources/CardArt/ ÖÐÓÐ¶ÔÓ¦Í¼Æ¬");
+                    GameLogger.LogWarning($"[CardData] ?????????: {asset.cardArtPath}??????? Resources/CardArt/ ?????????");
                 }
             }
             else
             {
-                Debug.LogWarning($"[CardData] ¿¨ÅÆ {asset.cardName} µÄ cardArtPath Îª¿Õ");
+                GameLogger.LogWarning($"[CardData] ???? {asset.cardName} ?? cardArtPath ???");
             }
 
             if (asset.effectIds != null && asset.effectIds.Count > 0)
@@ -86,10 +124,32 @@ namespace MutationChess.Core
                     }
                     else
                     {
-                        Debug.LogError($"ÎÞ·¨´´½¨Ð§¹û: {effectId} ÓÃÓÚ¿¨ÅÆ {asset.cardName}");
+                        GameLogger.LogError($"?????????: {effectId}?????? {asset.cardName}");
                     }
                 }
             }
+
+
+            if (asset.inherentEffectIds != null && asset.inherentEffectIds.Count > 0)
+            {
+                foreach (string inherentId in asset.inherentEffectIds)
+                {
+                    InherentEffect inherent = LoadInherentEffect(inherentId);
+                    if (inherent != null)
+                    {
+                        card.inherentEffects.Add(inherent);
+                    }
+                    else
+                    {
+                        GameLogger.LogError($"????????????: {inherentId}?????? {asset.cardName}");
+                    }
+                }
+            }
+
+
+            InjectDefaultInherentEffects(card);
+
+            card.GenerateDescription();
 
             return card;
         }
@@ -122,10 +182,75 @@ namespace MutationChess.Core
             }
             else
             {
-                Debug.LogError($"¼ÓÔØÐ§¹û×ÊÔ´Ê§°Ü: {effectId}");
+                GameLogger.LogError($"????????????: {effectId}");
             }
 
             return effect;
+        }
+
+        private static InherentEffect LoadInherentEffect(string effectId)
+        {
+            if (inherentEffectCache.TryGetValue(effectId, out InherentEffect cached))
+            {
+                return cached;
+            }
+
+            InherentEffect inherent = null;
+
+            inherent = Resources.Load<InherentEffect>($"InherentEffects/{effectId}");
+            if (inherent == null)
+                inherent = Resources.Load<InherentEffect>($"Effects/{effectId}");
+            if (inherent == null)
+                inherent = Resources.Load<InherentEffect>(effectId);
+
+            if (inherent != null)
+            {
+                inherentEffectCache[effectId] = inherent;
+            }
+            else
+            {
+                GameLogger.LogError($"???????????????: {effectId}");
+            }
+
+            return inherent;
+        }
+
+        /// <summary>
+
+
+
+
+        /// </summary>
+        private static void InjectDefaultInherentEffects(Card card)
+        {
+            if (card == null) return;
+
+            // ??????????
+            var existingTags = new HashSet<CardTag>();
+            if (card.inherentEffects != null)
+            {
+                foreach (var inherent in card.inherentEffects)
+                {
+                    if (inherent != null)
+                        existingTags.Add(inherent.Tag);
+                }
+            }
+
+
+            if (card.HasTag(CardTag.Slime) && !existingTags.Contains(CardTag.Slime))
+            {
+                var inherent = LoadInherentEffect("SlimeInherent");
+                if (inherent != null) card.inherentEffects.Add(inherent);
+            }
+
+            // ??????????????????????? DrawCardsEffect ???????å£©
+            if (card.HasTag(CardTag.Reluctant) && !existingTags.Contains(CardTag.Reluctant))
+            {
+                var inherent = LoadInherentEffect("ReluctantInherent");
+                if (inherent != null) card.inherentEffects.Add(inherent);
+            }
+
+
         }
 
         public static List<CardName> GetAllCardNames()
@@ -134,3 +259,6 @@ namespace MutationChess.Core
         }
     }
 }
+
+
+

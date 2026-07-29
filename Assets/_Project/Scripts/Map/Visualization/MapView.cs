@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using MutationChess.Core;
 using UnityEngine;
 
 namespace MutationChess.Map
 {
     public class MapView : MonoBehaviour
     {
-        [Header("节点类型颜色")]
+        [Header("")]
         [SerializeField] private Color startColor = new Color(0.6f, 0.2f, 0.8f);
         [SerializeField] private Color normalMonsterColor = new Color(0.7f, 0.7f, 0.7f, 1f);
         [SerializeField] private Color eliteMonsterColor = new Color(1f, 0.4f, 0.1f, 1f);
@@ -15,7 +16,7 @@ namespace MutationChess.Map
         [SerializeField] private Color restColor = new Color(0.2f, 0.7f, 1f, 1f);
         [SerializeField] private Color bossColor = new Color(1f, 0.1f, 0.1f, 1f);
 
-        [Header("状态颜色")]
+        [Header("")]
         [SerializeField] private Color visitedColor = new Color(0.3f, 0.3f, 0.35f, 1f);
 
         private MapGenerator mapGenerator;
@@ -25,7 +26,7 @@ namespace MutationChess.Map
             mapGenerator = FindObjectOfType<MapGenerator>();
             if (mapGenerator == null)
             {
-                Debug.LogError("找不到 MapGenerator！");
+                GameLogger.LogError(" MapGenerator");
                 return;
             }
 
@@ -50,21 +51,21 @@ namespace MutationChess.Map
 
         public void RefreshAllNodes()
         {
-            // ★ 如果 MapGenerator 为空，重新查找
+
             if (mapGenerator == null)
             {
                 mapGenerator = FindObjectOfType<MapGenerator>();
                 if (mapGenerator == null)
                 {
-                    Debug.LogError("[MapView] MapGenerator 未找到！");
+                    GameLogger.LogError("[MapView] MapGenerator ");
                     return;
                 }
-                Debug.Log("[MapView] 重新找到了 MapGenerator");
+                GameLogger.Log("[MapView]  MapGenerator");
             }
 
             if (mapGenerator.AllLayers == null)
             {
-                Debug.LogWarning("[MapView] MapGenerator.AllLayers 为空");
+                GameLogger.LogWarning("[MapView] MapGenerator.AllLayers ");
                 return;
             }
 
@@ -136,8 +137,10 @@ namespace MutationChess.Map
             }
             else
             {
-                Debug.LogError("MapGenerator 未找到！");
+                GameLogger.LogError("MapGenerator ");
             }
         }
     }
 }
+
+

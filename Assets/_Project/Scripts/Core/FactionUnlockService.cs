@@ -1,0 +1,73 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+
+namespace MutationChess.Core
+{
+    public class FactionUnlockService : MonoBehaviour
+    {
+        private static FactionUnlockService _instance;
+        public static FactionUnlockService Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = FindObjectOfType<FactionUnlockService>();
+                return _instance;
+            }
+        }
+
+        [SerializeField] private bool debugMode = true;
+
+        private HashSet<CardFaction> unlockedFactions = new HashSet<CardFaction>();
+
+        public event System.Action<CardFaction> OnFactionUnlocked;
+
+        void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+        }
+
+        public void UnlockFaction(CardFaction faction)
+        {
+            if (faction == CardFaction.None) return;
+
+            if (unlockedFactions.Add(faction))
+            {
+                if (debugMode)
+                    GameLogger.Log($"[FactionUnlockService] : {GetFactionDisplayName(faction)}");
+                OnFactionUnlocked?.Invoke(faction);
+            }
+        }
+
+        public bool IsFactionUnlocked(CardFaction faction)
+        {
+            if (faction == CardFaction.None) return true;
+            return unlockedFactions.Contains(faction);
+        }
+
+        public string GetFactionDisplayName(CardFaction faction)
+        {
+            switch (faction)
+            {
+                case CardFaction.Slime: return "";
+                case CardFaction.Reluctant: return "";
+                case CardFaction.Blood: return "";
+                case CardFaction.Frost: return "";
+                case CardFaction.Shadow: return "";
+                case CardFaction.Corrupt: return "";
+                default: return "";
+            }
+        }
+
+        void OnDestroy()
+        {
+            if (_instance == this)
+                _instance = null;
+        }
+    }
+}

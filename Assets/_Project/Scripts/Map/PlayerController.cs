@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using DG.Tweening;
 
@@ -6,7 +6,7 @@ namespace MutationChess.Map
 {
     public class PlayerController : MonoBehaviour
     {
-        [Header("移动设置")]
+        [Header("�ƶ�����")]
         [SerializeField] private float moveDuration = 0.6f;
         [SerializeField] private float jumpPower = 2.5f;
         [SerializeField] private int jumpCount = 1;
@@ -37,7 +37,7 @@ namespace MutationChess.Map
                 rotationTween = transform.DORotateQuaternion(targetRotation, rotationDuration).SetEase(Ease.OutQuad);
             }
 
-            // 使用 DOTween 跳跃移动（更丝滑）
+            // ʹ�� DOTween ��Ծ�ƶ�����˿����
             moveTween = transform
                 .DOJump(target, jumpPower, jumpCount, moveDuration)
                 .SetEase(moveEase)
@@ -58,52 +58,7 @@ namespace MutationChess.Map
         }
 
         /// <summary>
-        /// 简单的平滑移动（不跳跃）
-        /// </summary>
-        public void MoveToNodeSmooth(Vector3 targetPosition, System.Action onComplete)
-        {
-            if (isMoving) return;
-            isMoving = true;
-
-            Vector3 direction = (targetPosition - transform.position).normalized;
-            if (direction != Vector3.zero)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
-                transform.DORotateQuaternion(targetRotation, rotationDuration).SetEase(Ease.OutQuad);
-            }
-
-            transform.DOMove(targetPosition, moveDuration)
-                .SetEase(Ease.OutQuad)
-                .OnComplete(() => {
-                    isMoving = false;
-                    onComplete?.Invoke();
-                });
-        }
-
-        /// <summary>
-        /// 带弧线的移动（更自然，像杀戮尖塔的移动）
-        /// </summary>
-        public void MoveToNodeArc(Vector3 targetPosition, float arcHeight, System.Action onComplete)
-        {
-            if (isMoving) return;
-            isMoving = true;
-
-            Vector3 startPos = transform.position;
-            Vector3 midPos = (startPos + targetPosition) / 2 + Vector3.up * arcHeight;
-
-            // 使用路径移动，CatmullRom 曲线更平滑
-            Vector3[] path = new Vector3[] { startPos, midPos, targetPosition };
-
-            transform.DOPath(path, moveDuration, PathType.CatmullRom)
-                .SetEase(Ease.OutQuad)
-                .OnComplete(() => {
-                    isMoving = false;
-                    onComplete?.Invoke();
-                });
-        }
-
-        /// <summary>
-        /// 停止移动
+        /// ֹͣ�ƶ�
         /// </summary>
         public void StopMoving()
         {

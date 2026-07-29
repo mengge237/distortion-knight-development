@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MutationChess.Core
 {
@@ -11,7 +11,9 @@ namespace MutationChess.Core
                 case CardRarity.Common: return new Color(0.63f, 0.63f, 0.63f);
                 case CardRarity.Uncommon: return new Color(0.31f, 0.76f, 0.97f);
                 case CardRarity.Rare: return new Color(1f, 0.84f, 0.31f);
-                case CardRarity.Mythic: return new Color(0.75f, 0.45f, 0.95f);
+                case CardRarity.Legendary: return new Color(1f, 0.35f, 0.15f);
+                case CardRarity.Colorless: return new Color(0.82f, 0.82f, 0.88f);
+                case CardRarity.Cursed: return new Color(0.45f, 0.1f, 0.55f); // 诅咒：深紫黑
                 default: return Color.white;
             }
         }

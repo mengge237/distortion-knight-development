@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+﻿﻿using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using System.Collections;
@@ -13,40 +13,42 @@ namespace MutationChess.UI
     {
         public static HandManager Instance { get; private set; }
 
-        [Header("=== UI引用 ===")]
+        [Header("UI引用")]
         [SerializeField] private GameObject handPanel;
         [SerializeField] private GameObject cardPrefab;
         [SerializeField] private RectTransform cardsContainer;
 
-        [Header("=== 牌堆信息栏 ===")]
+        [Header("牌堆信息栏")]
         [SerializeField] private TMP_Text energyText;
         [SerializeField] private TMP_Text drawPileCountText;
         [SerializeField] private TMP_Text discardPileCountText;
 
-        [Header("=== Fan Layout ===")]
+        [Header("Fan Layout")]
         [SerializeField] private float fanRadius = 2000f;
         [SerializeField] private float maxFanAngle = 35f;
         [SerializeField][Range(0f, 1f)] private float fanRotationStrength = 1f;
 
-        [Header("=== 卡组配置 ===")]
+        [Header("牌组配置")]
         [SerializeField] private DeckData deckData;
 
-        [Header("=== 手牌设置 ===")]
+        [Header("抽牌参数")]
         [SerializeField] private int maxHandSize = 10;
         [SerializeField] private int cardsPerTurn = 5;
         [SerializeField] private int startingHandSize = 5;
 
-        [Header("=== 动画设置 ===")]
+        [Header("动画参数")]
         [SerializeField] private float drawAnimationDelay = 0.05f;
 
-        [Header("=== 能量系统 ===")]
+        [Header("能量系统")]
         [SerializeField] private int maxEnergy = 3;
         private int currentEnergy = 3;
+        private int pendingNextTurnEnergy = 0;
 
-        [Header("=== 牌堆（运行时） ===")]
+        [Header("牌堆（运行时）")]
         [SerializeField] private List<Card> drawPile = new List<Card>();
         [SerializeField] private List<Card> handCards = new List<Card>();
         [SerializeField] private List<Card> discardPile = new List<Card>();
+        [SerializeField] private List<Card> exhaustPile = new List<Card>();
 
         private List<CardUI> cardUIs = new List<CardUI>();
         private BattleManager battleManager;
@@ -65,6 +67,16 @@ namespace MutationChess.UI
 
         void Start()
         {
+            // 从 GameConfig 加载默认值（仅当使用默认值时，允许 Inspector 覆盖）
+            var config = GameConfig.Instance;
+            if (config != null)
+            {
+                if (maxHandSize == 10) maxHandSize = config.maxHandSize;
+                if (cardsPerTurn == 5) cardsPerTurn = config.cardsPerTurn;
+                if (startingHandSize == 5) startingHandSize = config.startingHandSize;
+                if (maxEnergy == 3) maxEnergy = config.maxEnergy;
+            }
+
             currentEnergy = maxEnergy;
             UpdateEnergyUI();
             UpdatePileCountUI();
@@ -75,11 +87,14 @@ namespace MutationChess.UI
             battleManager = FindObjectOfType<BattleManager>();
             if (battleManager == null)
             {
-                Debug.LogError("HandManager: 无法找到 BattleManager！");
+                GameLogger.LogError("HandManager: 无法找到 BattleManager");
             }
 
             isFirstTurn = true;
             isAnimating = false;
+
+            // 修复 Bug16：跨战斗状态清理，避免上一场战斗的临时累积泄漏到下一场
+            pendingNextTurnEnergy = 0;
 
             InitializeDeckFromConfig();
             ClearHand();
@@ -100,6 +115,10 @@ namespace MutationChess.UI
                 discardPile.Add(card);
             handCards.Clear();
 
+            foreach (var card in exhaustPile)
+                discardPile.Add(card);
+            exhaustPile.Clear();
+
             foreach (var cardUI in cardUIs)
             {
                 if (cardUI != null) Destroy(cardUI.gameObject);
@@ -118,13 +137,18 @@ namespace MutationChess.UI
             if (isFirstTurn)
             {
                 isFirstTurn = false;
-                currentEnergy = maxEnergy;
+                currentEnergy = maxEnergy + pendingNextTurnEnergy;
+                pendingNextTurnEnergy = 0;
                 OnEnergyChanged?.Invoke(currentEnergy);
                 UpdateEnergyUI();
+
+                // 回合开始时检查馈赠
+                TriggerGiftsAtTurnStart();
                 return;
             }
 
-            currentEnergy = maxEnergy;
+            currentEnergy = maxEnergy + pendingNextTurnEnergy;
+            pendingNextTurnEnergy = 0;
             OnEnergyChanged?.Invoke(currentEnergy);
             UpdateEnergyUI();
 
@@ -133,11 +157,19 @@ namespace MutationChess.UI
                 ReshuffleDiscard();
             }
 
-            StartCoroutine(DrawCardsRoutine(cardsPerTurn, GetDrawPilePosition()));
+            // 回合开始时检查馈赠
+            TriggerGiftsAtTurnStart();
+
+
+            int effectiveDraw = GetEffectiveCardsPerTurn();
+            StartCoroutine(DrawCardsRoutine(effectiveDraw, GetDrawPilePosition()));
         }
 
         public void OnEndTurn()
         {
+            // 回合结束时检查馈赠
+            TriggerGiftsAtTurnEnd();
+
             foreach (var card in handCards)
                 discardPile.Add(card);
 
@@ -175,6 +207,7 @@ namespace MutationChess.UI
         {
             drawPile.Clear();
             discardPile.Clear();
+            exhaustPile.Clear();
 
             if (deckData == null)
             {
@@ -274,7 +307,7 @@ namespace MutationChess.UI
 
             for (int i = 0; i < count; i++)
             {
-                if (handCards.Count >= maxHandSize)
+                if (handCards.Count >= GetEffectiveMaxHandSize())
                 {
                     break;
                 }
@@ -347,7 +380,7 @@ namespace MutationChess.UI
 
             if (cardPrefab == null || cardsContainer == null)
             {
-                Debug.LogWarning("CardPrefab 和 CardsContainer 为空！");
+                GameLogger.LogWarning("CardPrefab 或 CardsContainer 为空");
                 return;
             }
 
@@ -375,7 +408,7 @@ namespace MutationChess.UI
                     cardUI.OnCardClicked += OnCardUIClicked;
                     cardUI.OnCardPlayed += PlayCard;
 
-                    bool canPlay = card.cost <= currentEnergy;
+                    bool canPlay = CanPlayCard(card);
                     cardUI.SetInteractable(canPlay);
 
                     RectTransform rect = cardUI.GetRectTransform();
@@ -402,8 +435,9 @@ namespace MutationChess.UI
         {
             if (card == null) return;
 
-            if (card.cost > currentEnergy)
+            if (!CanPlayCard(card))
             {
+                GameLogger.Log($"[HandManager] 无法打出此卡: {card.cardName}");
                 return;
             }
 
@@ -412,9 +446,11 @@ namespace MutationChess.UI
                 return;
             }
 
-            currentEnergy -= card.cost;
-            OnEnergyChanged?.Invoke(currentEnergy);
-            UpdateEnergyUI();
+            PayCardCost(card);
+
+
+            if (card.cardType != CardType.Curse)
+                TriggerCurseDevourEffects();
 
             handCards.Remove(card);
 
@@ -444,21 +480,268 @@ namespace MutationChess.UI
                     });
             }
 
+            // 修复：传入实际玩家数据，避免部分效果因 targetPlayer 为 null 静默失败
+            var dataMgr = PlayerDataManager.Instance;
+            PlayerData playerData = dataMgr != null ? dataMgr.GetPlayerData() : null;
             CombatContext context = new CombatContext(
                 battleManager,
                 battleManager?.GetCurrentEnemy(),
-                null,
+                playerData,
                 card
             );
 
             card.ExecuteEffects(context);
 
-            discardPile.Add(card);
+            bool isExhausted = ConversionModifier.ShouldExhaust(card);
+            if (isExhausted)
+            {
+                exhaustPile.Add(card);
+
+                var effectManager = EffectManager.Instance;
+                if (effectManager != null)
+                {
+                    EffectContext exhaustCtx = new EffectContext(battleManager);
+                    exhaustCtx.combat = context;
+                    exhaustCtx.tag = card;
+                    effectManager.Trigger(EffectTrigger.CardExhausted, exhaustCtx);
+                }
+            }
+            else
+            {
+                discardPile.Add(card);
+            }
 
             OnCardPlayed?.Invoke(card);
 
             RefreshAllUI();
         }
+
+        public int GetModifiedCardCost(Card card)
+        {
+            if (card == null) return 0;
+
+            int baseCost = card.cost;
+            var effectManager = EffectManager.Instance;
+            if (effectManager != null)
+            {
+                EffectContext ctx = new EffectContext(battleManager);
+                ctx.tag = card;
+                return effectManager.CalculateModifiedValue(EffectTrigger.CalculateCardCost, ctx, baseCost);
+            }
+            return baseCost;
+        }
+
+        /// <summary>
+        /// 判断卡牌费用是否可以支付。
+        /// 优先使用能量，不足部分按顺序用血→格挡补足（混合转换模式）。
+        /// </summary>
+        public bool CanPayCardCost(Card card)
+        {
+            if (card == null) return false;
+
+            int modifiedCost = GetModifiedCardCost(card);
+            int energyShortfall = Mathf.Max(0, modifiedCost - currentEnergy);
+
+            if (energyShortfall == 0) return true;
+
+            var dataManager = PlayerDataManager.Instance;
+            if (dataManager == null) return false;
+            PlayerData playerData = dataManager.GetPlayerData();
+            if (playerData == null) return false;
+
+            if (!card.UsesSpecialCost) return false;
+
+            int currentBlock = battleManager != null ? battleManager.GetPlayerBlock() : 0;
+
+            return card.CanPayWithMixedConversion(currentEnergy, playerData.currentHealth, currentBlock, modifiedCost);
+        }
+
+        /// <summary>
+        /// 支付卡牌费用。按顺序：先计算转换消耗量 → 扣能量 → 扣血量 → 扣格挡。
+        /// 混合模式：鲜血(3血=1能量)优先，寒霜(5格挡=1能量)补足剩余。
+        /// </summary>
+        private void PayCardCost(Card card)
+        {
+            if (card == null) return;
+
+            int modifiedCost = GetModifiedCardCost(card);
+
+            var dataManager = PlayerDataManager.Instance;
+            PlayerData playerData = dataManager != null ? dataManager.GetPlayerData() : null;
+            int currentBlock = battleManager != null ? battleManager.GetPlayerBlock() : 0;
+
+            // === 先计算混合转换消耗量（基于扣除能量前的状态，使用 modifiedCost 保证费用减免正确传递到转换阶段）===
+            int bloodToPay = 0;
+            int blockToPay = 0;
+
+            if (card.UsesSpecialCost && playerData != null)
+            {
+                var (bloodCost, blockCost) = card.CalculateMixedConversionCosts(
+                    currentEnergy, playerData.currentHealth, currentBlock, modifiedCost);
+                bloodToPay = bloodCost;
+                blockToPay = blockCost;
+            }
+
+            // === 再扣能量 ===
+            int energyToPay = Mathf.Min(modifiedCost, currentEnergy);
+            if (energyToPay > 0)
+            {
+                currentEnergy -= energyToPay;
+                OnEnergyChanged?.Invoke(currentEnergy);
+                UpdateEnergyUI();
+            }
+
+            int energyShortfall = Mathf.Max(0, modifiedCost - energyToPay);
+
+            // === 先扣血量（鲜血优先）===
+            if (bloodToPay > 0 && playerData != null)
+            {
+                if (playerData.currentHealth > bloodToPay)
+                {
+                    playerData.TakeDamage(bloodToPay);
+                    GameLogger.Log($"[HandManager] {card.cardName} 血量转换: {energyShortfall}能量 <- {bloodToPay}血量");
+                    dataManager.UpdateUI();
+                }
+            }
+
+            // === 再扣格挡（寒霜补足）===
+            if (blockToPay > 0 && battleManager != null)
+            {
+                if (battleManager.GetPlayerBlock() >= blockToPay)
+                {
+                    battleManager.ConsumePlayerBlock(blockToPay);
+                    GameLogger.Log($"[HandManager] {card.cardName} 格挡转换: {energyShortfall}能量 <- {blockToPay}格挡");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 判断卡牌是否可以打出。
+        /// </summary>
+        public bool CanPlayCard(Card card)
+        {
+            if (card == null) return false;
+            if (card.cardType == CardType.Curse) return false;
+            return CanPayCardCost(card);
+        }
+
+        /// <summary>
+        /// 回合开始时触发馈赠效果。
+        /// </summary>
+        private void TriggerGiftsAtTurnStart()
+        {
+            var triggered = GiftEffect.CheckAndTriggerGifts(GiftEffect.GiftTriggerTime.TurnStart);
+            if (triggered.Count > 0)
+            {
+                RefreshAllUI();
+            }
+        }
+
+        /// <summary>
+    /// 回合结束时触发馈赠效果，并处理诅咒卡效果。
+    /// </summary>
+    private void TriggerGiftsAtTurnEnd()
+    {
+        var triggered = GiftEffect.CheckAndTriggerGifts(GiftEffect.GiftTriggerTime.TurnEnd);
+        if (triggered.Count > 0)
+        {
+            RefreshAllUI();
+        }
+
+
+        TriggerCurseDecayEffects();
+    }
+
+    /// <summary>
+
+    /// </summary>
+    private void TriggerCurseDecayEffects()
+    {
+        var dataManager = PlayerDataManager.Instance;
+        PlayerData playerData = dataManager != null ? dataManager.GetPlayerData() : null;
+        if (playerData == null) return;
+
+        int totalHpLoss = 0;
+        foreach (var card in handCards)
+        {
+            if (card == null || card.cardType != CardType.Curse) continue;
+            foreach (var effect in card.effects)
+            {
+                if (effect is CurseDecayEffect decay)
+                {
+                    totalHpLoss += decay.hpLossPerTurn;
+                }
+            }
+        }
+
+        if (totalHpLoss > 0)
+        {
+            playerData.TakeDamage(totalHpLoss);
+            GameLogger.Log($"[HandManager] 诅咒衰败触发：损失 {totalHpLoss} HP");
+            dataManager.UpdateUI();
+        }
+    }
+
+    /// <summary>
+    /// 获取当前手牌中所有指定类型的诅咒效果。
+    /// </summary>
+    private List<T> GetCurseEffects<T>() where T : CurseEffect
+    {
+        List<T> result = new List<T>();
+        foreach (var card in handCards)
+        {
+            if (card == null || card.cardType != CardType.Curse) continue;
+            foreach (var effect in card.effects)
+            {
+                if (effect is T typed)
+                    result.Add(typed);
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+
+    /// </summary>
+    private int GetEffectiveMaxHandSize()
+    {
+        int reduction = 0;
+        foreach (var fog in GetCurseEffects<CurseFogEffect>())
+            reduction += fog.handSizeReduction;
+        return Mathf.Max(1, maxHandSize - reduction);
+    }
+
+    /// <summary>
+
+    /// </summary>
+    private int GetEffectiveCardsPerTurn()
+    {
+        int reduction = 0;
+        foreach (var chains in GetCurseEffects<CurseChainsEffect>())
+            reduction += chains.drawReduction;
+        return Mathf.Max(0, cardsPerTurn - reduction);
+    }
+
+    /// <summary>
+
+    /// </summary>
+    private void TriggerCurseDevourEffects()
+    {
+        var dataManager = PlayerDataManager.Instance;
+        PlayerData playerData = dataManager != null ? dataManager.GetPlayerData() : null;
+        if (playerData == null) return;
+
+        int totalHpLoss = 0;
+        foreach (var devour in GetCurseEffects<CurseDevourEffect>())
+            totalHpLoss += devour.hpLossPerCard;
+
+        if (totalHpLoss > 0)
+        {
+            playerData.TakeDamage(totalHpLoss);
+            GameLogger.Log($"[HandManager] 诅咒噬命触发：损失 {totalHpLoss} HP");
+            dataManager.UpdateUI();
+        }
+    }
 
         public void DiscardCard(Card card)
         {
@@ -489,6 +772,10 @@ namespace MutationChess.UI
 
         public List<Card> GetDrawPile() => drawPile;
 
+        public List<Card> GetDiscardPile() => discardPile;
+
+        public List<Card> GetExhaustPile() => exhaustPile;
+
         public void RemoveCardFromDrawPile(int index)
         {
             if (index >= 0 && index < drawPile.Count)
@@ -498,11 +785,62 @@ namespace MutationChess.UI
             }
         }
 
+        /// <summary>
+        /// 添加卡牌到抽牌堆顶部。
+        /// </summary>
+        public void AddToDrawPileTop(Card card)
+        {
+            if (card == null) return;
+            drawPile.Insert(0, card);
+            UpdatePileCountUI();
+        }
+
+        /// <summary>
+        /// 添加卡牌到抽牌堆底部。
+        /// </summary>
+        public void AddToDrawPileBottom(Card card)
+        {
+            if (card == null) return;
+            drawPile.Add(card);
+            UpdatePileCountUI();
+        }
+
+        /// <summary>
+        /// 随机插入卡牌到抽牌堆。
+        /// </summary>
+        public void AddToDrawPileRandom(Card card)
+        {
+            if (card == null) return;
+            int index = Random.Range(0, drawPile.Count + 1);
+            drawPile.Insert(index, card);
+            UpdatePileCountUI();
+        }
+
+        /// <summary>
+        /// 添加卡牌到弃牌堆。
+        /// </summary>
+        public void AddToDiscardPile(Card card)
+        {
+            if (card == null) return;
+            discardPile.Add(card);
+            UpdatePileCountUI();
+        }
+
+        /// <summary>
+        /// 添加卡牌到消耗堆。
+        /// </summary>
+        public void AddToExhaustPile(Card card)
+        {
+            if (card == null) return;
+            exhaustPile.Add(card);
+            UpdatePileCountUI();
+        }
+
         public void AddCardToHand(Card card)
         {
             if (card == null) return;
 
-            if (handCards.Count < maxHandSize)
+            if (handCards.Count < GetEffectiveMaxHandSize())
             {
                 handCards.Add(card);
                 Vector3 drawPilePos = GetDrawPilePosition();
@@ -513,7 +851,7 @@ namespace MutationChess.UI
             else
             {
                 discardPile.Add(card);
-                Debug.Log($"手牌已满，{card.cardName} 进入弃牌堆");
+                GameLogger.Log($"手牌已满，{card.cardName} 放入弃牌堆");
                 UpdatePileCountUI();
             }
         }
@@ -536,7 +874,7 @@ namespace MutationChess.UI
                 energyText.text = $"能量: {currentEnergy}/{maxEnergy}";
         }
 
-        void UpdatePileCountUI()
+        public void UpdatePileCountUI()
         {
             if (drawPileCountText != null)
                 drawPileCountText.text = $"抽牌: {drawPile.Count}";
@@ -546,7 +884,7 @@ namespace MutationChess.UI
 
         void OnCardUIClicked(Card card)
         {
-            if (card != null && card.cost <= currentEnergy)
+            if (card != null && CanPayCardCost(card))
             {
                 PlayCard(card);
             }
@@ -562,6 +900,55 @@ namespace MutationChess.UI
             cardUIs.Clear();
         }
 
+        /// <summary>
+        /// 消耗手牌全部卡牌到消耗堆（用于黑暗契约药水等效果）。
+        /// 返回被消耗的卡牌数量。
+        /// </summary>
+        public int ExhaustHand()
+        {
+            if (handCards.Count == 0) return 0;
+
+            int count = handCards.Count;
+            foreach (var card in handCards)
+            {
+                if (card != null) exhaustPile.Add(card);
+            }
+
+            handCards.Clear();
+            foreach (var cardUI in cardUIs)
+            {
+                if (cardUI != null) Destroy(cardUI.gameObject);
+            }
+            cardUIs.Clear();
+
+            UpdatePileCountUI();
+            RefreshAllUI();
+            GameLogger.Log($"[HandManager] 消耗全部手牌: {count} 张");
+            return count;
+        }
+
+        /// <summary>
+        /// 弃掉手牌全部卡牌到弃牌堆（回合结束调用）。
+        /// </summary>
+        public void DiscardHand()
+        {
+            if (handCards.Count == 0) return;
+
+            foreach (var card in handCards)
+            {
+                if (card != null) discardPile.Add(card);
+            }
+
+            handCards.Clear();
+            foreach (var cardUI in cardUIs)
+            {
+                if (cardUI != null) Destroy(cardUI.gameObject);
+            }
+            cardUIs.Clear();
+
+            UpdatePileCountUI();
+        }
+
         public void AddCardToDrawPile(Card card)
         {
             if (card != null) drawPile.Add(card);
@@ -575,6 +962,7 @@ namespace MutationChess.UI
         public int GetHandSize() => handCards.Count;
         public int GetDrawPileSize() => drawPile.Count;
         public int GetDiscardPileSize() => discardPile.Count;
+        public int GetExhaustPileSize() => exhaustPile.Count;
         public int GetCurrentEnergy() => currentEnergy;
         public int GetMaxEnergy() => maxEnergy;
 
@@ -592,6 +980,11 @@ namespace MutationChess.UI
             OnEnergyChanged?.Invoke(currentEnergy);
             UpdateEnergyUI();
             UpdateHandUI();
+        }
+
+        public void AddPendingNextTurnEnergy(int amount)
+        {
+            pendingNextTurnEnergy += amount;
         }
 
         public bool IsInBattle() => handPanel != null && handPanel.activeSelf;
