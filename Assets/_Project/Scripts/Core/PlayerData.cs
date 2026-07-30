@@ -12,7 +12,7 @@ namespace MutationChess.Core
         public int currentHealth = 100;
         public int gold = 200;
 
-        [Tooltip("最大药水携带数量")]
+        [Tooltip("���ҩˮЯ������")]
         public int maxPotions = 3;
 
         private List<Buff> buffs = new List<Buff>();
@@ -24,24 +24,26 @@ namespace MutationChess.Core
         public int PotionCount => potions.Count;
 
         /// <summary>
-        /// 从 GameConfig 读取默认值，由 PlayerDataManager.Awake 调用
-        /// 如果玩家未修改过默认值，则覆盖为配置值，否则保留 Inspector 设置值
+        /// �� GameConfig ��ȡĬ��ֵ���� PlayerDataManager.Awake ����
+        /// ������δ�޸Ĺ�Ĭ��ֵ���򸲸�Ϊ����ֵ�������� Inspector ����ֵ
         /// </summary>
         public void InitFromConfig()
         {
             var config = GameConfig.Instance;
             if (config == null) return;
 
-            // 只在玩家使用默认值时覆盖，避免覆盖 Inspector 设置值
+            // ֻ�����ʹ��Ĭ��ֵʱ���ǣ����⸲�� Inspector ����ֵ
             if (maxHealth == 100) maxHealth = config.maxHealth;
             if (currentHealth == 100) currentHealth = config.maxHealth;
             if (maxPotions == 3) maxPotions = config.maxPotions;
             if (gold == 200) gold = config.startingGold;
         }
 
-        public void Heal(int amount)
+        public int Heal(int amount)
         {
+            int previous = currentHealth;
             currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+            return currentHealth - previous;
         }
 
         public void TakeDamage(int damage)
@@ -88,7 +90,7 @@ namespace MutationChess.Core
             {
                 existing.amount += buff.amount;
                 existing.duration = Mathf.Max(existing.duration, buff.duration);
-                // 合并时传播暗影标记：任意一方为暗影则合并后仍为暗影
+                // �ϲ�ʱ������Ӱ��ǣ�����һ��Ϊ��Ӱ��ϲ�����Ϊ��Ӱ
                 if (buff.isShadow) existing.isShadow = true;
             }
             else
@@ -98,8 +100,8 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        /// 移除所有 isShadow=true 的力量 buff（暗影临时力量），供暗影爆发卡使用
-        /// 返回被移除的力量总值
+        /// �Ƴ����� isShadow=true ������ buff����Ӱ��ʱ������������Ӱ������ʹ��
+        /// ���ر��Ƴ���������ֵ
         /// </summary>
         public int RemoveShadowStrengthBuffs()
         {
@@ -125,7 +127,7 @@ namespace MutationChess.Core
         {
             for (int i = buffs.Count - 1; i >= 0; i--)
             {
-                // 暗影临时力量在 ShadowStrengthNoDecay 开启时不流失
+                // ��Ӱ��ʱ������ ShadowStrengthNoDecay ����ʱ����ʧ
                 if (ConversionModifier.ShadowStrengthNoDecay && buffs[i].isShadow)
                 {
                     continue;
@@ -169,7 +171,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        /// 移除指定类型的所有buff，不论正负效果都移除
+        /// �Ƴ�ָ�����͵�����buff����������Ч�����Ƴ�
         /// </summary>
         public int RemoveBuffsByType(BuffType type)
         {
@@ -186,7 +188,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        /// 移除指定类型的debuff，仅移除 amount<0 的debuff记录
+        /// �Ƴ�ָ�����͵�debuff�����Ƴ� amount<0 ��debuff��¼
         /// </summary>
         public int RemoveDebuffsByType(BuffType type)
         {
@@ -212,7 +214,7 @@ namespace MutationChess.Core
             if (potion == null) return false;
             if (potions.Count >= maxPotions)
             {
-                GameLogger.LogWarning($"[PlayerData] 药水栏已满 ({maxPotions})，无法添加 {potion.potionName}");
+                GameLogger.LogWarning($"[PlayerData] ҩˮ������ ({maxPotions})���޷���� {potion.potionName}");
                 return false;
             }
             potions.Add(potion);

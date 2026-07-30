@@ -1,4 +1,4 @@
-﻿﻿using DG.Tweening;
+﻿using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using System.Collections;
@@ -63,6 +63,19 @@ namespace MutationChess.UI
         {
             if (Instance == null) Instance = this;
             else Destroy(gameObject);
+        }
+
+        void OnDestroy()
+        {
+            // 清理所有卡牌 UI 上残留的 DOTween 动画
+            foreach (var cardUI in cardUIs)
+            {
+                if (cardUI != null && cardUI.GetRectTransform() != null)
+                {
+                    DOTween.Kill(cardUI.GetRectTransform());
+                }
+            }
+            cardUIs.Clear();
         }
 
         void Start()
@@ -467,15 +480,17 @@ namespace MutationChess.UI
             if (targetCardUI != null)
             {
                 cardUIs.Remove(targetCardUI);
-                targetCardUI.GetRectTransform().DOAnchorPosY(200f, 0.3f)
+                RectTransform playedRt = targetCardUI.GetRectTransform();
+                playedRt.DOAnchorPosY(200f, 0.3f)
                     .SetEase(Ease.OutQuad);
-                targetCardUI.GetRectTransform().DOScale(Vector3.one * 1.5f, 0.2f)
+                playedRt.DOScale(Vector3.one * 1.5f, 0.2f)
                     .SetEase(Ease.OutBack)
                     .OnComplete(() => {
-                        targetCardUI.GetRectTransform().DOScale(Vector3.zero, 0.15f)
+                        if (targetCardUI == null) return;
+                        playedRt.DOScale(Vector3.zero, 0.15f)
                             .SetEase(Ease.InQuad)
                             .OnComplete(() => {
-                                Destroy(targetCardUI.gameObject);
+                                if (targetCardUI != null) Destroy(targetCardUI.gameObject);
                             });
                     });
             }

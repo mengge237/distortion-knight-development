@@ -1,36 +1,32 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    /// <summary>
-
-
-
-    /// </summary>
     [CreateAssetMenu(fileName = "ShadowBurst", menuName = "MutationChess/Effects/Shadow Burst")]
     public class ShadowBurstEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip(" =   ")]
+        [Header("��Ӱ��������")]
+        [Tooltip("����ת��Ϊ�˺��ı���(magicNumber>0ʱʹ�ÿ���ֵ)")]
         public int multiplier = 2;
 
         public override void Execute(CombatContext context)
         {
             if (context == null) return;
 
-            if (context.targetPlayer == null)
+            PlayerData player = context.targetPlayer ?? context.battleManager?.GetPlayerData();
+            Enemy enemy = context.targetEnemy ?? context.battleManager?.GetCurrentEnemy();
+
+            if (player == null)
             {
-                GameLogger.LogError("ShadowBurstEffect: targetPlayer ");
+                GameLogger.LogError("ShadowBurstEffect: targetPlayer Ϊ��");
                 return;
             }
-
-            if (context.targetEnemy == null)
+            if (enemy == null)
             {
-                GameLogger.LogError("ShadowBurstEffect: targetEnemy ");
+                GameLogger.LogError("ShadowBurstEffect: targetEnemy Ϊ��");
                 return;
             }
-
 
             int mult = multiplier;
             if (context.sourceCard != null && context.sourceCard.magicNumber > 0)
@@ -38,23 +34,26 @@ namespace MutationChess.Core
                 mult = context.sourceCard.magicNumber;
             }
 
-
-            int totalStrength = context.targetPlayer.GetBuffAmount(BuffType.Strength);
+            int totalStrength = player.GetBuffAmount(BuffType.Strength);
             int damage = totalStrength * mult;
-
-            GameLogger.Log($"[ShadowBurst]  {totalStrength}  {mult} = {damage} ");
-
 
             if (damage > 0)
             {
-                context.targetEnemy.TakeDamage(damage);
+                enemy.TakeDamage(damage);
+                context.battleManager?.AddLog($"��Ӱ������������� {totalStrength} ���������� {enemy.enemyName} ��� {damage} ���˺���x{mult}��");
+            }
+            else
+            {
+                context.battleManager?.AddLog($"��Ӱ��������������ҵ�ǰ������������");
             }
 
+            int removed = player.RemoveShadowStrengthBuffs();
+            if (removed > 0)
+            {
+                context.battleManager?.AddLog($"�Ƴ���������� {removed} ����Ӱ����Ч��");
+            }
 
-            int removed = context.targetPlayer.RemoveShadowStrengthBuffs();
-            GameLogger.Log($"[ShadowBurst]  {removed} ?");
+            GameLogger.Log($"[ShadowBurst] ����{totalStrength} x ����{mult} = �˺�{damage}���Ƴ���Ӱbuff{removed}��");
         }
     }
 }
-
-

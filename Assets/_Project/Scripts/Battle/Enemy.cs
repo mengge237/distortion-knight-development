@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Core;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +20,6 @@ namespace MutationChess.Battle
         public EnemyData data;
 
         private bool isSecondForm = false;
-        private string firstFormSpriteName;
         private string secondFormSpriteName;
 
         private EnemyAIPattern aiPattern;
@@ -66,7 +65,7 @@ namespace MutationChess.Battle
 
             if (enemySprite == null)
             {
-                GameLogger.LogWarning($": {fullPath}");
+                // 精灵图缺失时静默处理，不刷屏
             }
         }
 
@@ -429,7 +428,6 @@ namespace MutationChess.Battle
             data.spriteName = "";
 
             var enemy = new Enemy(data);
-            enemy.firstFormSpriteName = "";
             enemy.secondFormSpriteName = "";
 
             return enemy;

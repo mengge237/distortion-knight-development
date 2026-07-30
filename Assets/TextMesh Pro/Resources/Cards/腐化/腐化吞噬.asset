@@ -28,7 +28,7 @@ MonoBehaviour:
   description: "\u9020\u621020\u70B9\u4F24\u5BB3\uFF0C\u62BD2\u5F20\u724C\u3002\u6D88\u8017\u3002Legendary"
   effectIds:
   - DealDamageEffect
-  - Draw2CardsEffect
+  - DrawCardsEffect
   inherentEffectIds: []
   isColorless: 0
   isFactionLocked: 1

@@ -30,7 +30,7 @@ MonoBehaviour:
   - DealDamageEffect
   - ApplyWeakEffect
   inherentEffectIds:
-  - SlimeInherent
+  - SlimeInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u7C98\u6DB2\u55B7\u5C04"

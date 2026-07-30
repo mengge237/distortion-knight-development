@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -45,7 +45,7 @@ namespace MutationChess.Core
             enemy.AddBuff(new Buff { type = BuffType.Vulnerability, amount = totalVulnerable, duration = 999 });
 
             GameLogger.Log($"[AcidicCore] {totalWeak}/ {totalFrail}/ {totalVulnerable}" +
-                (ConversionModifier.BossAcidicCoreActive ? " (Boss???)" : ""));
+                (ConversionModifier.BossAcidicCoreActive ? " (Boss加成)" : ""));
         }
     }
 }

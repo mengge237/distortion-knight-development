@@ -45,10 +45,10 @@ namespace MutationChess.Core
                 duration = duration
             });
 
-            GameLogger.Log($"[LoseDexterity]  {dexterityLoss}  {duration} ");
+            GameLogger.Log($"[LoseDexterity] ���ʧȥ{dexterityLoss}����ݣ�����{duration}�غ�");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($" {dexterityLoss} {duration} ");
+                battleManager.AddBattleLog($"���ʧȥ{dexterityLoss}����ݣ�����{duration}�غ�");
         }
     }
 }

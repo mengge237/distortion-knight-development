@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7894629ea1d44614aa6fcd2140fd89ab, type: 3}
   m_Name: LoseDexterityNextTurnEffect
   m_EditorClassIdentifier: 
-  effectDescription: ?????????
+  effectDescription: 2回合内失去2点敏捷(debuff持续2回合)
   dexterityLoss: 2
   duration: 2

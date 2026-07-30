@@ -4663,7 +4663,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &550583077
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9826,7 +9826,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1208548158
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9843,8 +9843,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 60}
-  m_SizeDelta: {x: 300, y: 300}
+  m_AnchoredPosition: {x: -0.3416, y: 60}
+  m_SizeDelta: {x: 300.6832, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1208548159
 MonoBehaviour:
@@ -9923,7 +9923,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 2, y: -1}
+  m_AnchoredPosition: {x: 2, y: 1.5}
   m_SizeDelta: {x: 14, y: 77}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1210312974
@@ -13217,7 +13217,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -1128.1404, y: -251.20178}
+  m_SizeDelta: {x: -844.79456, y: -390.1156}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1437611757
 MonoBehaviour:
@@ -18455,7 +18455,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2115190419
 RectTransform:
   m_ObjectHideFlags: 0
@@ -18561,7 +18561,6 @@ MonoBehaviour:
   removalInfoText: {fileID: 0}
   cardContainer: {fileID: 0}
   relicContainer: {fileID: 1437611756}
-  relicLayout: {fileID: 0}
   potionContainer: {fileID: 0}
   cardSlotPrefab: {fileID: 0}
   relicSlotPrefab: {fileID: 3387508410934850848, guid: ddaa509f367e9fe4c99ac07e5f3a1901, type: 3}

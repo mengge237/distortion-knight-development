@@ -15,7 +15,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "DrawReluctantFromDiscardEffect", menuName = "MutationChess/Potion Effects/Draw Reluctant From Discard")]
     public class DrawReluctantFromDiscardEffect : CardEffect
     {
-        [Header("鿨")]
+        [Header("?")]
         [Tooltip("")]
         public int drawCount = 2;
 
@@ -50,14 +50,14 @@ namespace MutationChess.Core
 
                 discardPile.RemoveAt(i);
                 handManager.AddCardToHand(c);
-                GameLogger.Log($"[DrawReluctantFromDiscard] 鵽 {c.cardName}");
+                GameLogger.Log($"[DrawReluctantFromDiscard] �z {c.cardName}");
                 drawn++;
             }
 
             handManager.UpdatePileCountUI();
 
             if (battleManager != null)
-                battleManager.AddBattleLog($" {drawn} ");
+                battleManager.AddBattleLog($"�����ƶѳ�ȡ��{drawn}���ź޿��Ƶ�����");
 
             if (drawn == 0)
                 GameLogger.Log("[DrawReluctantFromDiscard] ");

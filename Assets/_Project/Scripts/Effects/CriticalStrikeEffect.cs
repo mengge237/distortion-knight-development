@@ -1,26 +1,22 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MutationChess.Core
 {
-    /// <summary>
-    ///
-    ///
-    /// Execute(CombatContext) 
-    /// </summary>
     [CreateAssetMenu(fileName = "CriticalStrikeEffect", menuName = "MutationChess/Relic Effects/Critical Strike")]
     public class CriticalStrikeEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("��������")]
+        [Tooltip("�����������ʣ�0~1��")]
         [Range(0f, 1f)]
         public float criticalChance = 0.15f;
 
-        [Tooltip("")]
+        [Tooltip("�����˺�����")]
         public float damageMultiplier = 2f;
 
         public override void Execute(CombatContext context)
         {
-            //
+            // ��Ϊ����Ч���������߼�ͨ�� CalculateAttackDamage ֵ�޸�������
+            // �˷��������ʵ�֣���������ִ��
         }
 
         public override void Execute(EffectContext context)
@@ -32,7 +28,8 @@ namespace MutationChess.Core
             {
                 int critDamage = Mathf.RoundToInt(context.baseValue * damageMultiplier);
                 context.finalValue = critDamage;
-                GameLogger.Log($"[CriticalStrike] {context.baseValue} -> {critDamage}");
+                context.combat?.battleManager?.AddLog($"�������˺� {context.baseValue} -> {critDamage}��x{damageMultiplier}��");
+                GameLogger.Log($"[CriticalStrike] �������� {context.baseValue} -> {critDamage}");
             }
         }
     }

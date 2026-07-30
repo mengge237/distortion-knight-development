@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using MutationChess.Core;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,7 +29,7 @@ namespace MutationChess.Core
             }
 
             allCardsLoaded = true;
-            GameLogger.Log($"[CardData] : {allAssets.Length} ??");
+            GameLogger.Log($"[CardData] 已加载 {allAssets.Length} 张卡牌资产");
         }
 
         private static CardDataAsset LoadAsset(CardName cardName)
@@ -52,7 +52,7 @@ namespace MutationChess.Core
             if (assetCache.TryGetValue(key, out CardDataAsset retry))
                 return retry;
 
-            GameLogger.LogError($"[CardData] : {key} Cards .asset ");
+            GameLogger.LogError($"[CardData] 未找到卡牌: {key}，请检查 Cards 目录下的 .asset 文件");
             return null;
         }
 
@@ -66,7 +66,7 @@ namespace MutationChess.Core
             CardDataAsset asset = LoadAsset(cardName);
             if (asset == null)
             {
-                GameLogger.LogError($": {cardName}");
+                GameLogger.LogError($"[CardData] 无法创建卡牌: {cardName}");
                 return null;
             }
 
@@ -108,16 +108,7 @@ namespace MutationChess.Core
                 if (originalSprite != null)
                 {
                     card.cardArt = originalSprite;
-                    GameLogger.Log($"[CardData] : {asset.cardArtPath}");
                 }
-                else
-                {
-                    GameLogger.LogWarning($"[CardData] : {asset.cardArtPath} Resources/CardArt/ ");
-                }
-            }
-            else
-            {
-                GameLogger.LogWarning($"[CardData] {asset.cardName} cardArtPath");
             }
 
             if (asset.effectIds != null && asset.effectIds.Count > 0)
@@ -131,7 +122,7 @@ namespace MutationChess.Core
                     }
                     else
                     {
-                        GameLogger.LogError($": {effectId}, {asset.cardName}");
+                        GameLogger.LogError($"[CardData] 效果加载失败: {effectId}, 卡牌: {asset.cardName}");
                     }
                 }
             }
@@ -148,7 +139,7 @@ namespace MutationChess.Core
                     }
                     else
                     {
-                        GameLogger.LogError($": {inherentId}, {asset.cardName}");
+                        GameLogger.LogError($"[CardData] 固有效果加载失败: {inherentId}, 卡牌: {asset.cardName}");
                     }
                 }
             }
@@ -189,7 +180,7 @@ namespace MutationChess.Core
             }
             else
             {
-                GameLogger.LogError($": {effectId}");
+                GameLogger.LogError($"[CardData] 未找到效果: {effectId}");
             }
 
             return effect;
@@ -216,7 +207,7 @@ namespace MutationChess.Core
             }
             else
             {
-                GameLogger.LogError($": {effectId}");
+                GameLogger.LogError($"[CardData] 未找到固有效果: {effectId}");
             }
 
             return inherent;

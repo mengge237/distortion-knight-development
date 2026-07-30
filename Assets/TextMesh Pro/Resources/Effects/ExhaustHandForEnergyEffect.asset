@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 289f9026d8bbaf24688ba85f32782354, type: 3}
   m_Name: ExhaustHandForEnergyEffect
   m_EditorClassIdentifier: 
-  effectDescription: ?????????
+  effectDescription: 消耗全部手牌,每张获1能量(每卡1能量)
   energyPerCard: 1

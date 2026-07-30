@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f86ef231103fcf43a8431b75ea1155d, type: 3}
   m_Name: SlimeWeakEffect
   m_EditorClassIdentifier: 
-  effectDescription: ??????
+  effectDescription: 打出粘液牌对敌1层虚弱3回合(Boss+1层=2层)
   weakAmount: 1
   bossExtraWeak: 1
   weakDuration: 3

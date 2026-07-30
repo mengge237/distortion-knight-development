@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 187f05fcf3a44125941e24961c64c00d, type: 3}
   m_Name: BloodAltarBoostedEffect
   m_EditorClassIdentifier: 
-  effectDescription: ???????
+  effectDescription: 回复1生命并永久获得1点力量
   healthCostReduction: 1
   extraStrength: 1

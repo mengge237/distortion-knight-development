@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -15,10 +15,10 @@ namespace MutationChess.Core
 
     public enum CardRarity
     {
-        Common,     // 1?? ???
-        Uncommon,   // 2?? ???
-        Rare,       // 3?? ???
-        Legendary,  // 4?? ???
+        Common,     // 1星 普通
+        Uncommon,   // 2星 罕见
+        Rare,       // 3星 稀有
+        Legendary,  // 4星 传说
         Colorless,  //
         Cursed      //
     }
@@ -397,9 +397,12 @@ namespace MutationChess.Core
 
         public void ExecuteEffects(CombatContext context)
         {
+            var bm = context.battleManager;
+            bm?.AddLog($"玩家打出卡牌【{cardName}】");
+
             if (effects.Count == 0 && inherentEffects.Count == 0)
             {
-                GameLogger.LogWarning($"{cardName} ");
+                GameLogger.LogWarning($"{cardName} 未配置任何效果");
                 return;
             }
 
@@ -411,19 +414,15 @@ namespace MutationChess.Core
                 ctx.tag = this;
                 effectManager.Trigger(EffectTrigger.CardPlayed, ctx);
 
-                //
                 ConversionModifier.CardsPlayedThisBattle++;
                 if (cardType == CardType.Attack)
                     ConversionModifier.AttackCardsPlayedThisBattle++;
 
-                // 
                 effectManager.Trigger(EffectTrigger.AfterCardsPlayed, ctx);
             }
 
-            //
             if (inherentEffects != null && inherentEffects.Count > 0)
             {
-                //
                 int triggerCount = ConversionModifier.TagEffectDoubleTrigger ? 2 : 1;
 
                 foreach (var inherent in inherentEffects)
@@ -432,14 +431,13 @@ namespace MutationChess.Core
                     {
                         for (int i = 0; i < triggerCount; i++)
                         {
-                            GameLogger.Log($"[Card] {cardName} : {inherent.GetType().Name}" + (triggerCount > 1 ? $" (??{i + 1}??)" : ""));
+                            GameLogger.Log($"[Card] {cardName} 触发固有效果: {inherent.GetType().Name}" + (triggerCount > 1 ? $" (第{i + 1}次)" : ""));
                             inherent.ApplyInherent(context);
                         }
                     }
                 }
             }
 
-            //
             foreach (var effect in effects)
             {
                 if (effect != null)
@@ -448,7 +446,7 @@ namespace MutationChess.Core
                 }
                 else
                 {
-                    GameLogger.LogWarning("");
+                    GameLogger.LogWarning($"{cardName} 存在空的效果引用");
                 }
             }
         }

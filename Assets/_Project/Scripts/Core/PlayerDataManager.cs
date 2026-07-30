@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using MutationChess.Core;
 using UnityEngine;
 using TMPro;
@@ -134,11 +134,12 @@ namespace MutationChess.Core
             return removed;
         }
 
-        public void Heal(int amount)
+        public int Heal(int amount)
         {
-            playerData.Heal(amount);
+            int actual = playerData.Heal(amount);
             OnDataChanged?.Invoke(playerData);
             UpdateUI();
+            return actual;
         }
 
         public void TakeDamage(int damage)

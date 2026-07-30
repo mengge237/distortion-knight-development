@@ -1,38 +1,32 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Core;
 using MutationChess.UI;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    /// <summary>
-    ///
-    ///
-    /// </summary>
     [CreateAssetMenu(fileName = "GainEnergyEffect", menuName = "MutationChess/Relic Effects/Gain Energy")]
     public class GainEnergyEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("��������")]
+        [Tooltip("���λ�õ���������")]
         public int energyGain = 1;
 
-        [Header("")]
-        [Tooltip("")]
-        public int discardRandomCount = 1;
+        [Header("��������")]
+        [Tooltip("Ч���������������������0=�����ƣ�")]
+        public int discardRandomCount = 0;
 
         public override void Execute(CombatContext context)
         {
             var handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("[GainEnergyEffect] HandManager ");
+                GameLogger.LogWarning("[GainEnergyEffect] HandManager Ϊ��");
                 return;
             }
 
-            //
             handManager.RestoreEnergy(energyGain);
 
-            //
             for (int i = 0; i < discardRandomCount; i++)
             {
                 var handCards = handManager.GetHandCards();
@@ -44,12 +38,12 @@ namespace MutationChess.Core
 
             if (context?.battleManager != null)
             {
-                context.battleManager.AddBattleLog($": +{energyGain}" +
-                    (discardRandomCount > 0 ? $": {discardRandomCount}" : ""));
+                string log = $"��һ�� {energyGain} ������";
+                if (discardRandomCount > 0) log += $"��������� {discardRandomCount} ����";
+                context.battleManager.AddLog(log);
             }
 
-            GameLogger.Log($"[GainEnergyEffect] {energyGain} " +
-                (discardRandomCount > 0 ? $"{discardRandomCount} " : ""));
+            GameLogger.Log($"[GainEnergyEffect] ����+{energyGain}" + (discardRandomCount > 0 ? $" ����{discardRandomCount}" : ""));
         }
 
         public void ExecuteGainEnergy(BattleManager battleManager)
@@ -57,7 +51,7 @@ namespace MutationChess.Core
             var handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("[GainEnergyEffect] HandManager ");
+                GameLogger.LogWarning("[GainEnergyEffect] HandManager Ϊ��");
                 return;
             }
 
@@ -65,7 +59,7 @@ namespace MutationChess.Core
 
             if (battleManager != null)
             {
-                battleManager.AddBattleLog($": {energyGain} ");
+                battleManager.AddLog($"��һ�� {energyGain} ������");
             }
         }
     }

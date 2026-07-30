@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3872f0b87b26f2442bebaea8db83df53, type: 3}
   m_Name: GainEnergyEffect
   m_EditorClassIdentifier: 
-  effectDescription: ???????
+  effectDescription: 获得1点能量并随机弃1张手牌(能量1,弃牌1)
   energyGain: 1
   discardRandomCount: 1

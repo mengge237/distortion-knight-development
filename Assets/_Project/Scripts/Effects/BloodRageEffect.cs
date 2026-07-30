@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Core;
 using MutationChess.Battle;
 
@@ -21,20 +21,20 @@ namespace MutationChess.Core
         {
             ConversionModifier.BloodConversionForAll = true;
             ConversionModifier.TemporaryBloodRateOverride = defaultBloodRate;
-            GameLogger.Log($"[BloodRage]  {defaultBloodRate}=1");
+            GameLogger.Log($"[BloodRage] ��ҽ���Ѫŭ״̬�����п��ƾ���Ѫ֮ת����ת����{defaultBloodRate}:1��");
 
             if (context?.battleManager != null)
-                context.battleManager.AddBattleLog("");
+                context.battleManager.AddBattleLog($"��ҽ���Ѫŭ״̬�����п��ƾ���Ѫ֮ת����ת����{defaultBloodRate}:1��");
         }
 
         public override void Execute(EffectContext context)
         {
             ConversionModifier.BloodConversionForAll = true;
             ConversionModifier.TemporaryBloodRateOverride = defaultBloodRate;
-            GameLogger.Log($"[BloodRage]  {defaultBloodRate}=1");
+            GameLogger.Log($"[BloodRage] ��ҽ���Ѫŭ״̬�����п��ƾ���Ѫ֮ת����ת����{defaultBloodRate}:1��");
 
             if (context?.battleManager != null)
-                context.battleManager.AddBattleLog("");
+                context.battleManager.AddBattleLog($"��ҽ���Ѫŭ״̬�����п��ƾ���Ѫ֮ת����ת����{defaultBloodRate}:1��");
         }
     }
 }

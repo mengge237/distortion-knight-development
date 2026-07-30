@@ -26,7 +26,7 @@ namespace MutationChess.Map
             mapGenerator = FindObjectOfType<MapGenerator>();
             if (mapGenerator == null)
             {
-                GameLogger.LogError(" MapGenerator");
+                GameLogger.LogError("[MapView] 未找到 MapGenerator");
                 return;
             }
 
@@ -57,15 +57,15 @@ namespace MutationChess.Map
                 mapGenerator = FindObjectOfType<MapGenerator>();
                 if (mapGenerator == null)
                 {
-                    GameLogger.LogError("[MapView] MapGenerator ");
+                    GameLogger.LogError("[MapView] 未找到 MapGenerator");
                     return;
                 }
-                GameLogger.Log("[MapView]  MapGenerator");
+                GameLogger.Log("[MapView] 已找到 MapGenerator");
             }
 
             if (mapGenerator.AllLayers == null)
             {
-                GameLogger.LogWarning("[MapView] MapGenerator.AllLayers ");
+                GameLogger.LogWarning("[MapView] MapGenerator.AllLayers 为空");
                 return;
             }
 
@@ -137,7 +137,7 @@ namespace MutationChess.Map
             }
             else
             {
-                GameLogger.LogError("MapGenerator ");
+                GameLogger.LogError("[MapView] MapGenerator 未初始化");
             }
         }
     }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Core;
 using MutationChess.Battle;
 
@@ -71,10 +71,10 @@ namespace MutationChess.Core
             turnEndHandlerRef = (ctx) => OnTurnEnd();
             effectManager.Register(EffectTrigger.PlayerTurnEnd, turnEndHandlerRef);
 
-            GameLogger.Log($"[BlockLock] {remainingTurns} ");
+            GameLogger.Log($"[BlockLock] ��ұ�ʩ�Ӹ�������{remainingTurns}�غ����޷���ø�");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($"{duration} ");
+                battleManager.AddBattleLog($"��ұ�ʩ�Ӹ�������{duration}�غ����޷���ø�");
         }
 
         /// <summary>

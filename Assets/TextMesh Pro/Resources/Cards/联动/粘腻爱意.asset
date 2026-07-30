@@ -32,8 +32,8 @@ MonoBehaviour:
   - ApplyVulnerabilityEffect
   - ReduceStrengthEffect
   inherentEffectIds:
-  - SlimeInherent
-  - ReluctantInherent
+  - SlimeInherentEffect
+  - ReluctantInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u7C98\u817B\u7231\u610F"

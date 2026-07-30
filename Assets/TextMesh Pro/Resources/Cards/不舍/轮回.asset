@@ -29,7 +29,7 @@ MonoBehaviour:
   effectIds:
   - DrawReluctantFromDiscardEffect
   inherentEffectIds:
-  - ReluctantInherent
+  - ReluctantInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u8F6E\u56DE"

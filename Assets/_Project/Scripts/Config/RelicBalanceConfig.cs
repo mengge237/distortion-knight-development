@@ -97,7 +97,7 @@ namespace MutationChess.Core
                 isBossRelic = true,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "BloodVeinsBossEffect", trigger = EffectTrigger.BattleStart }
+                    new RelicEffectEntry { effectId = "BossBloodVeinEffect", trigger = EffectTrigger.BattleStart }
                 }
             });
 
@@ -130,8 +130,8 @@ namespace MutationChess.Core
                 isBossRelic = true,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "CorruptLiverBossEffect", trigger = EffectTrigger.CardExhausted },
-                    new RelicEffectEntry { effectId = "KillBonusDamageEffect", trigger = EffectTrigger.EnemyDeath }
+                    new RelicEffectEntry { effectId = "BossCorruptLiverEffect", trigger = EffectTrigger.CardExhausted },
+                    new RelicEffectEntry { effectId = "ShadowCardBonusDamageEffect", trigger = EffectTrigger.EnemyDeath, value1 = 1f }
                 }
             });
 
@@ -147,8 +147,8 @@ namespace MutationChess.Core
                 isBossRelic = true,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "BattleStartDraw1Effect", trigger = EffectTrigger.BattleStart },
-                    new RelicEffectEntry { effectId = "SlimeWeakPlusEffect", trigger = EffectTrigger.CardPlayed }
+                    new RelicEffectEntry { effectId = "DrawCardsEffect", trigger = EffectTrigger.BattleStart, value1 = 1f },
+                    new RelicEffectEntry { effectId = "SlimeWeakEffect", trigger = EffectTrigger.CardPlayed, value1 = 1f }
                 }
             });
 
@@ -164,7 +164,7 @@ namespace MutationChess.Core
                 isBossRelic = true,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "BattleStartDrawReluctantEffect", trigger = EffectTrigger.BattleStart },
+                    new RelicEffectEntry { effectId = "DrawReluctantFromDiscardEffect", trigger = EffectTrigger.BattleStart, value1 = 1f },
                     new RelicEffectEntry { effectId = "ReluctantBlockBonusEffect", trigger = EffectTrigger.CardPlayed, value1 = 2f }
                 }
             });
@@ -603,7 +603,7 @@ namespace MutationChess.Core
                 price = 150,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "LeatherArmorBlockEffect", trigger = EffectTrigger.BattleStart }
+                    new RelicEffectEntry { effectId = "ApplyBlockEffect", trigger = EffectTrigger.BattleStart, value1 = 10f }
                 }
             });
 
@@ -631,7 +631,7 @@ namespace MutationChess.Core
                 price = 285,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "SwiftBootsDraw2Effect", trigger = EffectTrigger.BattleStart }
+                    new RelicEffectEntry { effectId = "DrawCardsEffect", trigger = EffectTrigger.BattleStart, value1 = 2f }
                 }
             });
 
@@ -659,7 +659,7 @@ namespace MutationChess.Core
                 price = 285,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "IronWillBattleStartEffect", trigger = EffectTrigger.BattleStart }
+                    new RelicEffectEntry { effectId = "BlockAndStrengthEffect", trigger = EffectTrigger.BattleStart }
                 }
             });
 
@@ -673,7 +673,7 @@ namespace MutationChess.Core
                 price = 285,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "Gold12OnVictoryEffect", trigger = EffectTrigger.Victory, value1 = 12f }
+                    new RelicEffectEntry { effectId = "Gain12GoldOnVictoryEffect", trigger = EffectTrigger.Victory, value1 = 12f }
                 }
             });
 
@@ -715,7 +715,7 @@ namespace MutationChess.Core
                 price = 320,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "TitanTempDex3TurnEffect", trigger = EffectTrigger.BattleStart }
+                    new RelicEffectEntry { effectId = "TempDexterity3TurnsEffect", trigger = EffectTrigger.BattleStart }
                 }
             });
 
@@ -857,7 +857,7 @@ namespace MutationChess.Core
                 isSynthesisTarget = true,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
-                    new RelicEffectEntry { effectId = "BonusDamageEffect", trigger = EffectTrigger.CalculateAttackDamage, value1 = 2f }
+                    new RelicEffectEntry { effectId = "ShadowCardBonusDamageEffect", trigger = EffectTrigger.CalculateAttackDamage, value1 = 2f }
                 }
             });
 

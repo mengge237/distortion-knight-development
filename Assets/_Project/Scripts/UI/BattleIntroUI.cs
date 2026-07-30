@@ -47,6 +47,22 @@ namespace MutationChess.UI
             gameObject.SetActive(false);
         }
 
+        private void OnDestroy()
+        {
+            // 终止所有关联的 DOTween 动画，避免销毁后仍访问 RectTransform/CanvasGroup
+            if (overlayCanvasGroup != null) DOTween.Kill(overlayCanvasGroup);
+            if (backgroundImage != null) DOTween.Kill(backgroundImage);
+            if (playerInfoGroup != null) DOTween.Kill(playerInfoGroup);
+            if (playerInfoCanvasGroup != null) DOTween.Kill(playerInfoCanvasGroup);
+            if (enemyInfoGroup != null) DOTween.Kill(enemyInfoGroup);
+            if (enemyInfoCanvasGroup != null) DOTween.Kill(enemyInfoCanvasGroup);
+            if (battleStartText != null)
+            {
+                DOTween.Kill(battleStartText);
+                DOTween.Kill(battleStartText.transform);
+            }
+        }
+
         public void ShowIntro(string playerName, int playerHp, int playerMaxHp,
                               string enemyName, int enemyHp, int enemyMaxHp,
                               Sprite enemySprite, Action onComplete)

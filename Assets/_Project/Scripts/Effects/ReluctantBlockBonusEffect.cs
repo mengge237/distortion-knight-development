@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;  namespace MutationChess.Core
 {  /// <summary>  ///  ///  ///  /// Bossbase 2 -> 4  /// </summary>  [CreateAssetMenu(fileName = "ReluctantBlockBonusEffect", menuName = "MutationChess/Relic Effects/Reluctant Block Bonus")]  public class ReluctantBlockBonusEffect : CardEffect  {  [Header("")]  [Tooltip("")]  public int blockAmount = 2;  public override void Execute(CombatContext context)  {  GrantReluctantBlock(context);  }  public override void Execute(EffectContext context)  {  GrantReluctantBlock(context?.combat);  }  private void GrantReluctantBlock(CombatContext context)  {  if (context == null || context.battleManager == null) return;  Card playedCard = context.sourceCard;  if (playedCard == null || !playedCard.HasTag(CardTag.Reluctant)) return;  int effectiveBlock = blockAmount;  if (ConversionModifier.BossReluctantChainActive)  effectiveBlock = blockAmount * 2;  context.battleManager.PlayerBlock(effectiveBlock);  GameLogger.Log($"[ReluctantBlock]  {playedCard.cardName}  {effectiveBlock} ??{(ConversionModifier.BossReluctantChainActive ? "??Boss" : "")}");  }  }
 }

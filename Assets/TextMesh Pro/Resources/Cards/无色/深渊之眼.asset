@@ -27,7 +27,7 @@ MonoBehaviour:
   description: "\u51CF\u4F243\u70B9\uFF0C\u62BD3\u5F20\u724C\u3002Legendary"
   effectIds:
   - DamageReductionEffect
-  - Draw3CardsEffect
+  - DrawCardsEffect
   inherentEffectIds: []
   isColorless: 1
   isFactionLocked: 0

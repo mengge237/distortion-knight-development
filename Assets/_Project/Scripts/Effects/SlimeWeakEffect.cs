@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -55,7 +55,7 @@ namespace MutationChess.Core
             });
 
             GameLogger.Log($"[SlimeWeak] {playedCard.cardName} {totalWeak} " +
-                (ConversionModifier.BossSlimeGlandActive ? " (Boss???)" : ""));
+                (ConversionModifier.BossSlimeGlandActive ? " (Boss加成)" : ""));
         }
     }
 }

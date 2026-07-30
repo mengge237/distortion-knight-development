@@ -1,4 +1,4 @@
-using MutationChess.Core;
+﻿using MutationChess.Core;
 using MutationChess.Map;
 using MutationChess.UI;
 using System;
@@ -15,43 +15,43 @@ namespace MutationChess.Battle
     {
         public static BattleManager Instance { get; private set; }
 
-        [Header("UI???")]
+        [Header("UI引用")]
         [SerializeField] private GameObject battlePanel;
         [SerializeField] private GameObject handPanel;
 
- [Header("")]
+ [Header("视图切换")]
         [SerializeField] private Button toggleViewButton;
 
- [Header("")]
+ [Header("回合结束")]
         [SerializeField] private Button endTurnButton;
 
- [Header("")]
+ [Header("敌人意图")]
         [SerializeField] private EnemyIntentUI enemyIntentUI;
 
- [Header("")]
+ [Header("敌人名称")]
         [SerializeField] private TMP_Text enemyNameText;
         [SerializeField] private TMP_Text enemyHpText;
         [SerializeField] private Image enemyImage;
 
- [Header("")]
+ [Header("玩家血量")]
         [SerializeField] private TMP_Text playerHpText;
         [SerializeField] private TMP_Text playerBlockText;
         [SerializeField] private Image playerImage;
 
- [Header("")]
+ [Header("战斗日志")]
         [SerializeField] private TMP_Text battleLogText;
         [SerializeField] private BattleIntroUI battleIntroUI;
 
         [Header("Debuff")]
         [SerializeField] private TMP_Text playerDebuffText;
 
- [Header("")]
+ [Header("行动提示")]
         [SerializeField] private TMP_Text actionHintText;
 
- [Header("")]
+ [Header("奖励面板")]
         [SerializeField] private RewardPanel rewardPanel;
 
- [Header("")]
+ [Header("背景图片")]
         [SerializeField] private Image backgroundImage;
         [SerializeField] private BackgroundConfig backgroundConfig;
 
@@ -98,7 +98,7 @@ namespace MutationChess.Battle
 
             if (gameManager == null)
             {
- GameLogger.LogWarning("BattleManager: ??? GameManager");
+ GameLogger.LogWarning("BattleManager: 缺少 GameManager");
             }
 
             effectManager = EffectManager.Instance;
@@ -318,7 +318,7 @@ namespace MutationChess.Battle
             }
             else
             {
-                GameLogger.LogWarning("EnemyIntentUI ???");
+                GameLogger.LogWarning("EnemyIntentUI 未找到");
             }
         }
 
@@ -357,7 +357,7 @@ namespace MutationChess.Battle
                     break;
 
                 case EnemyIntentType.Wait:
- AddLog($"{currentEnemy.enemyName} ...");
+                    AddLog($"{currentEnemy.enemyName} 正在蓄力...");
                     yield return new WaitForSeconds(0.5f);
                     break;
             }
@@ -396,24 +396,26 @@ namespace MutationChess.Battle
         IEnumerator ExecuteAttack()
         {
             int dmg = currentIntentValue;
-            int actual = Mathf.Max(0, dmg - playerBlock);
 
             if (playerBlock > 0)
-                AddLog($"??? {Mathf.Min(dmg, playerBlock)}???");
+            {
+                int blocked = Mathf.Min(dmg, playerBlock);
+                AddLog($"{currentEnemy.enemyName} 攻击！玩家格挡抵挡 {blocked} 点伤害");
+            }
 
+            int actual = Mathf.Max(0, dmg - playerBlock);
             playerBlock = 0;
 
             if (actual > 0)
             {
- // ??? EffectManager DamageReductionEffect ???
                 actual = CalculatePlayerDamage(actual);
                 playerData.TakeDamage(actual);
- AddLog($"{currentEnemy.enemyName} {actual} ");
+                AddLog($"{currentEnemy.enemyName} 对玩家造成 {actual} 点伤害");
                 currentEnemy.PlayAttack();
             }
             else
             {
- AddLog("");
+                AddLog("玩家完全格挡了本次攻击");
                 currentEnemy.PlayHurt();
             }
 
@@ -426,7 +428,7 @@ namespace MutationChess.Battle
         {
             int healAmount = currentIntentValue;
             currentEnemy.currentHealth = Mathf.Min(currentEnemy.maxHealth, currentEnemy.currentHealth + healAmount);
- AddLog($"{currentEnemy.enemyName} {healAmount} ");
+            AddLog($"{currentEnemy.enemyName} 防御并回复 {healAmount} 点生命");
             currentEnemy.PlayIdle();
 
             RefreshAllUI();
@@ -436,20 +438,26 @@ namespace MutationChess.Battle
         IEnumerator ExecuteSpecial()
         {
             int specialDmg = currentIntentValue;
+
+            if (playerBlock > 0)
+            {
+                int blocked = Mathf.Min(specialDmg / 2, playerBlock);
+                AddLog($"{currentEnemy.enemyName} 释放特殊攻击！玩家格挡抵挡 {blocked} 点伤害");
+            }
+
             int actualSpecial = Mathf.Max(0, specialDmg - playerBlock / 2);
             playerBlock = 0;
 
             if (actualSpecial > 0)
             {
- // ??? EffectManager 
                 actualSpecial = CalculatePlayerDamage(actualSpecial);
                 playerData.TakeDamage(actualSpecial);
- AddLog($"{currentEnemy.enemyName} {actualSpecial} ");
+                AddLog($"{currentEnemy.enemyName} 的特殊攻击对玩家造成 {actualSpecial} 点伤害");
                 currentEnemy.PlayAttack();
             }
             else
             {
- AddLog("");
+                AddLog("玩家完全抵挡了本次特殊攻击");
                 currentEnemy.PlayHurt();
             }
 
@@ -462,7 +470,7 @@ namespace MutationChess.Battle
         {
             int buffAmount = currentIntentValue;
             currentEnemy.currentAttackDamage += buffAmount;
- AddLog($"{currentEnemy.enemyName} {buffAmount}");
+            AddLog($"{currentEnemy.enemyName} 获得 {buffAmount} 点力量（攻击力提升）");
             currentEnemy.PlayHurt();
             yield return new WaitForSeconds(0.5f);
         }
@@ -502,7 +510,7 @@ namespace MutationChess.Battle
             else
             {
                 ShowMapView();
-                AddLog("???...");
+                AddLog("正在加载地图...");
             }
         }
 
@@ -581,7 +589,6 @@ namespace MutationChess.Battle
                 else
                 {
                     enemyImage.gameObject.SetActive(false);
-                    GameLogger.LogWarning("Enemy has no image: " + currentEnemy.enemyName);
                 }
             }
 
@@ -598,7 +605,8 @@ namespace MutationChess.Battle
             RefreshAllUI();
 
             AddLog("=== Battle Start ===");
-            AddLog("Encounter: " + currentEnemy.enemyName);
+            string encounterName = string.IsNullOrEmpty(currentEnemy.enemyName) ? currentEnemy.data?.aiPatternName ?? "Unknown" : currentEnemy.enemyName;
+            AddLog("Encounter: " + encounterName);
             AddLog("Player HP: " + playerData.currentHealth + "/" + playerData.maxHealth);
             AddLog("Enemy HP: " + currentEnemy.currentHealth + "/" + currentEnemy.maxHealth);
 
@@ -652,16 +660,18 @@ namespace MutationChess.Battle
             switch (action)
             {
                 case "attack":
- AddLog("");
-                    PlayerAttack(8 + UnityEngine.Random.Range(0, 5));
+                    int atkDmg = 8 + UnityEngine.Random.Range(0, 5);
+                    AddLog($"玩家发动普通攻击");
+                    PlayerAttack(atkDmg);
                     break;
                 case "defend":
                     int block = 5 + UnityEngine.Random.Range(0, 4);
+                    AddLog("玩家进入防御姿态");
                     PlayerBlock(block);
                     break;
                 case "skill":
                     int skillDmg = 12 + UnityEngine.Random.Range(0, 6);
- AddLog(" -" + skillDmg + "HP");
+                    AddLog($"玩家释放技能，对敌人造成 {skillDmg} 点伤害");
                     if (currentEnemy != null)
                     {
                         currentEnemy.TakeDamage(skillDmg);
@@ -676,7 +686,7 @@ namespace MutationChess.Battle
         {
             if (currentEnemy == null)
             {
- GameLogger.LogWarning($"PlayerAttack: currentEnemy {damage} ??");
+                GameLogger.LogWarning($"PlayerAttack: 当前敌人不存在，攻击伤害={damage}");
                 waitingForPlayerInput = true;
                 return;
             }
@@ -710,7 +720,7 @@ namespace MutationChess.Battle
 
             currentEnemy.TakeDamage(finalDamage);
 
- AddLog($" {finalDamage} ");
+            AddLog($"玩家对 {currentEnemy.enemyName} 造成 {finalDamage} 点伤害");
 
             RefreshAllUI();
 
@@ -733,7 +743,7 @@ namespace MutationChess.Battle
 
             int finalBlock = playerData.GetModifiedBlock(blockAmount);
 
- // ??? EffectManager BlockLockNextTurnEffect ???
+ // 触发 EffectManager BlockLockNextTurnEffect 格挡锁定
             if (effectManager != null)
             {
                 EffectContext ctx = new EffectContext(this);
@@ -742,7 +752,7 @@ namespace MutationChess.Battle
             }
 
             playerBlock += finalBlock;
-            AddLog($"??? {finalBlock} ?? (???: {playerBlock})");
+            AddLog($"玩家获得 {finalBlock} 格挡 (总计格挡: {playerBlock})");
 
             RefreshAllUI();
             waitingForPlayerInput = true;
@@ -760,11 +770,11 @@ namespace MutationChess.Battle
             if (turnManager != null) turnManager.EndBattle();
             var dataManager = PlayerDataManager.Instance;
 
-            AddLog(victory ? "=== ??? ===" : "=== ??? ===");
+            AddLog(victory ? "=== 胜利 ===" : "=== 失败 ===");
 
             if (actionHintText != null)
             {
-                actionHintText.text = victory ? "???!" : "???...";
+                actionHintText.text = victory ? "胜利!" : "失败...";
                 actionHintText.color = victory ? Color.green : Color.red;
             }
 
@@ -829,9 +839,9 @@ namespace MutationChess.Battle
         {
             List<Card> result = new List<Card>();
 
-            Card attack = CardData.CreateCard(CardName.����);
-            Card defend = CardData.CreateCard(CardName.����);
-            Card bash = CardData.CreateCard(CardName.ʹ��);
+            Card attack = CardData.CreateCard(CardName.攻击);
+            Card defend = CardData.CreateCard(CardName.防御);
+            Card bash = CardData.CreateCard(CardName.痛击);
 
             if (attack != null) result.Add(attack);
             if (defend != null) result.Add(defend);
@@ -886,7 +896,7 @@ namespace MutationChess.Battle
             rareChance = Mathf.Clamp01(rareChance);
             uncommonChance = Mathf.Clamp01(uncommonChance);
 
- GameLogger.Log($"[BattleManager] - :{enemyType} :{floorProgress:F2} :{nodeProgress:F2} ???:{rareChance:P0} :{uncommonChance:P0}");
+ GameLogger.Log($"[BattleManager] 敌人:{enemyType} 楼层:{floorProgress:F2} 进度:{nodeProgress:F2} 稀有率:{rareChance:P0} 罕见率:{uncommonChance:P0}");
 
             var allCommon = poolConfig.GetColoredCardsByRarity(CardRarity.Common)
                 .Where(a => a.faction == CardFaction.None || unlockService == null || unlockService.IsFactionUnlocked(a.faction))
@@ -978,7 +988,7 @@ namespace MutationChess.Battle
             if (gameManager != null)
                 goldMultiplier = gameManager.GetGoldMultiplier();
             int finalBossGold = Mathf.RoundToInt(baseBossGold * goldMultiplier);
- GameLogger.Log($"[BattleManager] BOSS??? - :{baseBossGold} :{goldMultiplier:F2} :{finalBossGold}");
+ GameLogger.Log($"[BattleManager] BOSS金币 - 基础:{baseBossGold} 倍率:{goldMultiplier:F2} 最终:{finalBossGold}");
 
             pendingRelicReward = bossReward.factionUnlockRelic;
             pendingBonusRelic = bossReward.bonusRelic;
@@ -1020,10 +1030,10 @@ namespace MutationChess.Battle
             {
                 Vector2Int goldRange = gameManager.GetGoldRangeForEnemy(enemyType);
                 int baseGold = UnityEngine.Random.Range(goldRange.x, goldRange.y + 1);
- // +15% ???
+ // +15% 金币加成
                 float goldMultiplier = gameManager.GetGoldMultiplier();
                 goldReward = Mathf.RoundToInt(baseGold * goldMultiplier);
- GameLogger.Log($"[BattleManager] - :{enemyType} :{baseGold} :{goldMultiplier:F2} :{goldReward}");
+ GameLogger.Log($"[BattleManager] 敌人:{enemyType} 基础金币:{baseGold} 倍率:{goldMultiplier:F2} 最终金币:{goldReward}");
             }
             else
             {
@@ -1039,7 +1049,7 @@ namespace MutationChess.Battle
                 List<Card> extraCards = GetRewardCardsForEnemy(enemyType);
                 if (extraCards != null && extraCards.Count > 0)
                 {
-                    GameLogger.Log($"[BattleManager] ���⿨�ƽ��� {extraCards.Count} ��");
+                    GameLogger.Log($"[BattleManager] 额外卡牌奖励 {extraCards.Count} 张");
                     cardRewards.AddRange(extraCards);
                 }
             }
@@ -1107,13 +1117,13 @@ namespace MutationChess.Battle
             if (gold > 0 && dataManager != null)
             {
                 dataManager.AddGold(gold);
-                AddLog($"??? {gold} ???");
+                AddLog($"获得 {gold} 金币");
             }
 
             if (card != null && dataManager != null)
             {
                 dataManager.AddCardToDeck(card);
- AddLog($": {card.cardName}");
+                AddLog($"获得卡牌: {card.cardName}");
             }
 
             if (pendingRelicReward != null)
@@ -1122,7 +1132,7 @@ namespace MutationChess.Battle
                 if (relicManager != null)
                 {
                     relicManager.AddRelic(pendingRelicReward);
- AddLog($": {pendingRelicReward.relicName}");
+                    AddLog($"获得遗物: {pendingRelicReward.relicName}");
 
                     if (pendingRelicReward.faction != CardFaction.None)
                     {
@@ -1130,7 +1140,7 @@ namespace MutationChess.Battle
                         if (unlockService != null)
                         {
                             unlockService.UnlockFaction(pendingRelicReward.faction);
- AddLog($": {unlockService.GetFactionDisplayName(pendingRelicReward.faction)}");
+                            AddLog($"解锁阵营: {unlockService.GetFactionDisplayName(pendingRelicReward.faction)}");
                         }
                     }
                 }
@@ -1143,7 +1153,7 @@ namespace MutationChess.Battle
                 if (relicManager != null)
                 {
                     relicManager.AddRelic(pendingBonusRelic);
- AddLog($": {pendingBonusRelic.relicName}");
+                    AddLog($"获得额外遗物: {pendingBonusRelic.relicName}");
                 }
                 pendingBonusRelic = null;
             }
@@ -1155,14 +1165,13 @@ namespace MutationChess.Battle
                     bool added = dataManager.AddPotion(pendingPotionReward);
                     if (added)
                     {
- AddLog($": {pendingPotionReward.potionName}");
+                        AddLog($"获得药水: {pendingPotionReward.potionName}");
                     }
                     else
                     {
- // 
                         int refund = pendingPotionReward.price;
                         dataManager.AddGold(refund);
- AddLog($"{pendingPotionReward.potionName} {refund} ???");
+                        AddLog($"药水瓶已满，{pendingPotionReward.potionName} 转换为 {refund} 金币");
                     }
                 }
                 pendingPotionReward = null;
@@ -1212,7 +1221,7 @@ namespace MutationChess.Battle
             {
                 playerBlockText.gameObject.SetActive(playerBlock > 0);
                 if (playerBlock > 0)
-                    playerBlockText.text = $"??: {playerBlock}";
+                    playerBlockText.text = $"格挡: {playerBlock}";
             }
         }
 
@@ -1241,16 +1250,16 @@ namespace MutationChess.Battle
                     switch (buff.type)
                     {
                         case BuffType.Vulnerability:
- debuffStrings.Add($" {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"易伤 {buff.amount}({buff.duration})");
                             break;
                         case BuffType.Weak:
- debuffStrings.Add($" {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"虚弱 {buff.amount}({buff.duration})");
                             break;
                         case BuffType.Frail:
- debuffStrings.Add($" {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"脆弱 {buff.amount}({buff.duration})");
                             break;
                         case BuffType.Poison:
-                            debuffStrings.Add($"?? {buff.amount}({buff.duration})");
+                            debuffStrings.Add($"中毒 {buff.amount}({buff.duration})");
                             break;
                     }
                 }
@@ -1267,7 +1276,7 @@ namespace MutationChess.Battle
             }
         }
 
-        void AddLog(string msg)
+        public void AddLog(string msg)
         {
             if (battleLogText != null) battleLogText.text += msg + "\n";
             if (BattleLogManager.Instance != null) BattleLogManager.Instance.AddLog(msg);
@@ -1299,7 +1308,7 @@ namespace MutationChess.Battle
         /// <summary>
 
 
- /// ??? EffectTrigger.CalculatePlayerDamage /
+ /// 触发 EffectTrigger.CalculatePlayerDamage /
         /// </summary>
         public int CalculatePlayerDamage(int baseDamage)
         {

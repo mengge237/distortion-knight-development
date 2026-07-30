@@ -11,13 +11,13 @@ namespace MutationChess.Core
         {
             if (context.battleManager == null)
             {
-                GameLogger.LogError("ApplyBlockEffect: battleManager 为空！");
+                GameLogger.LogError("ApplyBlockEffect: battleManager Ϊ��");
                 return;
             }
 
             if (context.sourceCard == null)
             {
-                GameLogger.LogError("ApplyBlockEffect: sourceCard 为空！");
+                GameLogger.LogError("ApplyBlockEffect: sourceCard Ϊ��");
                 return;
             }
 

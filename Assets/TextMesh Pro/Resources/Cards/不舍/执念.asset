@@ -29,7 +29,7 @@ MonoBehaviour:
   effectIds:
   - ApplyTemporaryStrengthEffect
   inherentEffectIds:
-  - ReluctantInherent
+  - ReluctantInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u6267\u5FF5"

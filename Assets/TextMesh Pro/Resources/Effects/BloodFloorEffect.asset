@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3e65a18c8208c045be92ded05c8dc95, type: 3}
   m_Name: BloodFloorEffect
   m_EditorClassIdentifier: 
-  effectDescription: ??????
+  effectDescription: 生命值最低保持1点(防止战斗死亡)
   healthFloor: 1

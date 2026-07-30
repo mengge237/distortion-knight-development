@@ -34,10 +34,10 @@ namespace MutationChess.Core
         private void ActivateResonance(BattleManager battleManager)
         {
             ConversionModifier.TagEffectDoubleTrigger = true;
-            GameLogger.Log("[TagComboResonance] ");
+            GameLogger.Log("[TagComboResonance] ��һ�ñ�ǩ��������ǩЧ��������������");
 
             if (battleManager != null)
-                battleManager.AddBattleLog("");
+                battleManager.AddBattleLog("��һ�ñ�ǩ��������ǩЧ��������������");
         }
     }
 }

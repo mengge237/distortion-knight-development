@@ -26,7 +26,7 @@ MonoBehaviour:
   blockPerEnergy: 0
   description: "\u62BD2\u5F20\u724C"
   effectIds:
-  - Draw2CardsEffect
+  - DrawCardsEffect
   inherentEffectIds: []
   isColorless: 0
   isFactionLocked: 0

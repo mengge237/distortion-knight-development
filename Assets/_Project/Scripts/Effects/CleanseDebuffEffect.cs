@@ -49,10 +49,10 @@ namespace MutationChess.Core
             if (removeVulnerability)
                 removed += playerData.RemoveBuffsByType(BuffType.Vulnerability);
 
-            GameLogger.Log($"[CleanseDebuff]  {removed} debuff");
+            GameLogger.Log($"[CleanseDebuff] ���������{removed}������Ч��");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($" {removed} ");
+                battleManager.AddBattleLog($"���������{removed}������Ч��");
 
             dataManager.UpdateUI();
         }

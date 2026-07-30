@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using DG.Tweening;
 
@@ -6,7 +6,7 @@ namespace MutationChess.Map
 {
     public class PlayerController : MonoBehaviour
     {
-        [Header("ÒÆ¶¯ÉèÖÃ")]
+        [Header("ç§»åŠ¨è®¾ç½®")]
         [SerializeField] private float moveDuration = 0.6f;
         [SerializeField] private float jumpPower = 2.5f;
         [SerializeField] private int jumpCount = 1;
@@ -37,7 +37,7 @@ namespace MutationChess.Map
                 rotationTween = transform.DORotateQuaternion(targetRotation, rotationDuration).SetEase(Ease.OutQuad);
             }
 
-            // Ê¹ÓÃ DOTween ÌøÔ¾ÒÆ¶¯£¨¸üË¿»¬£©
+            // ä½¿ç”¨ DOTween è·³è·ƒç§»åŠ¨ï¼ˆæ›´ä¸æ»‘ï¼‰
             moveTween = transform
                 .DOJump(target, jumpPower, jumpCount, moveDuration)
                 .SetEase(moveEase)
@@ -58,13 +58,19 @@ namespace MutationChess.Map
         }
 
         /// <summary>
-        /// Í£Ö¹ÒÆ¶¯
+        /// åœæ­¢ç§»åŠ¨
         /// </summary>
         public void StopMoving()
         {
             moveTween?.Kill();
             rotationTween?.Kill();
             isMoving = false;
+        }
+
+        void OnDestroy()
+        {
+            moveTween?.Kill();
+            rotationTween?.Kill();
         }
     }
 }

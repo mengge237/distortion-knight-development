@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -6,9 +6,8 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "ApplyFrailEffect", menuName = "MutationChess/Effects/Apply Frail")]
     public class ApplyFrailEffect : CardEffect
     {
-        [Header("")]
+        [Header("��������")]
         [SerializeField] private int frailAmount = 1;
-        [Header("")]
         [SerializeField] private int duration = 2;
 
         public override void Execute(CombatContext context)
@@ -25,10 +24,12 @@ namespace MutationChess.Core
             if (context.targetEnemy != null)
             {
                 context.targetEnemy.AddBuff(buff);
+                context.battleManager?.AddLog($"�� {context.targetEnemy.enemyName} ʩ�� {frailAmount} ���������񵲼��٣�{duration}�غϣ�");
             }
             else if (context.targetPlayer != null)
             {
                 context.targetPlayer.AddBuff(buff);
+                context.battleManager?.AddLog($"����ܵ� {frailAmount} ���������񵲼��٣�{duration}�غϣ�");
             }
         }
     }

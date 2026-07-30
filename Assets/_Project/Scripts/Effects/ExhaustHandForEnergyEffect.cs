@@ -38,9 +38,9 @@ namespace MutationChess.Core
             List<Card> handCards = handManager.GetHandCards();
             if (handCards.Count == 0)
             {
-                GameLogger.Log("[ExhaustHand] ");
+                GameLogger.Log("[ExhaustHand] ����Ϊ�գ��޷����Ļ������");
                 if (battleManager != null)
-                    battleManager.AddBattleLog("");
+                    battleManager.AddBattleLog("����Ϊ�գ��޷����Ļ������");
                 return;
             }
 
@@ -56,10 +56,10 @@ namespace MutationChess.Core
                 handManager.RestoreEnergy(totalEnergy);
             }
 
-            GameLogger.Log($"[ExhaustHand]  {actualExhausted}  {totalEnergy} ");
+            GameLogger.Log($"[ExhaustHand] ������{actualExhausted}�����ƣ����{totalEnergy}������");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($" {actualExhausted}  {totalEnergy} ");
+                battleManager.AddBattleLog($"������{actualExhausted}�����ƣ����{totalEnergy}������");
         }
     }
 }

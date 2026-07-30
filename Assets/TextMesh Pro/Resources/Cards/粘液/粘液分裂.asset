@@ -29,7 +29,7 @@ MonoBehaviour:
   effectIds:
   - DrawCardsEffect
   inherentEffectIds:
-  - SlimeInherent
+  - SlimeInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u7C98\u6DB2\u5206\u88C2"

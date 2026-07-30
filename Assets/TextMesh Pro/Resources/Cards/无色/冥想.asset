@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9acc8e158a2a46d8898b425d6810d5b7, type: 3}
-  m_Name: "\u5191\u60F3"
+  m_Name: "\u51A5\u60F3"
   m_EditorClassIdentifier: 
   cardName: "\u51A5\u60F3"
   cardType: 2
@@ -27,7 +27,7 @@ MonoBehaviour:
   description: "\u83B7\u5F971\u70B9\u80FD\u91CF\uFF0C\u62BD2\u5F20\u724C"
   effectIds:
   - GainEnergyEffect
-  - Draw2CardsEffect
+  - DrawCardsEffect
   inherentEffectIds: []
   isColorless: 1
   isFactionLocked: 0

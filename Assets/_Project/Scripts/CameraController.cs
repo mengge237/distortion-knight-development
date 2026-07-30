@@ -109,7 +109,7 @@ public class CameraController : MonoBehaviour
         {
             Vector3 currentWorldPos = GetMouseWorldPosition();
             Vector3 diff = dragOrigin - currentWorldPos;
-            transform.position += diff;
+            transform.position += diff * dragSpeed;
         }
 
         if (Input.GetMouseButtonUp(2))

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace MutationChess.UI
@@ -17,7 +17,7 @@ namespace MutationChess.UI
         [SerializeField] private Vector2 cellSize = new Vector2(240, 320);
         [SerializeField] private Vector2 spacing = new Vector2(25, 20);
 
-        [Header("???")]
+        [Header("内边距")]
         [SerializeField] private int paddingLeft = 20;
         [SerializeField] private int paddingRight = 20;
         [SerializeField] private int paddingTop = 15;

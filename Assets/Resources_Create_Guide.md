@@ -143,134 +143,151 @@
 
 ### 2.1 已有卡牌（无需创建）
 
-基础/: 攻击, 防御, 痛击, 加固, 后发制人, 暮光仪式, 预知仪式
-粘液/: 粘液打击, 粘液防御, 粘液附体
+#### 基础系列（7张）
+
+| 卡牌名 | cardType | rarity | cost | effectIds | 描述 |
+|---|---|---|---|---|---|
+| 攻击 | Attack | Common | 1 | DealDamageEffect | 造成6点伤害 |
+| 防御 | Defense | Common | 1 | ApplyBlockEffect | 获得5点格挡 |
+| 痛击 | Attack | Common | 1 | DealDamageEffect, ApplyVulnerabilityEffect | 造成8点伤害，施加1层易伤 |
+| 加固 | Skill | Common | 1 | ApplyDexterityEffect | 获得3点敏捷 |
+| 后发制人 | Skill | Uncommon | 0 | InspectEffect | 检视牌堆顶3张牌，可按优先级排序 |
+| 暮光仪式 | Attack | Uncommon | 2 | DealDamageEffect | 造成8点伤害（手牌数≤3时伤害翻倍） |
+| 预知仪式 | Skill | Uncommon | 0 | DrawCardsEffect | 抽2张牌 |
+
+#### 粘液系列已有卡牌（3张）
+
+| 卡牌名 | cardType | rarity | cost | tags | effectIds | inherentEffectIds | 描述 |
+|---|---|---|---|---|---|---|---|
+| 粘液打击 | Attack | Common | 1 | Slime | DealDamageEffect | SlimeInherent | 造成5点伤害。固有：粘液 |
+| 粘液防御 | Defense | Common | 1 | Slime | ApplyBlockEffect, ApplyWeakEffect | SlimeInherent | 获得4点格挡，施加1层虚弱。固有：粘液 |
+| 粘液附体 | Attack | Uncommon | 1 | Slime | DealDamageEffect | SlimeInherent | 造成3点伤害（AoE，对全体敌人）。固有：粘液 |
 
 ### 2.2 需要新建的卡牌（39张 · **稀有度不含Mythic，Mythic→Legendary）
 
 #### 粘液系列（3张）→ 保存到 `粘液/`
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds | inherentEffectIds |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | 粘液喷射 | Attack | Common | 1 | 3 | 0 | 2 | Slime | DealDamageEffect, ApplyWeakEffect | SlimeInherent |
-| 2 | 粘液陷阱 | Skill | Uncommon | 0 | 0 | 0 | 5 | Slime | DealDamageNextTurnEffect | SlimeInherent |
-| 3 | 粘液分裂 | Skill | Uncommon | 1 | 0 | 0 | 1 | Slime | DrawCardsEffect | SlimeInherent |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds | inherentEffectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 粘液喷射 | Attack | Common | 1 | 3 | 0 | 2 | Slime | DealDamageEffect, ApplyWeakEffect | SlimeInherent | 造成3点伤害，施加2层虚弱。固有：粘液 |
+| 2 | 粘液陷阱 | Skill | Uncommon | 0 | 0 | 0 | 5 | Slime | DealDamageNextTurnEffect | SlimeInherent | 下回合对敌人造成5点伤害。固有：粘液 |
+| 3 | 粘液分裂 | Skill | Uncommon | 1 | 0 | 0 | 1 | Slime | DrawCardsEffect | SlimeInherent | 抽1张牌。固有：粘液 |
 
 #### 不舍系列（4张）→ 新建 `不舍/` 文件夹
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds | inherentEffectIds |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 4 | 不舍之盾 | Defense | Common | 1 | 0 | 6 | 0 | Reluctant | ApplyBlockEffect | ReluctantInherent |
-| 5 | 回响打击 | Attack | Common | 1 | 7 | 0 | 0 | Reluctant | DealDamageEffect | ReluctantInherent |
-| 6 | 执念 | Skill | Uncommon | 1 | 0 | 0 | 2 | Reluctant | ApplyTemporaryStrengthEffect | ReluctantInherent |
-| 7 | 轮回 | Skill | Rare | 0 | 0 | 0 | 1 | Reluctant | DrawReluctantFromDiscardEffect | ReluctantInherent |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds | inherentEffectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 4 | 不舍之盾 | Defense | Common | 1 | 0 | 6 | 0 | Reluctant | ApplyBlockEffect | ReluctantInherent | 获得6点格挡。固有：不舍 |
+| 5 | 回响打击 | Attack | Common | 1 | 7 | 0 | 0 | Reluctant | DealDamageEffect | ReluctantInherent | 造成7点伤害。固有：不舍 |
+| 6 | 执念 | Skill | Uncommon | 1 | 0 | 0 | 2 | Reluctant | ApplyTemporaryStrengthEffect | ReluctantInherent | 获得2点临时力量。固有：不舍 |
+| 7 | 轮回 | Skill | Rare | 0 | 0 | 0 | 1 | Reluctant | DrawReluctantFromDiscardEffect | ReluctantInherent | 从弃牌堆回收1张不舍牌。固有：不舍 |
 
 #### 暗影系列（8张）→ 新建 `暗影/` 文件夹
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds |
-|---|---|---|---|---|---|---|---|---|---|
-| 8 | 暗影突袭 | Attack | Common | 1 | 9 | 0 | 0 | Shadow | DealDamageEffect |
-| 9 | 影刃 | Attack | Common | 0 | 4 | 0 | 0 | Shadow | DealDamageEffect |
-| 10 | 暗袭 | Attack | Uncommon | 2 | 14 | 0 | 1 | Shadow | DealDamageEffect, DrawCardsEffect |
-| 11 | 暗影迷雾 | Skill | Uncommon | 1 | 0 | 8 | 1 | Shadow | ApplyBlockEffect, ApplyDexterityEffect |
-| 12 | 幻影 | Skill | Rare | 2 | 0 | 0 | 0 | Shadow | DamageReductionEffect |
-| 13 | 暗影蓄力 | Skill | Common | 1 | 0 | 0 | 2 | Shadow | ApplyShadowStrengthEffect |
-| 14 | 暗影爆发 | Attack | Uncommon | 1 | 0 | 0 | 2 | Shadow | ShadowBurstEffect |
-| 15 | 影舞 | Skill | Rare | 1 | 0 | 0 | 3 | Shadow | ApplyShadowStrengthEffect, ApplyDexterityEffect |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 8 | 暗影突袭 | Attack | Common | 1 | 9 | 0 | 0 | Shadow | DealDamageEffect | 造成9点伤害 |
+| 9 | 影刃 | Attack | Common | 0 | 4 | 0 | 0 | Shadow | DealDamageEffect | 造成4点伤害 |
+| 10 | 暗袭 | Attack | Uncommon | 2 | 14 | 0 | 1 | Shadow | DealDamageEffect, DrawCardsEffect | 造成14点伤害，抽1张牌 |
+| 11 | 暗影迷雾 | Skill | Uncommon | 1 | 0 | 8 | 1 | Shadow | ApplyBlockEffect, ApplyDexterityEffect | 获得8点格挡，获得1点敏捷 |
+| 12 | 幻影 | Skill | Rare | 2 | 0 | 0 | 0 | Shadow | DamageReductionEffect | 本回合受到伤害减少（减伤效果） |
+| 13 | 暗影蓄力 | Skill | Common | 1 | 0 | 0 | 2 | Shadow | ApplyShadowStrengthEffect | 获得2点暗影力量 |
+| 14 | 暗影爆发 | Attack | Uncommon | 1 | 0 | 0 | 2 | Shadow | ShadowBurstEffect | 造成2倍暗影力量值的伤害 |
+| 15 | 影舞 | Skill | Rare | 1 | 0 | 0 | 3 | Shadow | ApplyShadowStrengthEffect, ApplyDexterityEffect | 获得3点暗影力量，获得1点敏捷 |
 
 #### 鲜血系列（6张·带恢复）→ 新建 `鲜血/` 文件夹（**CardBalanceConfig已加恢复效果）
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | bloodPerEnergy | tags | effectIds |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 16 | 血瀑 | Attack | Uncommon | 2 | 18 | 0 | 3 | 3 | Blood | DealDamageEffect, HealPlayerEffect |
-| 17 | 嗜血仪式 | Skill | Rare | 1 | 0 | 0 | 2 | 4 | Blood | GainStrengthEffect, HealPlayerEffect |
-| 18 | 血池 | Attack | Common | 0 | 8 | 0 | 0 | 5 | Blood | DealDamageEffect, HealPlayerEffect |
-| 19 | 鲜血献祭 | Skill | Uncommon | 1 | 0 | 0 | 6 | 3 | Blood | HealPlayerEffect, DrawCardsEffect |
-| 20 | 血怒 | Attack | Uncommon | 2 | 12 | 0 | 3 | 3 | Blood | DealDamageEffect, HealPlayerEffect |
-| 21 | 血腥撕裂 | Attack | Rare | 3 | 25 | 0 | 0 | 3 | Blood | DealDamageEffect, HealPlayerEffect |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | bloodPerEnergy | tags | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 16 | 血瀑 | Attack | Uncommon | 2 | 18 | 0 | 3 | 3 | Blood | DealDamageEffect, HealPlayerEffect | 造成18点伤害，恢复3点HP。血转：每1能量=3HP |
+| 17 | 嗜血仪式 | Skill | Rare | 1 | 0 | 0 | 2 | 4 | Blood | GainStrengthEffect, HealPlayerEffect | 获得2点力量，恢复2点HP。血转：每1能量=4HP |
+| 18 | 血池 | Attack | Common | 0 | 8 | 0 | 0 | 5 | Blood | DealDamageEffect, HealPlayerEffect | 造成8点伤害，恢复HP。血转：每1能量=5HP |
+| 19 | 鲜血献祭 | Skill | Uncommon | 1 | 0 | 0 | 6 | 3 | Blood | HealPlayerEffect, DrawCardsEffect | 恢复6点HP，抽3张牌。血转：每1能量=3HP |
+| 20 | 血怒 | Attack | Uncommon | 2 | 12 | 0 | 3 | 3 | Blood | DealDamageEffect, HealPlayerEffect | 造成12点伤害，恢复3点HP。血转：每1能量=3HP |
+| 21 | 血腥撕裂 | Attack | Rare | 3 | 25 | 0 | 0 | 3 | Blood | DealDamageEffect, HealPlayerEffect | 造成25点伤害，恢复HP。血转：每1能量=3HP |
 
 **说明**：鲜血卡同时具备扣血与恢复机制，不再是单向消耗。
 
 #### 寒霜系列（6张）→ 新建 `寒霜/` 文件夹
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | blockPerEnergy | tags | effectIds |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 22 | 寒枪 | Attack | Uncommon | 2 | 12 | 0 | 0 | 5 | Frost | DealDamageEffect |
-| 23 | 霜甲 | Defense | Common | 2 | 0 | 15 | 0 | 4 | Frost | ApplyBlockEffect |
-| 24 | 寒霜反击 | Defense | Rare | 3 | 0 | 20 | 3 | 6 | Frost | ApplyBlockEffect, ApplyThornsEffect |
-| 25 | 冰封 | Defense | Common | 1 | 0 | 10 | 0 | 5 | Frost | ApplyBlockEffect |
-| 26 | 寒冰壁垒 | Defense | Uncommon | 2 | 0 | 18 | 0 | 4 | Frost | ApplyBlockEffect |
-| 27 | 冰霜之锤 | Attack | Uncommon | 2 | 10 | 8 | 0 | 5 | Frost | DealDamageEffect, ApplyBlockEffect |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | blockPerEnergy | tags | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 22 | 寒枪 | Attack | Uncommon | 2 | 12 | 0 | 0 | 5 | Frost | DealDamageEffect | 造成12点伤害。挡转：每1能量=5HP |
+| 23 | 霜甲 | Defense | Common | 2 | 0 | 15 | 0 | 4 | Frost | ApplyBlockEffect | 获得15点格挡。挡转：每1能量=4HP |
+| 24 | 寒霜反击 | Defense | Rare | 3 | 0 | 20 | 3 | 6 | Frost | ApplyBlockEffect, ApplyThornsEffect | 获得20点格挡，获得3点荆棘。挡转：每1能量=6HP |
+| 25 | 冰封 | Defense | Common | 1 | 0 | 10 | 0 | 5 | Frost | ApplyBlockEffect | 获得10点格挡。挡转：每1能量=5HP |
+| 26 | 寒冰壁垒 | Defense | Uncommon | 2 | 0 | 18 | 0 | 4 | Frost | ApplyBlockEffect | 获得18点格挡。挡转：每1能量=4HP |
+| 27 | 冰霜之锤 | Attack | Uncommon | 2 | 10 | 8 | 0 | 5 | Frost | DealDamageEffect, ApplyBlockEffect | 造成10点伤害，获得8点格挡。挡转：每1能量=5HP |
 
 #### 腐化系列（5张）→ 新建 `腐化/` 文件夹
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | exhaust | effectIds |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 28 | 腐化 | Attack | Common | 0 | 6 | 0 | 0 | Corrupt | true | DealDamageEffect |
-| 29 | 腐蚀打击 | Attack | Uncommon | 1 | 14 | 0 | 2 | Corrupt | true | DealDamageEffect, ApplyVulnerabilityEffect |
-| 30 | 腐化释放 | Skill | Rare | 2 | 0 | 0 | 0 | Corrupt | false | CorruptReleaseEffect |
-| 31 | 暗影腐化 | Skill | Rare | 1 | 0 | 0 | 2 | Corrupt | false | AddCardToDeckEffect |
-| 32 | 腐化吞噬 | Attack | Legendary | 3 | 20 | 0 | 2 | Corrupt | true | DealDamageEffect, DrawCardsEffect |
-| **注** | | | 原Mythic→Legendary | | | | | | |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | exhaust | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 28 | 腐化 | Attack | Common | 0 | 6 | 0 | 0 | Corrupt | true | DealDamageEffect | 造成6点伤害。消耗 |
+| 29 | 腐蚀打击 | Attack | Uncommon | 1 | 14 | 0 | 2 | Corrupt | true | DealDamageEffect, ApplyVulnerabilityEffect | 造成14点伤害，施加2层易伤。消耗 |
+| 30 | 腐化释放 | Skill | Rare | 2 | 0 | 0 | 0 | Corrupt | false | CorruptReleaseEffect | 消耗所有腐化卡，每张触发效果 |
+| 31 | 暗影腐化 | Skill | Rare | 1 | 0 | 0 | 2 | Corrupt | false | AddCardToDeckEffect | 向牌组添加2张腐化卡 |
+| 32 | 腐化吞噬 | Attack | Legendary | 3 | 20 | 0 | 2 | Corrupt | true | DealDamageEffect, DrawCardsEffect | 造成20点伤害，抽2张牌。消耗。Legendary |
+| **注** | | | 原Mythic→Legendary | | | | | | | |
 
 #### 联动卡牌（2张）→ 新建 `联动/` 文件夹
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds | inherentEffectIds |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 33 | 粘腻爱意 | Skill | Rare | 2 | 0 | 0 | 3 | Slime, Reluctant | ApplyWeakEffect, ApplyVulnerabilityEffect, ReduceStrengthEffect | SlimeInherent, ReluctantInherent |
-| 34 | 霜影斩 | Attack | Rare | 2 | 0 | 0 | 2 | Shadow, Frost | BlockToAttackEffect | — |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | tags | effectIds | inherentEffectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 33 | 粘腻爱意 | Skill | Rare | 2 | 0 | 0 | 3 | Slime, Reluctant | ApplyWeakEffect, ApplyVulnerabilityEffect, ReduceStrengthEffect | SlimeInherent, ReluctantInherent | 施加1层虚弱+1层易伤，减少3点力量。双重标签：粘液+不舍 |
+| 34 | 霜影斩 | Attack | Rare | 2 | 0 | 0 | 2 | Shadow, Frost | BlockToAttackEffect | — | 将格挡转化为攻击伤害，倍率2。双重标签：暗影+寒霜 |
 
 #### 通用卡牌（3张）→ 保存到 `基础/`
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | effectIds |
-|---|---|---|---|---|---|---|---|---|
-| 35 | 预知 | Skill | Common | 0 | 0 | 0 | 3 | InspectEffect |
-| 36 | 探索 | Skill | Uncommon | 1 | 0 | 0 | 3 | DiscoverEffect |
-| 37 | 礼物之力 | Attack | Rare | 1 | 10 | 0 | 1 | GiftEffect, DealDamageEffect |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|
+| 35 | 预知 | Skill | Common | 0 | 0 | 0 | 3 | InspectEffect | 检视牌堆顶3张牌 |
+| 36 | 探索 | Skill | Uncommon | 1 | 0 | 0 | 3 | DiscoverEffect | 发现3张卡牌中选1张 |
+| 37 | 礼物之力 | Attack | Rare | 1 | 10 | 0 | 1 | GiftEffect, DealDamageEffect | 造成10点伤害，若牌堆顶为礼物牌则触发额外效果 |
 
 #### 无色卡牌（6张）→ 新建 `无色/` 文件夹
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | isColorless | effectIds |
-|---|---|---|---|---|---|---|---|---|---|
-| 38 | 宝藏 | Skill | Uncommon | 0 | 0 | 0 | 2 | true | TreasureEffect |
-| 39 | 冥想 | Skill | Uncommon | 1 | 0 | 0 | 2 | true | GainEnergyEffect, DrawCardsEffect |
-| 40 | 神秘卷轴 | Skill | Rare | 1 | 0 | 0 | 3 | true | DiscoverEffect |
-| 41 | 古老符文 | Skill | Rare | 0 | 0 | 0 | 2 | true | GainStrengthEffect, ApplyDexterityEffect |
-| 42 | 圣物 | Skill | Legendary | 2 | 0 | 6 | 6 | true | HealPlayerEffect, ApplyBlockEffect |
-| 43 | 深渊之眼 | Skill | Legendary | 2 | 0 | 0 | 3 | true | DamageReductionEffect, DrawCardsEffect |
-| **注** | | | 原Mythic→Legendary | | | | | | |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | isColorless | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 38 | 宝藏 | Skill | Uncommon | 0 | 0 | 0 | 2 | true | TreasureEffect | 获得2张随机卡牌 |
+| 39 | 冥想 | Skill | Uncommon | 1 | 0 | 0 | 2 | true | GainEnergyEffect, DrawCardsEffect | 获得1点能量，抽2张牌 |
+| 40 | 神秘卷轴 | Skill | Rare | 1 | 0 | 0 | 3 | true | DiscoverEffect | 发现3张卡牌中选1张 |
+| 41 | 古老符文 | Skill | Rare | 0 | 0 | 0 | 2 | true | GainStrengthEffect, ApplyDexterityEffect | 获得2点力量，获得2点敏捷 |
+| 42 | 圣物 | Skill | Legendary | 2 | 0 | 6 | 6 | true | HealPlayerEffect, ApplyBlockEffect | 恢复6点HP，获得6点格挡。Legendary |
+| 43 | 深渊之眼 | Skill | Legendary | 2 | 0 | 0 | 3 | true | DamageReductionEffect, DrawCardsEffect | 减伤3点，抽3张牌。Legendary |
+| **注** | | | 原Mythic→Legendary | | | | | | | |
 
 #### 新增通用卡牌第一弹（6张 · 中国元素）→ 保存到 `基础/`
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | exhaust | effectIds |
-|---|---|---|---|---|---|---|---|---|---|
-| 44 | 破阵 | Attack | Common | 1 | 8 | 0 | 0 | false | DealDamageEffect |
-| 45 | 回春 | Skill | Uncommon | 0 | 0 | 0 | 4 | false | HealPlayerEffect |
-| 46 | 镇魂 | Skill | Common | 1 | 0 | 6 | 1 | false | ApplyBlockEffect, DrawCardsEffect |
-| 47 | 蓄势 | Skill | Uncommon | 0 | 0 | 0 | 2 | false | GainEnergyNextTurnEffect |
-| 48 | 斩缘 | Attack | Uncommon | 2 | 14 | 0 | 0 | true | DealDamageEffect |
-| 49 | 灵动 | Skill | Common | 1 | 0 | 0 | 3 | false | DamageReductionEffect |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | exhaust | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 44 | 破阵 | Attack | Common | 1 | 8 | 0 | 0 | false | DealDamageEffect | 造成8点伤害 |
+| 45 | 回春 | Skill | Uncommon | 0 | 0 | 0 | 4 | false | HealPlayerEffect | 恢复4点HP |
+| 46 | 镇魂 | Skill | Common | 1 | 0 | 6 | 1 | false | ApplyBlockEffect, DrawCardsEffect | 获得6点格挡，抽1张牌 |
+| 47 | 蓄势 | Skill | Uncommon | 0 | 0 | 0 | 2 | false | GainEnergyNextTurnEffect | 下回合获得2点能量 |
+| 48 | 斩缘 | Attack | Uncommon | 2 | 14 | 0 | 0 | true | DealDamageEffect | 造成14点伤害。消耗 |
+| 49 | 灵动 | Skill | Common | 1 | 0 | 0 | 3 | false | DamageReductionEffect | 本回合减伤3点 |
 
 #### 新增通用卡牌第二弹（6张 · 中国元素续）→ 保存到 `基础/`
 
-| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | exhaust | effectIds |
-|---|---|---|---|---|---|---|---|---|---|
-| 50 | 惊雷 | Attack | Uncommon | 2 | 12 | 0 | 0 | true | DealDamageEffect |
-| 51 | 守心 | Skill | Common | 1 | 0 | 5 | 1 | false | ApplyBlockEffect, DrawCardsEffect |
-| 52 | 破军 | Attack | Rare | 3 | 20 | 0 | 0 | false | DealDamageEffect |
-| 53 | 归元 | Skill | Uncommon | 1 | 0 | 5 | 5 | false | HealPlayerEffect, ApplyBlockEffect |
-| 54 | 凝神 | Skill | Uncommon | 0 | 0 | 0 | 1 | false | GainEnergyNextTurnEffect, DrawCardsEffect |
-| 55 | 玄甲 | Defense | Common | 2 | 0 | 14 | 0 | false | ApplyBlockEffect |
+| # | .asset文件名 | cardType | rarity | cost | damage | block | magic | exhaust | effectIds | 描述 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 50 | 惊雷 | Attack | Uncommon | 2 | 12 | 0 | 0 | true | DealDamageEffect | 造成12点伤害。消耗 |
+| 51 | 守心 | Skill | Common | 1 | 0 | 5 | 1 | false | ApplyBlockEffect, DrawCardsEffect | 获得5点格挡，抽1张牌 |
+| 52 | 破军 | Attack | Rare | 3 | 20 | 0 | 0 | false | DealDamageEffect | 造成20点伤害 |
+| 53 | 归元 | Skill | Uncommon | 1 | 0 | 5 | 5 | false | HealPlayerEffect, ApplyBlockEffect | 恢复5点HP，获得5点格挡 |
+| 54 | 凝神 | Skill | Uncommon | 0 | 0 | 0 | 1 | false | GainEnergyNextTurnEffect, DrawCardsEffect | 下回合获得1点能量，抽1张牌 |
+| 55 | 玄甲 | Defense | Common | 2 | 0 | 14 | 0 | false | ApplyBlockEffect | 获得14点格挡 |
 
 #### 诅咒卡牌（5张 · Cursed稀有度 · 无法打出 · 负面效果）→ 新建 `诅咒/` 文件夹
 
-| # | .asset文件名 | cardType | rarity | cost | tags | effectIds | 说明 |
+| # | .asset文件名 | cardType | rarity | cost | tags | effectIds | 描述 |
 |---|---|---|---|---|---|---|---|
-| 56 | 诅咒_衰败 | Curse | Cursed | 0 | Curse | CurseDecayEffect | 手牌中每回合-1HP |
+| 56 | 诅咒_衰败 | Curse | Cursed | 0 | Curse | CurseDecayEffect | 每回合结束损失1HP |
 | 57 | 诅咒_迷雾 | Curse | Cursed | 0 | Curse | CurseFogEffect | 手牌上限-1 |
 | 58 | 诅咒_枷锁 | Curse | Cursed | 0 | Curse | CurseChainsEffect | 每回合抽牌-1 |
-| 59 | 诅咒_噬命 | Curse | Cursed | 0 | Curse | CurseDevourEffect | 打出其他卡时-1HP |
-| 60 | 诅咒_虚耗 | Curse | Cursed | 0 | Curse | CurseVoidEffect | 占位，营地可移除 |
+| 59 | 诅咒_噬命 | Curse | Cursed | 0 | Curse | CurseDevourEffect | 打出其他卡时损失1HP |
+| 60 | 诅咒_虚耗 | Curse | Cursed | 0 | Curse | CurseVoidEffect | 占位无效果，可在营地移除 |
 
 ---
 
@@ -278,85 +295,32 @@
 
 保存目录：`Assets/TextMesh Pro/Resources/Relics/`
 
-**字段规则（从 RelicDataAsset.cs 对应）**：
-- `relicId` / `relicName` / `rarity` / `faction`
-- `baseEffectIds`（基础效果列表 · 一直显示 & 激活）
-- `hiddenActivatorRelicId`（Boss遗物relicId，留空=无隐藏效果，例如Boss_BloodVein）
-- `hiddenEffectIds`（拥有Activator才激活，获得Boss前不显示效果 & 不激活）
-- `isBossRelic`（Boss专属掉落= true，激活系列隐藏效果）
-- `isStartingRelic`（起始遗物=true，如燃烧之心）
-- `isShopRelic`（商店出售=true，如能核/画板/宝箱/金偶像）
+**遗物的完整数据（relicId、价格、效果、隐藏效果、视觉描述等）请参考 [遗物素材清单.txt](遗物素材清单.txt)**
 
-### 3.1 已有遗物（11个 · 更新稀有度）
+### 字段规则（从 RelicDataAsset.cs 对应）
 
-铁戒指, 血护符(Common→Rare), 剑碎片, 剑柄碎片, 剑之核心, 粘液腺体, 记忆晶状体, 腐化肝脏, 储蓄罐, 胜利誓约之剑, 鲜血脉络
+| 字段 | 说明 |
+|---|---|
+| relicId | 遗物唯一标识，格式：`分类_名称`（如 Boss_BloodVein、Blood_BloodAmulet） |
+| relicName | 遗物显示名称 |
+| rarity | 稀有度：Starting / Common / Rare / Legendary / Special |
+| faction | 所属派系：Blood / Frost / Corrupt / Slime / Reluctant / Shadow / None |
+| baseEffectIds | 基础效果列表，一直显示且激活 |
+| hiddenActivatorRelicId | Boss遗物relicId，留空=无隐藏效果 |
+| hiddenEffectIds | 拥有Activator后才激活的效果 |
+| isBossRelic | Boss专属掉落=true，激活系列隐藏效果 |
+| isStartingRelic | 起始遗物=true |
+| isShopRelic | 商店出售=true |
 
-### 3.2 6个系列 Boss 遗物（**Special稀有度，仅Boss掉落 · isBossRelic=true）
+### 创建注意事项
 
-| # | .asset文件名 | relicId | rarity | faction | price | baseEffectIds | 说明 |
-|---|---|---|---|---|---|---|---|
-| B1 | 鲜血脉络 | Boss_BloodVein | Special | Blood | 350 | BossBloodVeinEffect(BattleStart) | Boss核心：激活全鲜血系列隐藏效果 |
-| B2 | 寒霜之心 | Boss_FrostHeart | Special | Frost | 350 | BossFrostHeartEffect(BattleStart) | Boss核心：激活全寒霜系列隐藏效果 |
-| B3 | 腐化肝脏 | Boss_CorruptLiver | Special | Corrupt | 350 | BossCorruptLiverEffect(BattleStart) | Boss核心：激活全腐化系列隐藏效果 |
-| B4 | 粘液腺体 | Boss_SlimeGland | Special | Slime | 350 | BossSlimeGlandEffect(BattleStart) | Boss核心：激活全粘液系列隐藏效果 |
-| B5 | 不舍锁链 | Boss_ReluctantChain | Special | Reluctant | 350 | BossReluctantChainEffect(BattleStart) | Boss核心：激活全不舍系列隐藏效果，替换掉旧的"不舍系列=记忆晶状体" |
-| B6 | 记忆晶状体 | Boss_MemoryLens | Special | Shadow | 350 | ShadowCardBonusDamageEffect + ApplyBlockEffect(15, BattleStart) + Every4TurnsLoseDexEffect(TurnEnd) | 暗影Boss核心：**每4回合-1敏捷负面**；激活暗影隐藏；暗影牌+3伤害； |
-
-### 3.3 需要新建的系列遗物（含基础效果 + 隐藏效果）=19个）
-
-| # | .asset文件名 | relicId | rarity | faction | price | baseEffectIds | hiddenActivatorRelicId | hiddenEffectIds |
-|---|---|---|---|---|---|---|---|---|
-| 1 | 血祭坛 | Blood_CrimsonAltar | Rare | Blood | 285 | BloodAltarEffect(BattleStart) | Boss_BloodVein | BloodAltarBoostedEffect(BattleStart) |
-| 2 | 雪符 | Frost_Snowflake | Common | Frost | 150 | FrostSnowflakeEffect(BattleStart) | Boss_FrostHeart | GainDexterityBattleStartEffect(BattleStart, +1敏) |
-| 3 | 枯枝 | Corrupt_DeadBranch | Rare | Corrupt | 285 | CorruptAddCardEffect(CardExhausted) | Boss_CorruptLiver | (隐藏：+1牌) |
-| 4 | 粘液手套 | Slime_StickyGlove | Common | Slime | 150 | SlimeWeakEffect(CardPlayed) | Boss_SlimeGland | SlimeWeakEffect(CardPlayed, 虚弱+1) |
-| 5 | 怀旧链 | Reluctant_Nostalgia | Common | Reluctant | 150 | ReluctantBlockBonusEffect(CardPlayed, 2格挡) | Boss_ReluctantChain | ReluctantBlockBonusEffect(CardPlayed, +2格挡) |
-| 6 | 暗影斗篷 | Shadow_Cloak | Common | Shadow | 150 | ApplyBlockEffect(BattleStart, 10格挡) | Boss_MemoryLens | GainDexterityBattleStartEffect(+1敏) |
-| 7 | 幻影面具 | Shadow_PhantomMask | Rare | Shadow | 285 | PhantomAfter5CardsEffect(AfterCardsPlayed,5张→-5伤) | Boss_MemoryLens | PhantomAfter5CardsBoostEffect(再+3减伤→共-8) |
-| 8 | 深渊凝视 | Shadow_AbyssGaze | Legendary | Shadow | 320 | AbyssEvery4AttackEffect(CalculateAtkDmg,4张攻击翻倍) | Boss_MemoryLens | AbyssReduceThresholdEffect(3张触发) |
-| 9 | 吸血獠牙 | Blood_VampireFang | Common（原Rare→调低 | Blood | 150 | AttackHeal1Effect(CardPlayed, 攻击牌+1HP) | Boss_BloodVein | AttackHeal1Effect(CardPlayed, +1HP→共2) |
-| 10 | 血契 | Blood_BloodPact | Legendary | Blood | 300 | GainStrengthBattleStartEffect(BattleStart, +2力量) | Boss_BloodVein | BloodPactStrengthEffect(BattleStart) |
-| 11 | 永冻土 | Frost_Permafrost | Rare | Frost | 285 | FrostPermafrostEffect(BattleStart,15格挡) | Boss_FrostHeart | ApplyBlockEffect(再+10→25) |
-| 12 | 霜巨人 | Frost_FrostGiant | Legendary | Frost | 300 | GainDexterityBattleStartEffect(+1敏, BattleStart) + FrostBonusBlockEffect(寒霜牌+8格挡, CardPlayed) | **加强：无需隐藏 | 无隐藏，直接给全效果 |
-| 13 | 暗黑法典 | Corrupt_DarkTome | Common | Corrupt | 150 | ExhaustEnergyEffect(CardExhausted) | Boss_CorruptLiver | (隐藏+1) |
-| 14 | 死灵之书 | Corrupt_Necronomicon | Legendary | Corrupt | 320 | ExhaustDrawEffect(CardExhausted) | Boss_CorruptLiver | (隐藏+1抽) |
-| 15 | 粘液之心 | Slime_SlimeHeart | Rare | Slime | 285 | SlimeEnergyEffect(CardPlayed, 粘液牌→+1能量) | Boss_SlimeGland | 再+1费 |
-| 16 | 酸核 | Slime_AcidicCore | Legendary | Slime | 300 | AcidicCoreDebuff3StacksEffect(BattleStart,3种debuff各3层) | Boss_SlimeGland | AcidicCoreBoostedEffect(各+1层) |
-| 17 | 回响戒 | Reluctant_EchoRing | Rare | Reluctant | 285 | ReluctantBonusDrawEffect(CardPlayed, 不舍牌+1抽) | Boss_ReluctantChain | ReluctantBonusDrawEffect(CardPlayed, +1抽→共2) |
-| 18 | 共鸣石 | Combo_ResonanceStone | Legendary（原Mythic→Legendary） | None | 350 | TagComboResonanceEffect(CardPlayed) | - | （无隐藏） |
-| 19 | 棋王冠 | Combo_ChessMaster | Legendary（原Mythic→Legendary） | None | 350 | MaxHealthEffect(BattleStart, +20生命) + ChessMasterEvery6CardsStrengthEffect(AfterCardsPlayed,6张→+1力量) | - | **联动**：每6张力量+1 |
-
-**稀有度改动**：
-- **调高**：血护符(Common→Rare)、能核(Rare→Legendary)、画板(Rare→Legendary)
-- **调低**：吸血獠牙(Rare→Common)
-- **改名**：吸血鬼之牙→吸血獠牙、棋王之冠→棋王冠、能量核心→能核、绘画板→画板、鲜血护符→血护符
-
-### 3.4 商店遗物（5个 · isShopRelic=true）
-
-| # | .asset文件名 | relicId | rarity | price | baseEffectIds | 说明 |
-|---|---|---|---|---|---|---|
-| S1 | 能核 | Shop_EnergyCore | Legendary（Rare→调高） | 325 | EnergyCoreBattleStartEffect（开局+2能量） | 战斗开始一次性+2能量 |
-| S2 | 画板 | Shop_DrawingPad | Legendary（Rare→调高） | 325 | DrawingPadDraw2Effect（开局抽2） | 调高稀有度 |
-| S3 | 宝箱 | Shop_TreasureChest | Rare | 325 | EliteVictoryExtraCardGroupEffect（Victory） | **战胜精英额外一组卡牌奖励** |
-| S4 | 金偶像 | Shop_GoldenIdol | Legendary | 350 | GoldBonusEffect(Victory, +20%金币) | — |
-| S5 | 补货符 | Shop_RestockTalisman | Rare | 300 | ShopRestockEffect（Passive） | **商店不会卖空**：购买后商品自动补货 |
-
-### 3.5 通用遗物（12个 · 2026改版效果）
-
-| # | .asset文件名 | relicId | rarity | price | baseEffectIds | 改动说明 |
-|---|---|---|---|---|---|---|
-| U1 | 铜盾 | Generic_BronzeShield | Common | 150 | GainDexterityBattleStartEffect（BattleStart, +1敏） | — |
-| U2 | 战士腰带 | Generic_WarriorBelt | Common | 150 | MaxHealthSmallEffect(BattleStart, +15最大生命） | — |
-| U3 | 力量坠饰 | Generic_PowerPendant | Rare | 285 | GainStrengthBattleStartEffect(BattleStart, +2力量) | — |
-| U4 | 钢铁意志 | Generic_IronWill | Rare | 285 | BlockAndStrengthEffect(BattleStart) | — |
-| U5 | 金杯 | Generic_GoldenChalice | Rare | 285 | Gain12GoldOnVictoryEffect(Victory, +12金币) | 原回血→改成胜利获得12金币 |
-| U6 | 战旗 | Generic_BattleStandard | Legendary | 320 | AllStatsBuffEffect(BattleStart, 力1敏1格挡10) | — |
-| U7 | 凤凰羽毛 | Generic_PhoenixFeather | Legendary | 350 | PhoenixReviveEffect(濒死半血复活) | — |
-| U8 | 泰坦之心 | Generic_TitanHeart | Legendary | 320 | TempDexterity3TurnsEffect(1敏捷，持续3回合) | 平衡调整：原每回合+2敏→开局一次性，改为1敏3回合 |
-| U9 | 永焰 | Generic_EternalFlame | Legendary（原Mythic→降为Legendary） | 380 | EternalFlameBattleStartEffect(开局：力2敏2格挡10能量2) | — |
-| U10 | 吸血獠牙 / 血护符 / 霜巨人 等均在上面的「系列遗物」 |
-| U11 | 燃烧之心 | Starter_BurningHeart | Starting（起始=新稀有度！） | 0 | HealOnVictoryEffect(Victory 小恢复) | **起始遗物：isStartingRelic=true；起始稀有度 |
-| U12 | 储蓄罐 / 胜利誓约之剑 / 剑碎片系列 | 沿用老配置即可 |  |  |  |
+1. **6个Boss遗物**：标记 `isBossRelic=true`，稀有度 `Special`，仅Boss掉落
+2. **燃烧之心**：标记 `isStartingRelic=true`，稀有度 `Starting`
+3. **5个商店遗物**：标记 `isShopRelic=true`（能核/画板/宝箱/金偶像/补货符）
+4. **稀有度调整**：血护符(Rare)、吸血獠牙(Common)、能核(Legendary)、画板(Legendary)
+5. **冰晶符**使用"符箓"描述，不用"吊坠"
+6. **霜巨人**无隐藏效果，直接给全效果
+7. 遗物素材清单中所有 `沿用老配置` 的已有遗物，无需重新创建
 
 ---
 

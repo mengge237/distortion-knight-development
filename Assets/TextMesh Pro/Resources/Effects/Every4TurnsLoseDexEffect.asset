@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 897d16b2aca54933b65d2f3a1780f27f, type: 3}
   m_Name: Every4TurnsLoseDexEffect
   m_EditorClassIdentifier: 
-  effectDescription: 4????????
+  effectDescription: 每4回合失去1点敏捷(周期4,失去1)
   loseDex: 1
   turnInterval: 4

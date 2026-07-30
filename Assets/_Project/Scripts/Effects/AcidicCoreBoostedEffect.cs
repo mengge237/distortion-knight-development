@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;  namespace MutationChess.Core
 {  [CreateAssetMenu(fileName = "AcidicCoreBoostedEffect", menuName = "MutationChess/Relic Effects/Acidic Core Boost")]  public class AcidicCoreBoostedEffect : CardEffect  {  [Tooltip("debuff")]  public int extraStacks = 1;  public override void Execute(CombatContext context)  {  ApplyExtraDebuffs(context?.battleManager);  }  public override void Execute(EffectContext context)  {  ApplyExtraDebuffs(context?.battleManager);  }  private void ApplyExtraDebuffs(BattleManager bm)  {  if (bm == null) return;  var enemy = bm.GetCurrentEnemy();  if (enemy == null) return;  enemy.AddBuff(new Buff { type = BuffType.Weak, amount = extraStacks, duration = 999 });  enemy.AddBuff(new Buff { type = BuffType.Frail, amount = extraStacks, duration = 999 });  enemy.AddBuff(new Buff { type = BuffType.Vulnerability, amount = extraStacks, duration = 999 });  GameLogger.Log($"[AcidicCoreBoosted] {extraStacks}debuff");  }  }
 }

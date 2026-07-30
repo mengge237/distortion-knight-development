@@ -20,16 +20,16 @@ namespace MutationChess.Core
         public override void Execute(CombatContext context)
         {
             ConversionModifier.TemporaryBlockRateOverride = overrideRate;
-            GameLogger.Log($"[BlockDiscount]  {overrideRate}=1");
+            GameLogger.Log($"[BlockDiscount] ��һ�ø�ת���ӳɣ�����{overrideRate + 1}:1��");
 
             if (context?.battleManager != null)
-                context.battleManager.AddBattleLog(" 1:1");
+                context.battleManager.AddBattleLog($"��һ�ø�ת���ӳɣ�����{overrideRate + 1}:1��");
         }
 
         public override void Execute(EffectContext context)
         {
             ConversionModifier.TemporaryBlockRateOverride = overrideRate;
-            GameLogger.Log($"[BlockDiscount]  {overrideRate}=1");
+            GameLogger.Log($"[BlockDiscount] ��һ�ø�ת���ӳɣ�����{overrideRate + 1}:1��");
         }
     }
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -26,7 +26,7 @@ namespace MutationChess.Core
             //
             //
             if (context?.battleManager != null)
-                context.battleManager.AddBattleLog($"x{extraGroup}");
+                context.battleManager.AddBattleLog($"��Ӣսʤ����������{extraGroup}�鿨��ѡ�����");
         }
     }
 }

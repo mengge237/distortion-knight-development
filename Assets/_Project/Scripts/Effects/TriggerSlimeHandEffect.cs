@@ -55,7 +55,7 @@ namespace MutationChess.Core
             }
 
             if (battleManager != null)
-                battleManager.AddBattleLog($" {triggered} ");
+                battleManager.AddBattleLog($"������������{triggered}��ʷ��ķ���Ƶ�Ч��");
         }
     }
 }

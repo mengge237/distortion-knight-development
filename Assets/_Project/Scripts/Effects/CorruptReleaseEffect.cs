@@ -16,16 +16,16 @@ namespace MutationChess.Core
         public override void Execute(CombatContext context)
         {
             ConversionModifier.AllCardsNoExhaustThisTurn = true;
-            GameLogger.Log("[CorruptRelease] ");
+            GameLogger.Log("[CorruptRelease] ��һ�ø����ͷţ����غ����п��Ʋ��ᱻ����");
 
             if (context?.battleManager != null)
-                context.battleManager.AddBattleLog("");
+                context.battleManager.AddBattleLog("��һ�ø����ͷţ����غ����п��Ʋ��ᱻ����");
         }
 
         public override void Execute(EffectContext context)
         {
             ConversionModifier.AllCardsNoExhaustThisTurn = true;
-            GameLogger.Log("[CorruptRelease] ");
+            GameLogger.Log("[CorruptRelease] ��һ�ø����ͷţ����غ����п��Ʋ��ᱻ����");
         }
     }
 }

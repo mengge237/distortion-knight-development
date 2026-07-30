@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
@@ -30,7 +30,7 @@ namespace MutationChess.Core
         {
             if (context == null || context.battleManager == null) return;
             context.battleManager.PlayerBlock(startBlock);
-            GameLogger.Log($"[FrostPermafrost] ??? {startBlock} ??");
+            GameLogger.Log($"[FrostPermafrost] 获得 {startBlock} 格挡");
 
             if (ConversionModifier.BossFrostHeartActive)
             {

@@ -29,7 +29,7 @@ MonoBehaviour:
   effectIds:
   - ApplyBlockEffect
   inherentEffectIds:
-  - ReluctantInherent
+  - ReluctantInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u4E0D\u820D\u4E4B\u76FE"

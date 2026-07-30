@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Core;
 using MutationChess.UI;
 using MutationChess.Battle;
@@ -48,7 +48,7 @@ namespace MutationChess.Core
                 int totalEnergy = energyGain + (ConversionModifier.BossSlimeGlandActive ? bossExtraEnergy : 0);
                 handManager.RestoreEnergy(totalEnergy);
                 GameLogger.Log($"[SlimeEnergy]  {context.sourceCard.cardName}  +{totalEnergy}" +
-                    (ConversionModifier.BossSlimeGlandActive ? " (Boss???)" : ""));
+                    (ConversionModifier.BossSlimeGlandActive ? " (Boss加成)" : ""));
             }
         }
     }

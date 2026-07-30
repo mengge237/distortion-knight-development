@@ -21,15 +21,14 @@ MonoBehaviour:
   block: 0
   magicNumber: 0
   exhaust: 0
-  tags:
-  - 1
+  tags: 01000000
   bloodPerEnergy: 0
   blockPerEnergy: 0
   description: "\u9020\u62105\u70B9\u4F24\u5BB3\u3002\u56FA\u6709\uFF1A\u7C98\u6DB2"
   effectIds:
   - DealDamageEffect
   inherentEffectIds:
-  - SlimeInherent
+  - SlimeInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u7C98\u6DB2\u6253\u51FB"

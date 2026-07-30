@@ -29,7 +29,7 @@ MonoBehaviour:
   effectIds:
   - DealDamageEffect
   inherentEffectIds:
-  - ReluctantInherent
+  - ReluctantInherentEffect
   isColorless: 0
   isFactionLocked: 1
   cardArtPath: "CardArt/\u56DE\u54CD\u6253\u51FB"

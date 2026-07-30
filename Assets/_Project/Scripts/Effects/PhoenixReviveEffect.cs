@@ -55,11 +55,11 @@ namespace MutationChess.Core
                 playerData.currentHealth = reviveHealth;
                 usedThisBattle = true;
 
-                GameLogger.Log($"[PhoenixReviveEffect]  {reviveHealth} {reviveHealthPercent * 100f}%");
+                GameLogger.Log($"[PhoenixReviveEffect] �����ë��������Ҵӱ���״̬����ָ�{reviveHealth}������ֵ���������ֵ��{reviveHealthPercent * 100f}%��");
 
                 if (context.battleManager != null)
                 {
-                    context.battleManager.AddBattleLog("");
+                    context.battleManager.AddBattleLog($"�����ë��������Ҵӱ���״̬����ָ����������ֵ��{reviveHealthPercent * 100f}%");
                 }
             }
         }

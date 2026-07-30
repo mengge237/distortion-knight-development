@@ -28,7 +28,7 @@ MonoBehaviour:
   description: "\u6062\u590D6\u70B9HP\uFF0C\u62BD3\u5F20\u724C\u3002\u8840\u8F6C\uFF1A\u6BCF1\u80FD\u91CF=3HP"
   effectIds:
   - HealPlayerEffect
-  - Draw3CardsEffect
+  - DrawCardsEffect
   inherentEffectIds: []
   isColorless: 0
   isFactionLocked: 1

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;  namespace MutationChess.Core
 {  /// <summary>  ///  ///  /// BattleManager.PlayerBlock CalculateBlock  /// </summary>  [CreateAssetMenu(fileName = "FrostTurnBlockEffect", menuName = "MutationChess/Relic Effects/Frost Turn Block")]  public class FrostTurnBlockEffect : CardEffect  {  [Header("")]  [Tooltip("")]  public int blockAmount = 15;  [Tooltip("Boss")]  public int bossBlockAmount = 25;  public override void Execute(CombatContext context)  {  GrantBlock(context?.battleManager);  }  public override void Execute(EffectContext context)  {  GrantBlock(context?.battleManager);  }  private void GrantBlock(BattleManager battleManager)  {  if (battleManager == null)  {  GameLogger.LogError("[FrostTurnBlock] battleManager ");  return;  }  int finalBlock = ConversionModifier.BossFrostHeartActive ? bossBlockAmount : blockAmount;  battleManager.PlayerBlock(finalBlock);  GameLogger.Log($"[FrostTurnBlock] {finalBlock} ??" +  (ConversionModifier.BossFrostHeartActive ? " (Boss)" : ""));  }  }
 }

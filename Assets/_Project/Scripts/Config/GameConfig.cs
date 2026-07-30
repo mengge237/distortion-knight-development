@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MutationChess.Core
 {
@@ -45,20 +45,20 @@ namespace MutationChess.Core
         public float vulnerabilityDamageMultiplier = 1.5f;
 
         [Header("")]
-        [Tooltip("3? = 1")]
+        [Tooltip("3点血量 = 1能量")]
         public int defaultBloodPerEnergy = 3;
 
-        [Tooltip("5?? = 1")]
+        [Tooltip("5点格挡 = 1能量")]
         public int defaultBlockPerEnergy = 5;
 
         [Header("")]
         [Tooltip("")]
         public int maxFloor = 3;
 
-        [Tooltip("15% = 0.15??")]
+        [Tooltip("每层金币加成15% = 0.15")]
         public float goldBonusPerFloor = 0.15f;
 
-        [Tooltip("10% = 0.10??")]
+        [Tooltip("每层稀有掉落加成10% = 0.10")]
         public float rareDropBonusPerFloor = 0.10f;
 
         [Tooltip("")]
@@ -87,7 +87,7 @@ namespace MutationChess.Core
         [Tooltip("")]
         public float eliteEnemyPotionMultiplier = 1.5f;
 
-        [Tooltip("Boss0=Boss")]
+        [Tooltip("Boss掉落药水倍率，0=Boss不掉药水")]
         public float bossEnemyPotionMultiplier = 0.0f;
 
 
@@ -106,7 +106,6 @@ namespace MutationChess.Core
                     if (_instance == null)
                     {
                         _instance = CreateInstance<GameConfig>();
-                        GameLogger.LogWarning("[GameConfig] Resources/GameConfig");
                     }
                 }
                 return _instance;

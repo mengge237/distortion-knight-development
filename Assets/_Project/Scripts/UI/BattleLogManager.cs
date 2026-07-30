@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Core;
 using UnityEngine.UI;
 using TMPro;
@@ -35,9 +35,10 @@ namespace MutationChess.UI
 
         private List<string> logHistory = new List<string>();
         private List<GameObject> activeToasts = new List<GameObject>();
+        private Dictionary<GameObject, Sequence> toastSequences = new Dictionary<GameObject, Sequence>();
         private string previousFullText = "";
 
-        //
+        // 模板组件位置缓存
         private bool toastTextIsRoot;
         private bool toastBgIsRoot;
         private int toastTextSiblingIndex = -1;
@@ -51,7 +52,41 @@ namespace MutationChess.UI
                 return;
             }
             Instance = this;
-            GameLogger.Log("[BattleLogManager] Instance initialized");
+        }
+
+        private void OnDestroy()
+        {
+            // 清理所有 toast 的动画，避免销毁后 DOTween 仍访问 RectTransform
+            foreach (var toast in activeToasts)
+            {
+                KillToastTweens(toast);
+            }
+            activeToasts.Clear();
+            toastSequences.Clear();
+        }
+
+        /// <summary>
+        /// 终止指定 toast 上所有关联的 DOTween 动画（Sequence + 位移动画等）。
+        /// </summary>
+        private void KillToastTweens(GameObject toast)
+        {
+            if (toast == null) return;
+            if (toastSequences.TryGetValue(toast, out var seq))
+            {
+                if (seq != null && seq.IsActive()) seq.Kill();
+                toastSequences.Remove(toast);
+            }
+            // 终止所有以该 transform 为目标的独立动画（如位移 shift 动画）
+            DOTween.Kill(toast.transform);
+        }
+
+        /// <summary>
+        /// 安全销毁 toast：先终止所有动画，再销毁对象。
+        /// </summary>
+        private void DestroyToast(GameObject toast)
+        {
+            KillToastTweens(toast);
+            if (toast != null) Destroy(toast);
         }
 
         private void Start()
@@ -81,13 +116,10 @@ namespace MutationChess.UI
 
             if (toggleHistoryButton != null)
                 toggleHistoryButton.onClick.AddListener(ToggleHistoryPanel);
-
-            GameLogger.Log($"[BattleLogManager] Start - toastTemplate:{toastTemplate != null}, toastContainer:{toastContainer != null}, toastText:{toastTextTemplate != null}, toastBg:{toastBgTemplate != null}");
         }
 
         public void AddLog(string msg)
         {
-            GameLogger.Log($"[BattleLogManager] AddLog: {msg}");
             logHistory.Add(msg);
             UpdateHistoryText();
         }
@@ -116,26 +148,24 @@ namespace MutationChess.UI
                 return;
             }
 
-            //
+            // 超过最大显示数量时移除最旧的 toast
             while (activeToasts.Count >= maxVisibleToasts)
             {
                 GameObject oldest = activeToasts[0];
                 activeToasts.RemoveAt(0);
-                if (oldest != null)
-                {
-                    var cg = oldest.GetComponent<CanvasGroup>();
-                    if (cg != null) cg.DOFade(0f, 0.15f).OnComplete(() => Destroy(oldest));
-                    else Destroy(oldest);
-                }
+                DestroyToast(oldest);
             }
 
-            //
+            // 已有 toast 向上移动
             foreach (var toast in activeToasts)
             {
                 if (toast == null) continue;
                 RectTransform rt = toast.GetComponent<RectTransform>();
                 if (rt != null)
+                {
+                    DOTween.Kill(rt); // 终止旧的位移动画，避免叠加
                     rt.DOAnchorPosY(rt.anchoredPosition.y + toastSpacing, shiftAnimationDuration).SetEase(Ease.OutQuad);
+                }
             }
 
             //
@@ -164,10 +194,10 @@ namespace MutationChess.UI
 
             activeToasts.Add(newToast);
 
-            //
+            // 创建淡入→停留→淡出动画序列
             Sequence seq = DOTween.Sequence();
 
-            //
+            // 淡入阶段
             if (newCg != null)
             {
                 seq.Append(newCg.DOFade(1f, toastFadeInDuration));
@@ -179,10 +209,10 @@ namespace MutationChess.UI
                 seq.Append(newBg.DOFade(1f, toastFadeInDuration));
             }
 
-            // ???
+            // 等待提示显示
             seq.AppendInterval(toastDuration);
 
-            //
+            // 淡出阶段
             if (newCg != null)
             {
                 seq.Append(newCg.DOFade(0f, toastFadeOutDuration));
@@ -198,10 +228,18 @@ namespace MutationChess.UI
                     seq.Join(newRt.DOAnchorPosY(newRt.anchoredPosition.y + 40f, toastFadeOutDuration).SetEase(Ease.InQuad));
             }
 
+            // 记录 Sequence 引用以便安全清理
+            toastSequences[newToast] = seq;
+
             seq.OnComplete(() =>
             {
                 activeToasts.Remove(newToast);
-                if (newToast != null) Destroy(newToast);
+                toastSequences.Remove(newToast);
+                if (newToast != null)
+                {
+                    DOTween.Kill(newToast.transform); // 终止残留的位移等动画
+                    Destroy(newToast);
+                }
             });
         }
 
@@ -263,7 +301,6 @@ namespace MutationChess.UI
 
             previousFullText = newFullText;
             historyText.text = newFullText;
-            GameLogger.Log($"[BattleLogManager] UpdateHistoryText - lines:{logHistory.Count}, text length:{newFullText.Length}");
         }
 
         public void ClearLogs()
@@ -277,7 +314,7 @@ namespace MutationChess.UI
             if (historyPanel != null) historyPanel.SetActive(false);
             foreach (var toast in activeToasts)
             {
-                if (toast != null) Destroy(toast);
+                DestroyToast(toast);
             }
             activeToasts.Clear();
         }

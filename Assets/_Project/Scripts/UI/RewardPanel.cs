@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using MutationChess.Core;
@@ -402,7 +402,7 @@ namespace MutationChess.UI
         {
             if (cardContainer == null)
             {
-                GameLogger.LogError("RewardPanel: cardContainer ???");
+                GameLogger.LogError("RewardPanel: cardContainer 未找到");
                 return;
             }
 
@@ -414,7 +414,7 @@ namespace MutationChess.UI
 
             if (cardPrefab == null)
             {
-                GameLogger.LogError("RewardPanel: cardPrefab ???");
+                GameLogger.LogError("RewardPanel: cardPrefab 未找到");
                 return;
             }
 

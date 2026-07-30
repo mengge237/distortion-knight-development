@@ -1,4 +1,5 @@
-using UnityEngine;
+﻿using UnityEngine;
+using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
@@ -8,10 +9,9 @@ namespace MutationChess.Core
         public override void Execute(CombatContext context)
         {
             if (context.sourceCard == null) return;
-            //
-            //
             context.sourceCard.exhaust = true;
-            GameLogger.Log($"[ExhaustCardEffect] {context.sourceCard.cardName} ");
+            context.battleManager?.AddLog($"���ơ�{context.sourceCard.cardName}��ʹ�ú󽫱����ģ����������ƶѣ�");
+            GameLogger.Log($"[ExhaustCardEffect] �������: {context.sourceCard.cardName}");
         }
     }
 }

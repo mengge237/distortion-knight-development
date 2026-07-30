@@ -1,18 +1,13 @@
-using UnityEngine;
+﻿using UnityEngine;
 using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    /// <summary>
-
-
-
-    /// </summary>
     [CreateAssetMenu(fileName = "ApplyShadowStrength", menuName = "MutationChess/Effects/Apply Shadow Strength")]
     public class ApplyShadowStrengthEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("��Ӱ��������")]
+        [Tooltip("��Ӱ������ֵ������magicNumber>0ʱʹ�ÿ���ֵ")]
         public int strengthAmount = 2;
 
         public override void Execute(CombatContext context)
@@ -22,12 +17,10 @@ namespace MutationChess.Core
             if (context.targetPlayer != null)
             {
                 int amount = strengthAmount;
-
                 if (context.sourceCard != null && context.sourceCard.magicNumber > 0)
                 {
                     amount = context.sourceCard.magicNumber;
                 }
-
 
                 var buff = new Buff
                 {
@@ -37,11 +30,11 @@ namespace MutationChess.Core
                     isShadow = true
                 };
                 context.targetPlayer.AddBuff(buff);
-                GameLogger.Log($"[ApplyShadowStrength]  {amount} ?");
+                context.battleManager?.AddLog($"��һ�� {amount} �㰵Ӱ�������ɱ���Ӱ�������ģ�");
+                GameLogger.Log($"[ApplyShadowStrength] ��һ�ð�Ӱ���� +{amount}");
             }
             else if (context.targetEnemy != null)
             {
-
                 int amount = strengthAmount;
                 if (context.sourceCard != null && context.sourceCard.magicNumber > 0)
                 {
@@ -54,6 +47,7 @@ namespace MutationChess.Core
                     duration = -1,
                     isShadow = true
                 });
+                context.battleManager?.AddLog($"{context.targetEnemy.enemyName} ��� {amount} �㰵Ӱ����");
             }
         }
 
@@ -71,5 +65,3 @@ namespace MutationChess.Core
         }
     }
 }
-
-

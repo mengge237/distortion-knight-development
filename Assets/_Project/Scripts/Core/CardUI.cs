@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using MutationChess.Battle;
 using MutationChess.Core;
 using TMPro;
@@ -71,6 +71,15 @@ namespace MutationChess.UI
                 originalScale = Vector3.one;
                 originalPosition = Vector3.zero;
             }
+        }
+
+        void OnDestroy()
+        {
+            // 终止所有关联的 DOTween 动画，避免销毁后仍访问 RectTransform
+            hoverTween?.Kill();
+            if (rectTransform != null) DOTween.Kill(rectTransform);
+            if (bigCardInstance != null) DOTween.Kill(bigCardInstance.transform);
+            if (backgroundMask != null) DOTween.Kill(backgroundMask.transform);
         }
 
         void Update()
@@ -154,7 +163,6 @@ namespace MutationChess.UI
                 else
                 {
                     cardArt.enabled = false;
-                    GameLogger.LogWarning($" {cardData.cardName} ");
                 }
             }
 
@@ -199,7 +207,7 @@ namespace MutationChess.UI
 
             hoverTween?.Kill();
 
-            DOTween.Sequence()
+            hoverTween = DOTween.Sequence()
                 .Join(rectTransform.DOScale(originalScale, hoverDuration).SetEase(Ease.OutQuad))
                 .Join(rectTransform.DOAnchorPos3D(originalPosition, hoverDuration).SetEase(Ease.OutQuad))
                 .Play();

@@ -41,7 +41,7 @@ namespace MutationChess.Map
         [SerializeField] private float mapDisplayScale = 0.6f;
         [SerializeField] private Color mapTintColor = new Color(1, 1, 1, 0.8f);
 
-        [Header("㼶")]
+        [Header("?")]
         [SerializeField] private bool bossLayerHasRestBefore = true;
         [SerializeField] private int treasureLayerIndex = 6;
 
@@ -65,7 +65,7 @@ namespace MutationChess.Map
 
         void Start()
         {
-            GameLogger.Log("=== MapGenerator.Start()  ===");
+            GameLogger.Log("=== MapGenerator.Start() 开始 ===");
 
             if (Camera.main != null && Camera.main.GetComponent<PhysicsRaycaster>() == null)
                 Camera.main.gameObject.AddComponent<PhysicsRaycaster>();
@@ -80,9 +80,9 @@ namespace MutationChess.Map
 
             GenerateMap();
 
-            GameLogger.Log($"[MapGenerator] : {(enableMapDisplay ? "" : "")}");
-            GameLogger.Log($"[MapGenerator] : {(blueprintCache != null ? blueprintCache.Count : 0)}");
-            GameLogger.Log($"[MapGenerator] : {(textureCache != null ? textureCache.Count : 0)}");
+            GameLogger.Log($"[MapGenerator] 地图显示: {(enableMapDisplay ? "启用" : "禁用")}");
+            GameLogger.Log($"[MapGenerator] 蓝图缓存: {(blueprintCache != null ? blueprintCache.Count : 0)}");
+            GameLogger.Log($"[MapGenerator] 纹理缓存: {(textureCache != null ? textureCache.Count : 0)}");
 
             if (blueprintCache != null)
             {
@@ -121,7 +121,7 @@ namespace MutationChess.Map
             }
             else
             {
-                GameLogger.LogWarning("[MapGenerator] nodeBlueprints ");
+                GameLogger.Log("[MapGenerator] nodeBlueprints 未配置，使用默认颜色");
             }
         }
 
@@ -278,6 +278,11 @@ namespace MutationChess.Map
             Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null) shader = Shader.Find("Sprites/Default");
             if (shader == null) shader = Shader.Find("Standard");
+            if (shader == null)
+            {
+                GameLogger.LogError("[MapGenerator] 所有 Shader 均未找到，线条将不可见！请将 URP/Unlit 添加到 Always Included Shaders。");
+                shader = Shader.Find("Hidden/Internal-Colored");
+            }
             Material mat = new Material(shader);
             mat.color = Color.white;
             return mat;
@@ -285,7 +290,7 @@ namespace MutationChess.Map
 
         public void ClearMap()
         {
-            GameLogger.Log("[MapGenerator] ClearMap() ");
+            GameLogger.Log("[MapGenerator] ClearMap() 清空地图");
 
             foreach (var layer in allLayers)
             {
@@ -306,7 +311,7 @@ namespace MutationChess.Map
 
         public void GenerateMap()
         {
-            GameLogger.Log("[MapGenerator] GenerateMap() ");
+            GameLogger.Log("[MapGenerator] GenerateMap() 开始生成地图");
 
             ClearMap();
 
@@ -362,7 +367,7 @@ namespace MutationChess.Map
             if (enableMapDisplay)
             {
                 UpdateAllMapDisplays();
-                GameLogger.Log($"[MapGenerator]  {CountAllNodes()} ");
+                GameLogger.Log($"[MapGenerator] 地图生成完成，共 {CountAllNodes()} 个节点");
             }
         }
 
@@ -446,6 +451,12 @@ namespace MutationChess.Map
                 {
                     Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
                     if (shader == null) shader = Shader.Find("Standard");
+                    if (shader == null) shader = Shader.Find("Sprites/Default");
+                    if (shader == null)
+                    {
+                        GameLogger.LogError($"[MapGenerator] 节点 {type} 的 Shader 未找到，将使用粉色错误材质！");
+                        shader = Shader.Find("Hidden/Internal-Colored");
+                    }
                     Material mat = new Material(shader);
 
                     mat.color = GetBlueprintColor(type);
@@ -503,7 +514,6 @@ namespace MutationChess.Map
             }
 
 
-            GameLogger.LogWarning($"[MapGenerator] {type} ");
         }
 
         /// <summary>
@@ -517,7 +527,7 @@ namespace MutationChess.Map
             quad.transform.rotation = Quaternion.Euler(0, 0, 0);
 
             Collider col = quad.GetComponent<Collider>();
-            if (col != null) DestroyImmediate(col);
+            if (col != null) Destroy(col);
 
             Renderer renderer = quad.GetComponent<Renderer>();
             if (renderer != null)
@@ -525,6 +535,11 @@ namespace MutationChess.Map
                 Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
                 if (shader == null) shader = Shader.Find("Unlit/Texture");
                 if (shader == null) shader = Shader.Find("Standard");
+                if (shader == null)
+                {
+                    GameLogger.LogError($"[MapGenerator] MapQuad 的 Shader 未找到，贴图将不可见！");
+                    shader = Shader.Find("Sprites/Default");
+                }
 
                 Material mat = new Material(shader);
                 mat.mainTexture = texture;
@@ -1083,7 +1098,6 @@ namespace MutationChess.Map
         {
             if (!enableMapDisplay)
             {
-                GameLogger.LogWarning("[MapGenerator] UpdateAllMapDisplays  enableMapDisplay = false");
                 return;
             }
 
@@ -1094,12 +1108,9 @@ namespace MutationChess.Map
                 {
                     if (node.mapDisplayObject == null)
                     {
-                        if (enableMapDisplay)
-                        {
-                            GameLogger.LogWarning($"[MapGenerator]  {node.nodeType}  mapDisplayObject ");
-                            CreateMapDisplay(node, node.position, node.nodeType);
-                        }
-                        continue;
+                        CreateMapDisplay(node, node.position, node.nodeType);
+                        if (node.mapDisplayObject == null)
+                            continue;
                     }
 
                     Renderer renderer = node.mapDisplayObject.GetComponent<Renderer>();
@@ -1124,7 +1135,8 @@ namespace MutationChess.Map
                     }
                 }
             }
-            GameLogger.Log($"[MapGenerator] UpdateAllMapDisplays  {displayCount} ");
+            if (displayCount > 0)
+                GameLogger.Log($"[MapGenerator] UpdateAllMapDisplays 更新了 {displayCount} 个显示对象");
         }
 
         int CountAllNodes()

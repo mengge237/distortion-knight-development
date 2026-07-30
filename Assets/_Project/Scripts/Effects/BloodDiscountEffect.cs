@@ -20,16 +20,16 @@ namespace MutationChess.Core
         public override void Execute(CombatContext context)
         {
             ConversionModifier.TemporaryBloodRateOverride = overrideRate;
-            GameLogger.Log($"[BloodDiscount]  {overrideRate}=1");
+            GameLogger.Log($"[BloodDiscount] ��һ��Ѫ֮ת���ӳɣ�����{overrideRate + 1}:1��");
 
             if (context?.battleManager != null)
-                context.battleManager.AddBattleLog(" 1:1");
+                context.battleManager.AddBattleLog($"��һ��Ѫ֮ת���ӳɣ�����{overrideRate + 1}:1��");
         }
 
         public override void Execute(EffectContext context)
         {
             ConversionModifier.TemporaryBloodRateOverride = overrideRate;
-            GameLogger.Log($"[BloodDiscount]  {overrideRate}=1");
+            GameLogger.Log($"[BloodDiscount] ��һ��Ѫ֮ת���ӳɣ�����{overrideRate + 1}:1��");
         }
     }
 }
