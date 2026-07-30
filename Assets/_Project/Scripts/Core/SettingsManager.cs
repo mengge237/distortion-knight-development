@@ -9,18 +9,18 @@ namespace MutationChess.Core
     {
         public static SettingsManager Instance { get; private set; }
 
-        [Header("")]
+        [Header("面板控件")]
         [SerializeField] private GameObject settingsPanel;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button saveButton;
         [SerializeField] private Button resetButton;
 
-        [Header("")]
+        [Header("显示设置")]
         [SerializeField] private TMP_Dropdown resolutionDropdown;
         [SerializeField] private Toggle fullscreenToggle;
 
-        [Header("")]
+        [Header("音量设置")]
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private Slider musicVolumeSlider;
         [SerializeField] private Slider sfxVolumeSlider;
@@ -28,10 +28,10 @@ namespace MutationChess.Core
         [SerializeField] private TMP_Text musicVolumeText;
         [SerializeField] private TMP_Text sfxVolumeText;
 
-        [Header("UI")]
+        [Header("UI样式")]
         [SerializeField] private TMP_Dropdown uiStyleDropdown;
 
-        [Header("")]
+        [Header("FPS显示")]
         [SerializeField] private Toggle showFpsToggle;
         [SerializeField] private TMP_Text fpsText;
 
@@ -41,7 +41,7 @@ namespace MutationChess.Core
         private bool settingsOpen = false;
         private bool isInitialized = false;
 
-        private readonly string[] uiStyleOptions = { "", "", "", "" };
+        private readonly string[] uiStyleOptions = { "默认", "简洁", "经典", "深色" };
 
         void Awake()
         {

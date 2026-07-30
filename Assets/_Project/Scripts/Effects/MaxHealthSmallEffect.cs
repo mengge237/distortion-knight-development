@@ -10,7 +10,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "MaxHealthSmallEffect", menuName = "MutationChess/Relic Effects/Max Health Small")]
     public class MaxHealthSmallEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("增加的最大生命值")]
         public int healthBonus = 15;
 
         public override void Execute(CombatContext context)
@@ -21,14 +21,14 @@ namespace MutationChess.Core
             PlayerData playerData = context.targetPlayer ?? context.battleManager?.GetPlayerData();
             if (playerData == null)
             {
-                GameLogger.LogWarning("[MaxHealthSmallEffect] playerData ");
+                GameLogger.LogWarning("[MaxHealthSmallEffect] playerData 为空");
                 return;
             }
 
 
             playerData.maxHealth += healthBonus;
             playerData.currentHealth += healthBonus;
-            GameLogger.Log($"[MaxHealthSmallEffect]  +{healthBonus}: {playerData.currentHealth}/{playerData.maxHealth}");
+            GameLogger.Log($"[MaxHealthSmallEffect] 最大生命+{healthBonus}，当前: {playerData.currentHealth}/{playerData.maxHealth}");
         }
     }
 }

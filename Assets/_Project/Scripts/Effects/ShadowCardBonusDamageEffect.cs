@@ -6,10 +6,10 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "ShadowCardBonusDamageEffect", menuName = "MutationChess/Relic Effects/Shadow Card Bonus Dmg")]
     public class ShadowCardBonusDamageEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("暗影系卡牌额外造成的伤害")]
         public int bonus = 3;
 
-        [Tooltip("Boss0=")]
+        [Tooltip("Boss遗物激活时额外增加的伤害（默认 0）")]
         public int bossBonus = 0;
 
         public override void Execute(CombatContext context) { }

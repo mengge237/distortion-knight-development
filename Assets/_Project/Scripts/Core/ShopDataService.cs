@@ -33,15 +33,15 @@ namespace MutationChess.Core
                 {
                     case ShopItemType.ColoredCard:
                     case ShopItemType.ColorlessCard:
-                        return (item as Card)?.cardName ?? "Unknown Card";
+                        return (item as Card)?.cardName ?? "未知卡牌";
                     case ShopItemType.Relic:
-                        return (item as Relic)?.relicName ?? "Unknown Relic";
+                        return (item as Relic)?.relicName ?? "未知遗物";
                     case ShopItemType.Potion:
-                        return (item as Potion)?.potionName ?? "Unknown Potion";
+                        return (item as Potion)?.potionName ?? "未知药水";
                     case ShopItemType.CardRemoval:
-                        return "Card Removal";
+                        return "移除卡牌";
                     default:
-                        return "Unknown";
+                        return "未知";
                 }
             }
         }
@@ -60,7 +60,7 @@ namespace MutationChess.Core
                     case ShopItemType.Potion:
                         return (item as Potion)?.description ?? "";
                     case ShopItemType.CardRemoval:
-                        return "Remove a card from your deck permanently.";
+                        return "从牌组中永久移除一张卡牌。";
                     default:
                         return "";
                 }

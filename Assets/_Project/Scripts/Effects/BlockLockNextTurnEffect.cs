@@ -5,14 +5,14 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-    ///
-    /// 
-    /// EffectManager.RegisterValueModifier 
+    /// 格挡锁定效果
+    /// 下回合玩家无法获得格挡
+    /// 通过 EffectManager.RegisterValueModifier 注册修饰器将格挡值置为 0
     /// </summary>
     [CreateAssetMenu(fileName = "BlockLockNextTurnEffect", menuName = "MutationChess/Potion Effects/Block Lock Next Turn")]
     public class BlockLockNextTurnEffect : CardEffect
     {
-        [Header("")]
+        [Header("格挡锁定配置")]
         [Tooltip("2=+")]
         public int duration = 2;
 
@@ -43,7 +43,7 @@ namespace MutationChess.Core
             if (isActive)
             {
                 remainingTurns = Mathf.Max(remainingTurns, duration);
-                GameLogger.Log($"[BlockLock] : {remainingTurns}");
+                GameLogger.Log($"[BlockLock] 已激活，剩余回合: {remainingTurns}");
                 return;
             }
 
@@ -53,7 +53,7 @@ namespace MutationChess.Core
             var effectManager = EffectManager.Instance;
             if (effectManager == null)
             {
-                GameLogger.LogWarning("[BlockLock] EffectManager ");
+                GameLogger.LogWarning("[BlockLock] EffectManager 为空");
                 return;
             }
 
@@ -61,7 +61,7 @@ namespace MutationChess.Core
             modifierRef = (ctx, baseValue) =>
             {
                 if (!isActive) return baseValue;
-                GameLogger.Log($"[BlockLock] : {baseValue} ?? 0");
+                GameLogger.Log($"[BlockLock] 锁定格挡: {baseValue} -> 0");
                 return 0;
             };
 
@@ -71,14 +71,14 @@ namespace MutationChess.Core
             turnEndHandlerRef = (ctx) => OnTurnEnd();
             effectManager.Register(EffectTrigger.PlayerTurnEnd, turnEndHandlerRef);
 
-            GameLogger.Log($"[BlockLock] ��ұ�ʩ�Ӹ�������{remainingTurns}�غ����޷���ø�");
+            GameLogger.Log($"[BlockLock] 玩家被施加封印，{remainingTurns}回合内无法获得格挡");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($"��ұ�ʩ�Ӹ�������{duration}�غ����޷���ø�");
+                battleManager.AddBattleLog($"玩家被施加封印，{duration}回合内无法获得格挡");
         }
 
         /// <summary>
-        ///
+        /// 回合结束时处理
         /// </summary>
         public void OnTurnEnd()
         {
@@ -98,7 +98,7 @@ namespace MutationChess.Core
                 isActive = false;
                 modifierRef = null;
                 turnEndHandlerRef = null;
-                GameLogger.Log("[BlockLock] ");
+                GameLogger.Log("[BlockLock] 封印解除");
             }
         }
     }

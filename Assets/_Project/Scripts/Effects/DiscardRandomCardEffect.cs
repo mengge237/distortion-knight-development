@@ -6,6 +6,11 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "DiscardRandomCard", menuName = "MutationChess/Effects/Discard Random Card")]
     public class DiscardRandomCardEffect : CardEffect
     {
+        public override string GetDescription(Card card)
+        {
+            return "����� 1 ������";
+        }
+
         public override void Execute(CombatContext context)
         {
             var handManager = HandManager.Instance;

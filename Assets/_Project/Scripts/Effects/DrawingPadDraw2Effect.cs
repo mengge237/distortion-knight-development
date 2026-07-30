@@ -6,7 +6,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "DrawingPadDraw2Effect", menuName = "MutationChess/Relic Effects/Drawing Pad Draw 2")]
     public class DrawingPadDraw2Effect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("抽牌数量")]
         public int draw = 2;
 
         public override void Execute(CombatContext context)
@@ -15,7 +15,7 @@ namespace MutationChess.Core
             if (handManager != null)
             {
                 handManager.DrawCards(draw);
-                GameLogger.Log($"[DrawingPad] {draw} ");
+                GameLogger.Log($"[DrawingPad] 抽牌 {draw} 张");
             }
         }
     }

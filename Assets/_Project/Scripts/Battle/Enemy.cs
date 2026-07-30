@@ -106,7 +106,7 @@ namespace MutationChess.Battle
                 }
                 else
                 {
-                    GameLogger.LogWarning($": {secondFormSpriteName}");
+                    GameLogger.LogWarning($"[Enemy] 未找到第二形态精灵图：{secondFormSpriteName}");
                 }
             }
 
@@ -214,18 +214,18 @@ namespace MutationChess.Battle
             turnCount++;
             ReduceBuffDurations();
 
-            //
-            if (enemyName.Contains("") || enemyName.Contains(""))
+            // 君王型敌人每回合获得力量加成
+            if (enemyName.Contains("君王") || enemyName.Contains("之主"))
             {
                 int bonus = GetKingPowerBonus();
                 if (bonus > 0)
                 {
                     currentAttackDamage += bonus;
-                    GameLogger.Log($"[Enemy] {enemyName} +{bonus}: {currentAttackDamage}");
+                    GameLogger.Log($"[Enemy] {enemyName} 力量加成 +{bonus}，当前攻击力：{currentAttackDamage}");
                 }
             }
 
-            if (enemyName.Contains("") && !isSecondForm && GetHealthPercentage() < 0.5f)
+            if (enemyName.Contains("君王") && !isSecondForm && GetHealthPercentage() < 0.5f)
             {
                 SwitchToSecondForm();
             }
@@ -306,7 +306,7 @@ namespace MutationChess.Battle
         {
             for (int i = buffs.Count - 1; i >= 0; i--)
             {
-                //
+                // 暗影力量不衰减时跳过持续时间递减
                 if (ConversionModifier.ShadowStrengthNoDecay && buffs[i].isShadow)
                 {
                     continue;
@@ -359,76 +359,76 @@ namespace MutationChess.Battle
 
         public static Enemy CreateCorruptedSoldier()
         {
-            var data = new EnemyData("", 30, 7, EnemyType.Normal);
+            var data = new EnemyData("腐化士兵", 30, 7, EnemyType.Normal);
             data.aiPatternName = "CorruptedSoldier";
-            data.spriteName = "";
+            data.spriteName = "CorruptedSoldier";
             return new Enemy(data);
         }
 
         public static Enemy CreateMutantHound()
         {
-            var data = new EnemyData("", 25, 9, EnemyType.Normal);
+            var data = new EnemyData("畸变猎犬", 25, 9, EnemyType.Normal);
             data.aiPatternName = "MutantHound";
-            data.spriteName = "";
+            data.spriteName = "MutantHound";
             return new Enemy(data);
         }
 
         public static Enemy CreatePlagueAcolyte()
         {
-            var data = new EnemyData("", 28, 6, EnemyType.Normal);
+            var data = new EnemyData("瘟疫信徒", 28, 6, EnemyType.Normal);
             data.aiPatternName = "PlagueAcolyte";
-            data.spriteName = "";
+            data.spriteName = "PlagueAcolyte";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssGrub()
         {
-            var data = new EnemyData("", 22, 8, EnemyType.Normal);
+            var data = new EnemyData("深渊幼虫", 22, 8, EnemyType.Normal);
             data.aiPatternName = "AbyssGrub";
-            data.spriteName = "";
+            data.spriteName = "AbyssGrub";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedKnight()
         {
-            var data = new EnemyData("", 65, 14, EnemyType.Elite);
+            var data = new EnemyData("腐蚀骑士", 65, 14, EnemyType.Elite);
             data.aiPatternName = "CorruptedKnight";
-            data.spriteName = "";
+            data.spriteName = "CorruptedKnight";
             return new Enemy(data);
         }
 
         public static Enemy CreateHellInquisitor()
         {
-            var data = new EnemyData("", 60, 16, EnemyType.Elite);
+            var data = new EnemyData("炼狱审判官", 60, 16, EnemyType.Elite);
             data.aiPatternName = "HellInquisitor";
-            data.spriteName = "";
+            data.spriteName = "HellInquisitor";
             return new Enemy(data);
         }
 
         public static Enemy CreateVoidWizard()
         {
-            var data = new EnemyData("", 55, 12, EnemyType.Elite);
+            var data = new EnemyData("虚空法师", 55, 12, EnemyType.Elite);
             data.aiPatternName = "VoidWizard";
-            data.spriteName = "";
+            data.spriteName = "VoidWizard";
             return new Enemy(data);
         }
 
         public static Enemy CreateCorruptedGolem()
         {
-            var data = new EnemyData("", 80, 13, EnemyType.Elite);
+            var data = new EnemyData("腐化魔像", 80, 13, EnemyType.Elite);
             data.aiPatternName = "CorruptedGolem";
-            data.spriteName = "";
+            data.spriteName = "CorruptedGolem";
             return new Enemy(data);
         }
 
         public static Enemy CreateAbyssLord()
         {
-            var data = new EnemyData("", 150, 22, EnemyType.Boss);
+            var data = new EnemyData("腐化君王", 150, 22, EnemyType.Boss);
             data.aiPatternName = "AbyssLord";
-            data.spriteName = "";
+            data.spriteName = "AbyssLord";
 
             var enemy = new Enemy(data);
-            enemy.secondFormSpriteName = "";
+            enemy.secondFormSpriteName = "AbyssLord_2ndForm";
 
             return enemy;
         }
@@ -440,7 +440,7 @@ namespace MutationChess.Battle
         public BuffType type;
         public int amount;
         public int duration;
-        //
+        // 是否为暗影系列buff（不衰减持续时间）
         public bool isShadow;
 
         public void ReduceDuration() { if (duration > 0) duration--; }

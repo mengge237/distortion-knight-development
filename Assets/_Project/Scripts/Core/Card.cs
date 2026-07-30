@@ -19,8 +19,8 @@ namespace MutationChess.Core
         Uncommon,   // 2星 罕见
         Rare,       // 3星 稀有
         Legendary,  // 4星 传说
-        Colorless,  //
-        Cursed      //
+        Colorless,  // 5星 无色
+        Cursed      // 诅咒
     }
 
     public enum CardFaction
@@ -51,17 +51,17 @@ namespace MutationChess.Core
         public bool isUpgraded = false;
         public bool exhaust = false;
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("卡牌标签")]
+        [Tooltip("卡牌标签列表，用于标签联动与效果触发")]
         public List<CardTag> tags = new List<CardTag>();
 
-        [Header("")]
-        [Tooltip("33?=10")]
+        [Header("鲜血转换")]
+        [Tooltip("鲜血换能量比率（3=3滴血换1点能量，0=使用默认值）")]
         [Min(0)]
         public int bloodPerEnergy = 0;
 
-        [Header("")]
-        [Tooltip("55??=10")]
+        [Header("格挡转换")]
+        [Tooltip("格挡换能量比率（5=5点格挡换1点能量，0=使用默认值）")]
         [Min(0)]
         public int blockPerEnergy = 0;
 
@@ -282,18 +282,26 @@ namespace MutationChess.Core
             switch (cardType)
             {
                 case CardType.Attack:
-                    desc = $"{damage} ";
-                    if (magicNumber > 0) desc += $" {magicNumber} ";
+                    if (damage > 0) desc = $"造成 {damage} 点伤害";
+                    if (magicNumber > 0)
+                    {
+                        if (!string.IsNullOrEmpty(desc)) desc += "，";
+                        desc += $"额外效果值 {magicNumber}";
+                    }
                     break;
                 case CardType.Defense:
-                    desc = $"Block {block}";
-                    if (magicNumber > 0) desc += $" + Gain {magicNumber} Strength";
+                    if (block > 0) desc = $"获得 {block} 点格挡";
+                    if (magicNumber > 0)
+                    {
+                        if (!string.IsNullOrEmpty(desc)) desc += "，";
+                        desc += $"获得 {magicNumber} 点力量";
+                    }
                     break;
                 case CardType.Skill:
-                    desc = magicNumber > 0 ? $"Skill {magicNumber} " : "";
+                    desc = magicNumber > 0 ? $"技能效果值：{magicNumber}" : "";
                     break;
                 case CardType.Power:
-                    desc = magicNumber > 0 ? $"{magicNumber} " : "";
+                    desc = magicNumber > 0 ? $"能力效果值：{magicNumber}" : "";
                     break;
                 case CardType.Curse:
                     desc = "";
@@ -304,12 +312,16 @@ namespace MutationChess.Core
             {
                 foreach (var effect in effects)
                 {
-                    if (effect != null && !string.IsNullOrEmpty(effect.effectDescription))
-                        desc += $"\n{effect.effectDescription}";
+                    if (effect == null) continue;
+                    string effectDesc = effect.GetDescription(this);
+                    if (!string.IsNullOrEmpty(effectDesc))
+                    {
+                        if (!string.IsNullOrEmpty(desc)) desc += "\n";
+                        desc += effectDesc;
+                    }
                 }
             }
 
-            //
             if (tags != null && tags.Count > 0)
             {
                 foreach (var tag in tags)
@@ -319,43 +331,41 @@ namespace MutationChess.Core
                     switch (tag)
                     {
                         case CardTag.Slime:
-                            tagColor = "#00FF88"; tagName = "Slime"; break;
+                            tagColor = "#00FF88"; tagName = "粘液"; break;
                         case CardTag.Reluctant:
-                            tagColor = "#CC66FF"; tagName = "Reluctant"; break;
+                            tagColor = "#CC66FF"; tagName = "不舍"; break;
                         case CardTag.Blood:
-                            tagColor = "#FF4444"; tagName = "Blood"; break;
+                            tagColor = "#FF4444"; tagName = "鲜血"; break;
                         case CardTag.Frost:
-                            tagColor = "#66CCFF"; tagName = "Frost"; break;
+                            tagColor = "#66CCFF"; tagName = "寒霜"; break;
                         case CardTag.Corrupt:
-                            tagColor = "#9933CC"; tagName = "Corrupt"; break;
+                            tagColor = "#9933CC"; tagName = "腐化"; break;
                         case CardTag.Shadow:
-                            tagColor = "#666666"; tagName = "Shadow"; break;
+                            tagColor = "#666666"; tagName = "暗影"; break;
                         case CardTag.Curse:
-                            tagColor = "#731A8B"; tagName = "Curse"; break;
+                            tagColor = "#731A8B"; tagName = "诅咒"; break;
                         default: continue;
                     }
                     desc += $"\n<color={tagColor}>[{tagName}]</color>";
                 }
             }
 
-            //
             if (UsesBloodConversion)
-                desc += $"\n<color=#FF4444>{bloodPerEnergy} 1 </color>";
+                desc += $"\n<color=#FF4444>可消耗 {bloodPerEnergy} 点生命代替 1 点费用</color>";
             if (UsesBlockConversion)
-                desc += $"\n<color=#66CCFF>{blockPerEnergy} 1 </color>";
+                desc += $"\n<color=#66CCFF>可消耗 {blockPerEnergy} 点格挡代替 1 点费用</color>";
 
-            // faction 
             if (faction == CardFaction.Slime && !HasTag(CardTag.Slime))
-                desc += $"\n<color=#00FF88></color>";
+                desc += $"\n<color=#00FF88>[粘液阵营]</color>";
 
             if (faction == CardFaction.Reluctant && !HasTag(CardTag.Reluctant))
-                desc += $"\n<color=#CC66FF></color>";
+                desc += $"\n<color=#CC66FF>[不舍阵营]</color>";
 
             if (exhaust)
-                desc += "\n<color=#FF6644>Exhaust</color>";
+                desc += "\n<color=#FF6644>消耗（使用后从牌组中移除）</color>";
 
             if (isUpgraded)
-                desc += " ()";
+                desc += "（已强化）";
 
             description = desc;
         }
@@ -368,13 +378,13 @@ namespace MutationChess.Core
         {
             switch (rarity)
             {
-                case CardRarity.Common: return "Common";
-                case CardRarity.Uncommon: return "Uncommon";
-                case CardRarity.Rare: return "Rare";
-                case CardRarity.Legendary: return "Legendary";
-                case CardRarity.Colorless: return "Colorless";
-                case CardRarity.Cursed: return "Cursed";
-                default: return "Unknown";
+                case CardRarity.Common: return "普通";
+                case CardRarity.Uncommon: return "罕见";
+                case CardRarity.Rare: return "稀有";
+                case CardRarity.Legendary: return "传说";
+                case CardRarity.Colorless: return "无色";
+                case CardRarity.Cursed: return "诅咒";
+                default: return "未知";
             }
         }
 
@@ -382,14 +392,14 @@ namespace MutationChess.Core
         {
             switch (faction)
             {
-                case CardFaction.None: return "";
-                case CardFaction.Slime: return "Slime";
-                case CardFaction.Reluctant: return "Reluctant";
-                case CardFaction.Blood: return "Blood";
-                case CardFaction.Frost: return "Frost";
-                case CardFaction.Shadow: return "Shadow";
-                case CardFaction.Corrupt: return "Corrupt";
-                default: return "";
+                case CardFaction.None: return "无阵营";
+                case CardFaction.Slime: return "粘液";
+                case CardFaction.Reluctant: return "不舍";
+                case CardFaction.Blood: return "鲜血";
+                case CardFaction.Frost: return "寒霜";
+                case CardFaction.Shadow: return "暗影";
+                case CardFaction.Corrupt: return "腐化";
+                default: return "未知";
             }
         }
 

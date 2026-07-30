@@ -6,13 +6,12 @@ using System.Collections.Generic;
 namespace MutationChess.UI
 {
     /// <summary>
-    ///
-    ///
+    /// 遗物栏UI组件，显示玩家持有的遗物图标
     /// </summary>
     [RequireComponent(typeof(HorizontalLayoutGroup))]
     public class RelicBarUI : MonoBehaviour
     {
-        [Header("Icon Settings")]
+        [Header("图标设置")]
         [SerializeField] private Transform iconContainer;
         [SerializeField] private GameObject iconPrefab;
 

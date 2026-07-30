@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MutationChess.Core
 {
     /// <summary>
-
+    /// 遗物合成服务，检测合成配方并自动合成遗物
     /// </summary>
     public class RelicMergeService : MonoBehaviour
     {
@@ -23,13 +23,13 @@ namespace MutationChess.Core
         [System.Serializable]
         public class MergeRecipe
         {
-            [Tooltip("ID")]
+            [Tooltip("材料遗物ID列表")]
             public List<string> materialRelicIds = new List<string>();
-            [Tooltip("ID")]
+            [Tooltip("合成结果遗物ID")]
             public string resultRelicId;
         }
 
-        [Header("")]
+        [Header("合成配方")]
         [SerializeField] private List<MergeRecipe> recipes = new List<MergeRecipe>();
 
         void Awake()
@@ -53,7 +53,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-
+        /// 检查所有配方并执行可合成的配方
         /// </summary>
         public void CheckAndMerge()
         {
@@ -70,7 +70,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-
+        /// 当新遗物添加时触发合成检查
         /// </summary>
         public void OnRelicAdded(Relic newRelic)
         {
@@ -109,7 +109,7 @@ namespace MutationChess.Core
                     if (mergedRelic != null)
                     {
                         relicManager.AddRelic(mergedRelic);
-                        GameLogger.Log($"[RelicMergeService] : {mergedRelic.relicName}");
+                        GameLogger.Log($"[RelicMergeService] 合成遗物：{mergedRelic.relicName}");
                     }
                     break;
                 }

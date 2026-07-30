@@ -6,13 +6,13 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "AcidicCoreDebuff3StacksEffect", menuName = "MutationChess/Relic Effects/Acidic Core 3 Stacks")]
     public class AcidicCoreDebuff3StacksEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("施加虚弱的层数")]
         public int weak = 3;
 
-        [Tooltip("")]
+        [Tooltip("施加脆弱的层数")]
         public int frail = 3;
 
-        [Tooltip("")]
+        [Tooltip("施加易伤的层数")]
         public int vulnerable = 3;
 
         [Tooltip("Boss")]

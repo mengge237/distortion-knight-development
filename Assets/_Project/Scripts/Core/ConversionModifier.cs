@@ -3,62 +3,59 @@
 namespace MutationChess.Core
 {
     /// <summary>
-    ///
-    ///
-    /// - 13:22:2
-    /// - 1:1
-    /// - 1:1
-    /// ResetTemporary() 
+    /// 转换修正器，管理鲜血/格挡转换率的全局修正与Boss遗物激活状态
+    /// 包含永久减免、临时覆盖、全卡牌转换启用等修正
+    /// 使用 ResetTemporary() 在每回合结束时重置临时修正
+    /// 使用 ResetAll() 在战斗结束时重置所有修正
     /// </summary>
     public static class ConversionModifier
     {
-        // === ===
+        // === 永久转换率减免 ===
         public static int PermanentBloodRateReduction = 0;
         public static int PermanentBlockRateReduction = 0;
 
-        // === ===
-        [Tooltip("0=>0=")]
+        // === 临时转换率覆盖 ===
+        [Tooltip("临时鲜血转换率覆盖（0=不覆盖，>0=使用该值作为转换率）")]
         public static int TemporaryBloodRateOverride = 0;
 
-        [Tooltip("0=>0=")]
+        [Tooltip("临时格挡转换率覆盖（0=不覆盖，>0=使用该值作为转换率）")]
         public static int TemporaryBlockRateOverride = 0;
 
-        // === ===
+        // === 全卡牌转换启用 ===
         public static bool BloodConversionForAll = false;
         public static bool BlockConversionForAll = false;
 
-        // === ===
-        public static bool AllCardsNoExhaustThisTurn = false;  //
-        public static bool CorruptNoExhaustPermanent = false; //
+        // === 消耗规则修改 ===
+        public static bool AllCardsNoExhaustThisTurn = false;  // 本回合所有卡牌不消耗
+        public static bool CorruptNoExhaustPermanent = false; // 腐化标签卡牌永久不消耗
 
-        // === ===
-        public static bool TagEffectDoubleTrigger = false;    //
-        // === ===
-        //
+        // === 标签效果修改 ===
+        public static bool TagEffectDoubleTrigger = false;    // 标签效果双倍触发
+        // === 暗影系列修正 ===
+        // 暗影力量不衰减（默认启用）
         public static bool ShadowStrengthNoDecay = true;
 
-        // === Boss===
-        public static bool BossBloodVeinActive = false;      //
-        public static bool BossFrostHeartActive = false;     //
-        public static bool BossCorruptLiverActive = false;   //
-        public static bool BossSlimeGlandActive = false;     //
-        public static bool BossReluctantChainActive = false; //
-        public static bool BossMemoryLensActive = false;     //
-        public static bool BossAcidicCoreActive = false;     //
-        public static bool BossPhantomMaskActive = false;    //
+        // === Boss遗物激活状态 ===
+        public static bool BossBloodVeinActive = false;      // 血脉
+        public static bool BossFrostHeartActive = false;     // 寒霜之心
+        public static bool BossCorruptLiverActive = false;   // 腐化之肝
+        public static bool BossSlimeGlandActive = false;     // 粘液腺体
+        public static bool BossReluctantChainActive = false; // 不舍之链
+        public static bool BossMemoryLensActive = false;     // 记忆透镜
+        public static bool BossAcidicCoreActive = false;     // 酸性核心
+        public static bool BossPhantomMaskActive = false;    // 幻影面具
 
-        // === ===
-        public static int AbyssThresholdReduction = 0;       //
-        public static int PhantomExtraReduction = 0;         //
+        // === 深渊/幻影减免 ===
+        public static int AbyssThresholdReduction = 0;       // 深渊阈值减免
+        public static int PhantomExtraReduction = 0;         // 幻影额外减免
 
-        // === Boss ===
-        public static int TurnCounterForMemoryLens = 0;      //
-        public static int CardsPlayedThisBattle = 0;         //
-        public static int AttackCardsPlayedThisBattle = 0;   //
+        // === Boss计数器 ===
+        public static int TurnCounterForMemoryLens = 0;      // 记忆透镜回合计数器
+        public static int CardsPlayedThisBattle = 0;         // 本场战斗打出的卡牌数
+        public static int AttackCardsPlayedThisBattle = 0;   // 本场战斗打出的攻击卡数
 
         /// <summary>
-        ///
-        ///
+        /// 获取有效鲜血转换率
         /// </summary>
         public static int GetEffectiveBloodRate(int baseRate)
         {
@@ -67,7 +64,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
+        /// 获取有效格挡转换率
         /// </summary>
         public static int GetEffectiveBlockRate(int baseRate)
         {
@@ -76,7 +73,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
+        /// 判断卡牌是否应该消耗
         /// </summary>
         public static bool ShouldExhaust(Card card)
         {
@@ -87,7 +84,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-    ///
+        /// 重置临时修正（每回合结束时调用）
         /// </summary>
         public static void ResetTemporary()
         {
@@ -102,7 +99,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
+        /// 重置所有修正（战斗结束时调用）
         /// </summary>
         public static void ResetAll()
         {

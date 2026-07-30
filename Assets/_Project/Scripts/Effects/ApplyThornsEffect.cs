@@ -3,11 +3,17 @@ using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    [CreateAssetMenu(fileName = "ApplyThornsEffect", menuName = "MutationChess/Card Effects/Apply Thorns")]
+    [CreateAssetMenu(fileName = "ApplyThorns", menuName = "MutationChess/Card Effects/Apply Thorns")]
     public class ApplyThornsEffect : CardEffect
     {
-        [Tooltip("������ֵ������magicNumber>0ʱʹ�ÿ���ֵ")]
+        [Tooltip("荆棘数值（magicNumber>0时使用卡牌值）")]
         public int thornsAmount = 3;
+
+        public override string GetDescription(Card card)
+        {
+            int amount = (card != null && card.magicNumber > 0) ? card.magicNumber : thornsAmount;
+            return $"获得 {amount} 点荆棘";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -16,7 +22,7 @@ namespace MutationChess.Core
             PlayerData playerData = context.targetPlayer ?? context.battleManager?.GetPlayerData();
             if (playerData == null)
             {
-                GameLogger.LogWarning("[ApplyThornsEffect] playerData Ϊ��");
+                GameLogger.LogWarning("[ApplyThornsEffect] playerData 为空");
                 return;
             }
 
@@ -27,8 +33,8 @@ namespace MutationChess.Core
             }
 
             playerData.AddBuff(new Buff { type = BuffType.Thorns, amount = amount, duration = -1 });
-            context.battleManager?.AddLog($"��һ�� {amount} �㾣�����ܻ�������");
-            GameLogger.Log($"[ApplyThornsEffect] ���� +{amount}");
+            context.battleManager?.AddLog($"获得 {amount} 点荆棘（受击时反弹伤害）");
+            GameLogger.Log($"[ApplyThornsEffect] 荆棘 +{amount}");
         }
     }
 }

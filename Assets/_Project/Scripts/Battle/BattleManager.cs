@@ -1070,7 +1070,7 @@ namespace MutationChess.Battle
                 }
             }
 
- // 
+            // 尝试掉落药水
             pendingPotionReward = TryDropPotion(enemyType);
 
             rewardPanel.ShowRewards(
@@ -1293,7 +1293,7 @@ namespace MutationChess.Battle
         public int GetPlayerBlock() => playerBlock;
 
         /// <summary>
- /// 
+        /// 消耗玩家格挡值
         /// </summary>
         public void ConsumePlayerBlock(int amount)
         {

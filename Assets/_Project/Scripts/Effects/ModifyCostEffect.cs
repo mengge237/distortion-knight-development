@@ -9,6 +9,13 @@ namespace MutationChess.Core
         public int costModifier = -1;
         public bool applyToAllHand = false;
 
+        public override string GetDescription(Card card)
+        {
+            string modText = costModifier >= 0 ? $"+{costModifier}" : $"{costModifier}";
+            string targetText = applyToAllHand ? "ȫ������" : "������";
+            return $"{targetText}����{modText}";
+        }
+
         public override void Execute(CombatContext context)
         {
             if (context == null) return;
@@ -27,7 +34,7 @@ namespace MutationChess.Core
                             card.cost = Mathf.Max(0, card.cost + costModifier);
                         }
                     }
-                    GameLogger.Log($"[ModifyCostEffect] {handCards.Count} : {costModifier}");
+                    GameLogger.Log($"[ModifyCostEffect] �޸� {handCards.Count} �����Ʒ��ã�����ֵ��{costModifier}");
                     handManager.UpdateHandUI();
                 }
             }

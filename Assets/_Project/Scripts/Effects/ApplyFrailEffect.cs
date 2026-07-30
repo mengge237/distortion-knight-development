@@ -10,6 +10,11 @@ namespace MutationChess.Core
         [SerializeField] private int frailAmount = 1;
         [SerializeField] private int duration = 2;
 
+        public override string GetDescription(Card card)
+        {
+            return $"ʩ�� {frailAmount} �������{duration} �غϣ�";
+        }
+
         public override void Execute(CombatContext context)
         {
             if (context == null) return;
@@ -24,12 +29,12 @@ namespace MutationChess.Core
             if (context.targetEnemy != null)
             {
                 context.targetEnemy.AddBuff(buff);
-                context.battleManager?.AddLog($"�� {context.targetEnemy.enemyName} ʩ�� {frailAmount} ���������񵲼��٣�{duration}�غϣ�");
+                context.battleManager?.AddLog($"��Ҷ� {context.targetEnemy.enemyName} ʩ�� {frailAmount} �����������{duration}�غϣ�");
             }
             else if (context.targetPlayer != null)
             {
                 context.targetPlayer.AddBuff(buff);
-                context.battleManager?.AddLog($"����ܵ� {frailAmount} ���������񵲼��٣�{duration}�غϣ�");
+                context.battleManager?.AddLog($"��ұ�ʩ�� {frailAmount} �����������{duration}�غϣ�");
             }
         }
     }

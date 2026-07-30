@@ -7,9 +7,18 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "ApplyDexterity", menuName = "MutationChess/Effects/Apply Dexterity")]
     public class ApplyDexterityEffect : CardEffect
     {
-        [Header("�������")]
-        [Tooltip("Ĭ�������ֵ(magicNumber>0ʱʹ�ÿ���ֵ)")]
+        [Header("敏捷配置")]
+        [Tooltip("默认敏捷数值（magicNumber>0时使用卡牌值）")]
         public int defaultAmount = 3;
+
+        public override string GetDescription(Card card)
+        {
+            int amount = (card != null && card.magicNumber > 0) ? card.magicNumber : defaultAmount;
+            if (amount >= 0)
+                return $"获得 {amount} 点敏捷";
+            else
+                return $"失去 {-amount} 点敏捷";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -23,12 +32,12 @@ namespace MutationChess.Core
             if (context.targetPlayer != null)
             {
                 context.targetPlayer.AddBuff(buff);
-                context.battleManager?.AddLog($"��һ�� {amount} ����ݣ���������");
+                context.battleManager?.AddLog($"获得 {amount} 点敏捷（永久生效）");
             }
             else if (context.targetEnemy != null)
             {
                 context.targetEnemy.AddBuff(buff);
-                context.battleManager?.AddLog($"{context.targetEnemy.enemyName} ��� {amount} �����");
+                context.battleManager?.AddLog($"{context.targetEnemy.enemyName} 获得 {amount} 点敏捷");
             }
         }
     }

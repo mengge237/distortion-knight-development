@@ -5,20 +5,22 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
-
+    /// 下回合失去力量效果
     /// </summary>
     [CreateAssetMenu(fileName = "LoseStrengthNextTurnEffect", menuName = "MutationChess/Potion Effects/Lose Strength Next Turn")]
     public class LoseStrengthNextTurnEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("力量损失配置")]
+        [Tooltip("损失的力量值")]
         public int strengthLoss = 3;
 
         [Tooltip("2=+")]
         public int duration = 2;
+
+        public override string GetDescription(Card card)
+        {
+            return $"{duration} 回合失去 {strengthLoss} 力量";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -38,7 +40,6 @@ namespace MutationChess.Core
             PlayerData playerData = dataManager.GetPlayerData();
             if (playerData == null) return;
 
-
             playerData.AddBuff(new Buff
             {
                 type = BuffType.Strength,
@@ -46,12 +47,10 @@ namespace MutationChess.Core
                 duration = duration
             });
 
-            GameLogger.Log($"[LoseStrength] ���ʧȥ{strengthLoss}������������{duration}�غ�");
+            GameLogger.Log($"[LoseStrength] 下回合失去{strengthLoss}点力量，持续{duration}回合");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($"���ʧȥ{strengthLoss}������������{duration}�غ�");
+                battleManager.AddBattleLog($"下回合失去{strengthLoss}点力量，持续{duration}回合");
         }
     }
 }
-
-

@@ -6,7 +6,7 @@ namespace MutationChess.Map
 {
     public class MapView : MonoBehaviour
     {
-        [Header("")]
+        [Header("节点颜色")]
         [SerializeField] private Color startColor = new Color(0.6f, 0.2f, 0.8f);
         [SerializeField] private Color normalMonsterColor = new Color(0.7f, 0.7f, 0.7f, 1f);
         [SerializeField] private Color eliteMonsterColor = new Color(1f, 0.4f, 0.1f, 1f);
@@ -16,7 +16,7 @@ namespace MutationChess.Map
         [SerializeField] private Color restColor = new Color(0.2f, 0.7f, 1f, 1f);
         [SerializeField] private Color bossColor = new Color(1f, 0.1f, 0.1f, 1f);
 
-        [Header("")]
+        [Header("访问状态颜色")]
         [SerializeField] private Color visitedColor = new Color(0.3f, 0.3f, 0.35f, 1f);
 
         private MapGenerator mapGenerator;

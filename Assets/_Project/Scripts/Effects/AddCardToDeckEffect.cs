@@ -5,9 +5,7 @@ using MutationChess.UI;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
+    /// 添加卡牌到牌组效果
     /// </summary>
     [CreateAssetMenu(fileName = "AddCardToDeckEffect", menuName = "MutationChess/Card Effects/Add Card To Deck")]
     public class AddCardToDeckEffect : CardEffect
@@ -30,35 +28,35 @@ namespace MutationChess.Core
             RandomByRarity,
         }
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("卡牌选择模式")]
+        [Tooltip("卡牌选择方式")]
         public CardSelectionMode selectionMode = CardSelectionMode.SpecificName;
 
-        [Header("")]
-        [Tooltip("CardName ")]
+        [Header("指定卡牌名")]
+        [Tooltip("要添加的卡牌名称（CardName 枚举值）")]
         public string cardNameToAdd = "";
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("类型筛选")]
+        [Tooltip("按类型随机时的筛选类型")]
         public CardType filterCardType = CardType.Attack;
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("标签筛选")]
+        [Tooltip("按标签随机时的筛选标签")]
         public CardTag filterTag = CardTag.Corrupt;
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("稀有度筛选")]
+        [Tooltip("按稀有度随机时的筛选稀有度")]
         public CardRarity filterRarity = CardRarity.Common;
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("数量配置")]
+        [Tooltip("添加卡牌的数量")]
         [Min(1)]
         public int count = 1;
 
-        [Tooltip("")]
+        [Tooltip("卡牌添加的位置")]
         public AddLocation location = AddLocation.DrawPileRandom;
 
-        [Tooltip("")]
+        [Tooltip("是否在描述中显示卡牌名称")]
         public bool showCardNameInDescription = true;
 
         public override void Execute(CombatContext context)
@@ -66,7 +64,7 @@ namespace MutationChess.Core
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("[AddCardToDeckEffect] HandManager ");
+                GameLogger.LogWarning("[AddCardToDeckEffect] HandManager 为空");
                 return;
             }
 
@@ -75,12 +73,12 @@ namespace MutationChess.Core
                 Card newCard = CreateCardByMode(context);
                 if (newCard == null)
                 {
-                    GameLogger.LogError($"[AddCardToDeckEffect]  (: {selectionMode})");
+                    GameLogger.LogError($"[AddCardToDeckEffect] 创建卡牌失败（模式: {selectionMode}）");
                     continue;
                 }
 
                 AddCardToLocation(handManager, newCard);
-                GameLogger.Log($"[AddCardToDeckEffect] : {newCard.cardName} -> {location}");
+                GameLogger.Log($"[AddCardToDeckEffect] 添加卡牌: {newCard.cardName} -> {location}");
             }
 
             handManager.UpdatePileCountUI();
@@ -114,7 +112,7 @@ namespace MutationChess.Core
         {
             if (context?.sourceCard == null)
             {
-                GameLogger.LogError("[AddCardToDeckEffect] SelfCopysourceCard");
+                GameLogger.LogError("[AddCardToDeckEffect] SelfCopy 需要 sourceCard");
                 return null;
             }
 
@@ -137,14 +135,14 @@ namespace MutationChess.Core
         {
             if (!System.Enum.TryParse<CardName>(cardNameToAdd, out CardName parsedName))
             {
-                GameLogger.LogError($"[AddCardToDeckEffect] : {cardNameToAdd}");
+                GameLogger.LogError($"[AddCardToDeckEffect] 无法解析卡牌名: {cardNameToAdd}");
                 return null;
             }
 
             Card card = CardData.CreateCard(parsedName);
             if (card == null)
             {
-                GameLogger.LogError($"[AddCardToDeckEffect] : {cardNameToAdd}");
+                GameLogger.LogError($"[AddCardToDeckEffect] 创建卡牌失败: {cardNameToAdd}");
             }
             return card;
         }
@@ -165,7 +163,7 @@ namespace MutationChess.Core
 
             if (candidates.Count == 0)
             {
-                GameLogger.LogWarning($"[AddCardToDeckEffect]  {filterCardType} ");
+                GameLogger.LogWarning($"[AddCardToDeckEffect] 未找到类型为 {filterCardType} 的卡牌");
                 return null;
             }
 
@@ -189,7 +187,7 @@ namespace MutationChess.Core
 
             if (candidates.Count == 0)
             {
-                GameLogger.LogWarning($"[AddCardToDeckEffect]  {filterTag} ");
+                GameLogger.LogWarning($"[AddCardToDeckEffect] 未找到标签为 {filterTag} 的卡牌");
                 return null;
             }
 
@@ -213,7 +211,7 @@ namespace MutationChess.Core
 
             if (candidates.Count == 0)
             {
-                GameLogger.LogWarning($"[AddCardToDeckEffect]  {filterRarity} ");
+                GameLogger.LogWarning($"[AddCardToDeckEffect] 未找到稀有度为 {filterRarity} 的卡牌");
                 return null;
             }
 
@@ -248,5 +246,3 @@ namespace MutationChess.Core
         }
     }
 }
-
-

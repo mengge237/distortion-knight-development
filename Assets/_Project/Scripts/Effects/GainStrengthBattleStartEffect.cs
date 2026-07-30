@@ -9,7 +9,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "GainStrengthBattleStartEffect", menuName = "MutationChess/Relic Effects/Gain Strength Battle Start")]
     public class GainStrengthBattleStartEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("战斗开始时获得的力量值")]
         public int strengthAmount = 1;
 
         public override void Execute(CombatContext context)
@@ -20,13 +20,13 @@ namespace MutationChess.Core
             PlayerData playerData = context.targetPlayer ?? context.battleManager?.GetPlayerData();
             if (playerData == null)
             {
-                GameLogger.LogWarning("[GainStrengthBattleStartEffect] playerData ");
+                GameLogger.LogWarning("[GainStrengthBattleStartEffect] playerData 为空");
                 return;
             }
 
 
             playerData.AddBuff(new Buff { type = BuffType.Strength, amount = strengthAmount, duration = -1 });
-            GameLogger.Log($"[GainStrengthBattleStartEffect]  {strengthAmount} ");
+            GameLogger.Log($"[GainStrengthBattleStartEffect] 获得力量 {strengthAmount} 点");
         }
     }
 }

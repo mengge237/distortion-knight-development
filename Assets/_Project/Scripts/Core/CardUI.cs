@@ -18,7 +18,7 @@ namespace MutationChess.UI
         [SerializeField] private TMP_Text costText;
         [SerializeField] private TMP_Text descriptionText;
 
-        [Header("")]
+        [Header("费用图标")]
         [SerializeField] private Image costIcon;
 
         [Header("Hover")]
@@ -29,10 +29,10 @@ namespace MutationChess.UI
         [SerializeField] private float dragFloatAmount = 50f;
         [SerializeField] private float dragThreshold = 50f;
 
-        [Header("")]
+        [Header("禁用样式")]
         [SerializeField] private Color disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
 
-        [Header("")]
+        [Header("大卡预览")]
         [SerializeField] private GameObject bigCardPrefab;
         [SerializeField] private Transform bigCardParent;
         [SerializeField] private float longPressDelay = 0.5f;

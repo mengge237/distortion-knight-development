@@ -5,10 +5,7 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
-
+    /// 腐化不消耗效果：腐化系卡牌不再被消耗
     /// </summary>
     [CreateAssetMenu(fileName = "CorruptNoExhaustEffect", menuName = "MutationChess/Relic Effects/Corrupt No Exhaust")]
     public class CorruptNoExhaustEffect : CardEffect
@@ -26,9 +23,7 @@ namespace MutationChess.Core
         private void ActivateNoExhaust()
         {
             ConversionModifier.CorruptNoExhaustPermanent = true;
-            GameLogger.Log("[CorruptNoExhaust] ");
+            GameLogger.Log("[CorruptNoExhaust] 腐化系卡牌不再被消耗");
         }
     }
 }
-
-

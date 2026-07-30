@@ -55,7 +55,7 @@ namespace MutationChess.Battle
         }
 
         /// <summary>
-        ///
+        /// 判断指定卡牌名称是否为基础卡牌
         /// </summary>
         public static bool IsBasicCard(string cardName)
         {

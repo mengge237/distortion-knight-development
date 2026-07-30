@@ -6,7 +6,7 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-    ///
+    /// 文档说明
     /// </summary>
     [CreateAssetMenu(fileName = "GiftEffect", menuName = "MutationChess/Card Effects/Gift")]
     public class GiftEffect : CardEffect
@@ -17,21 +17,26 @@ namespace MutationChess.Core
             TurnEnd,     //
         }
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("触发配置")]
+        [Tooltip("礼物触发的时机")]
         public GiftTriggerTime triggerTime = GiftTriggerTime.TurnStart;
 
-        [Tooltip("")]
+        [Tooltip("触发后是否弃置卡牌")]
         public bool discardAfterTrigger = true;
+
+        public override string GetDescription(Card card)
+        {
+            return "回合开始触发礼物效果后置弃";
+        }
 
         public override void Execute(CombatContext context)
         {
-            //
-            GameLogger.Log("[GiftEffect] Execute HandManager ");
+            // 实际逻辑由 CheckAndTriggerGifts 静态方法处理
+            GameLogger.Log("[GiftEffect] Execute 需要 HandManager");
         }
 
         /// <summary>
-        ///
+        /// 检查并触发抽牌堆中所有符合条件的礼物卡
         /// </summary>
         public static List<Card> CheckAndTriggerGifts(GiftTriggerTime time)
         {
@@ -72,7 +77,7 @@ namespace MutationChess.Core
                 drawPile.RemoveAt(index);
                 triggeredCards.Add(topCard);
 
-                GameLogger.Log($"[GiftEffect] : {topCard.cardName} (: {time})");
+                GameLogger.Log($"[GiftEffect] 触发礼物: {topCard.cardName}（时机: {time}）");
 
 
                 CombatContext context = new CombatContext(
@@ -101,14 +106,14 @@ namespace MutationChess.Core
             if (triggeredCards.Count > 0)
             {
                 handManager.UpdatePileCountUI();
-                GameLogger.Log($"[GiftEffect] {triggeredCards.Count} ");
+                GameLogger.Log($"[GiftEffect] 触发了 {triggeredCards.Count} 张礼物卡");
             }
 
             return triggeredCards;
         }
 
         /// <summary>
-        ///
+        /// 从卡牌效果列表中查找指定时机的礼物效果
         /// </summary>
         private static GiftEffect FindGiftEffect(Card card, GiftTriggerTime time)
         {

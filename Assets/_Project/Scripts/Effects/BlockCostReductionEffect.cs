@@ -5,16 +5,13 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
-
+    /// 格挡消耗降低效果：降低格挡转化率
     /// </summary>
     [CreateAssetMenu(fileName = "BlockCostReductionEffect", menuName = "MutationChess/Relic Effects/Block Cost Reduction")]
     public class BlockCostReductionEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("2 53")]
+        [Header("格挡消耗降低配置")]
+        [Tooltip("格挡转化率降低数值（例如从 5 降至 3）")]
         public int rateReduction = 2;
 
         public override void Execute(CombatContext context)
@@ -30,7 +27,7 @@ namespace MutationChess.Core
         private void ApplyReduction()
         {
             ConversionModifier.PermanentBlockRateReduction += rateReduction;
-            GameLogger.Log($"[BlockCostReduction]  {rateReduction}: {ConversionModifier.PermanentBlockRateReduction}");
+            GameLogger.Log($"[BlockCostReduction] 格挡转化率降低 {rateReduction}，当前累计：{ConversionModifier.PermanentBlockRateReduction}");
         }
     }
 }

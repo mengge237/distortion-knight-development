@@ -7,13 +7,18 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "CorruptAddCardEffect", menuName = "MutationChess/Relic Effects/Corrupt Add Card")]
     public class CorruptAddCardEffect : CardEffect
     {
-        [Header("�����ӿ�����")]
-        [Tooltip("ս����ʼʱ��ӵ����Ƶĸ�����������")]
+        [Header("腐化卡牌配置")]
+        [Tooltip("战斗开始时添加腐化卡牌的额外数量")]
         [Min(1)]
         public int count = 1;
 
-        [Tooltip("Bossս�¶�����ӵĸ�����������")]
+        [Tooltip("Boss战下额外添加的腐化卡牌数量")]
         public int bossExtraCount = 1;
+
+        public override string GetDescription(Card card)
+        {
+            return $"将 {count} 张腐化卡加入手牌";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -30,7 +35,7 @@ namespace MutationChess.Core
             var handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogError("[CorruptAddCard] HandManager Ϊ��");
+                GameLogger.LogError("[CorruptAddCard] HandManager 为空");
                 return;
             }
 
@@ -46,7 +51,7 @@ namespace MutationChess.Core
 
             if (candidates.Count == 0)
             {
-                GameLogger.LogWarning("[CorruptAddCard] δ�ҵ��κθ�����ǩ����");
+                GameLogger.LogWarning("[CorruptAddCard] 未找到任何腐化标签卡牌");
                 return;
             }
 
@@ -61,13 +66,13 @@ namespace MutationChess.Core
                 {
                     handManager.AddCardToHand(newCard);
                     addedNames.Add(newCard.cardName);
-                    GameLogger.Log($"[CorruptAddCard] ��Ӹ�����: {newCard.cardName}");
+                    GameLogger.Log($"[CorruptAddCard] 添加腐化卡: {newCard.cardName}");
                 }
             }
 
             if (addedNames.Count > 0)
             {
-                combat?.battleManager?.AddLog($"����֮����Ч�������м����� {addedNames.Count} �Ÿ������ƣ�{string.Join("��", addedNames)}");
+                combat?.battleManager?.AddLog($"腐化之力生效，手中加入了 {addedNames.Count} 张腐化卡牌：{string.Join("、", addedNames)}");
             }
         }
     }

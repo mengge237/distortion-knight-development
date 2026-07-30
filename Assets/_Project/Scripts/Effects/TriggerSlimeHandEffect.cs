@@ -7,10 +7,7 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
-
+    /// 触发粘液手牌效果：触发手牌中所有粘液系卡牌的效果
     /// </summary>
     [CreateAssetMenu(fileName = "TriggerSlimeHandEffect", menuName = "MutationChess/Potion Effects/Trigger Slime Hand")]
     public class TriggerSlimeHandEffect : CardEffect
@@ -51,13 +48,11 @@ namespace MutationChess.Core
 
                 card.ExecuteEffects(cardCtx);
                 triggered++;
-                GameLogger.Log($"[TriggerSlimeHand] : {card.cardName}");
+                GameLogger.Log($"[TriggerSlimeHand] 触发卡牌：{card.cardName}");
             }
 
             if (battleManager != null)
-                battleManager.AddBattleLog($"������������{triggered}��ʷ��ķ���Ƶ�Ч��");
+                battleManager.AddBattleLog($"触发手牌中所有粘液系卡牌，共触发 {triggered} 张粘液系卡牌的效果");
         }
     }
 }
-
-

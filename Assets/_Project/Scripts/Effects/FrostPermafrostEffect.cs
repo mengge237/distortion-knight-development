@@ -10,7 +10,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "FrostPermafrostEffect", menuName = "MutationChess/Relic Effects/Frost Permafrost")]
     public class FrostPermafrostEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("战斗开始时获得的格挡值")]
         public int startBlock = 10;
 
         [Tooltip("Boss")]
@@ -38,7 +38,7 @@ namespace MutationChess.Core
                 if (playerData != null)
                 {
                     playerData.AddBuff(new Buff { type = BuffType.Dexterity, amount = bossDexterity, duration = -1 });
-                    GameLogger.Log($"[FrostPermafrost] Boss{bossDexterity} ");
+                    GameLogger.Log($"[FrostPermafrost] Boss加成：敏捷+{bossDexterity}");
                 }
             }
         }

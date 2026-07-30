@@ -7,46 +7,52 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-    /// 发现效果：从牌堆或卡池中随机抽取 N 张卡牌供玩家选择
-    /// 选中的卡牌将加入手牌，其余卡牌将被丢弃
+    /// ����Ч�������ƶѻ򿨳��������ȡ N �ſ��ƹ����ѡ��
+    /// ѡ�еĿ��ƽ��������ƣ����࿨�ƽ�������
     /// </summary>
     [CreateAssetMenu(fileName = "DiscoverEffect", menuName = "MutationChess/Card Effects/Discover")]
     public class DiscoverEffect : CardEffect
     {
         public enum DiscoverSource
         {
-            DrawPile,           // 从抽牌堆发现
-            DiscardPile,        // 从弃牌堆发现
-            ByTag,              // 按标签过滤卡牌池
-            ByFaction,          // 按阵营过滤卡牌池
-            ByRarity,           // 按稀有度过滤卡牌池
-            AllCards,           // 从所有卡牌池发现
+            DrawPile,           // �ӳ��ƶѷ���
+            DiscardPile,        // �����ƶѷ���
+            ByTag,              // ����ǩ���˿��Ƴ�
+            ByFaction,          // ����Ӫ���˿��Ƴ�
+            ByRarity,           // ��ϡ�жȹ��˿��Ƴ�
+            AllCards,           // �����п��Ƴط���
         }
 
-        [Header("发现设置")]
-        [Tooltip("发现卡牌的来源类型")]
+        [Header("��������")]
+        [Tooltip("���ֿ��Ƶ���Դ����")]
         public DiscoverSource source = DiscoverSource.ByTag;
 
-        [Tooltip("发现的卡牌数量")]
+        [Tooltip("���ֵĿ�������")]
         [Min(1)]
         public int discoverCount = 3;
 
-        [Tooltip("加入手牌的卡牌数量")]
+        [Tooltip("�������ƵĿ�������")]
         [Min(1)]
         public int cardsToHand = 1;
 
-        [Header("过滤器")]
-        [Tooltip("按标签过滤，source=ByTag 时生效")]
+        [Header("������")]
+        [Tooltip("����ǩ���ˣ�source=ByTag ʱ��Ч")]
         public CardTag filterTag = CardTag.None;
 
-        [Tooltip("按阵营过滤，source=ByFaction 时生效")]
+        [Tooltip("����Ӫ���ˣ�source=ByFaction ʱ��Ч")]
         public CardFaction filterFaction = CardFaction.None;
 
-        [Tooltip("按稀有度过滤，source=ByRarity 时生效")]
+        [Tooltip("��ϡ�жȹ��ˣ�source=ByRarity ʱ��Ч")]
         public CardRarity filterRarity = CardRarity.Common;
 
-        [Tooltip("是否排除自身卡牌")]
+        [Tooltip("�Ƿ��ų��������")]
         public bool excludeSelf = true;
+
+        public override string GetDescription(Card card)
+        {
+            int actualDiscover = (card != null && card.magicNumber > 0) ? card.magicNumber : discoverCount;
+            return $"���� {actualDiscover} �ſ��ƣ�ѡ {cardsToHand} �ż�������";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -55,26 +61,26 @@ namespace MutationChess.Core
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("[DiscoverEffect] HandManager 不存在");
+                GameLogger.LogWarning("[DiscoverEffect] HandManager ������");
                 return;
             }
 
             List<Card> pool = BuildDiscoverPool(context);
             if (pool.Count == 0)
             {
-                GameLogger.Log("[DiscoverEffect] 卡牌池为空");
+                GameLogger.Log("[DiscoverEffect] ���Ƴ�Ϊ��");
                 return;
             }
 
-            // 随机抽取 N 张候选卡牌
+            // �����ȡ N �ź�ѡ����
             List<Card> candidates = new List<Card>(pool);
             ShuffleList(candidates);
             int actualCount = Mathf.Min(discoverCount, candidates.Count);
 
-            GameLogger.Log($"[DiscoverEffect] 从 {pool.Count} 张卡牌中抽取 {actualCount} 张");
+            GameLogger.Log($"[DiscoverEffect] �� {pool.Count} �ſ����г�ȡ {actualCount} ��");
 
-            // 将前 cardsToHand 张加入手牌
-            // 其余卡牌可选择丢弃或放回牌堆
+            // ��ǰ cardsToHand �ż�������
+            // ���࿨�ƿ�ѡ������Ż��ƶ�
             int toHand = Mathf.Min(cardsToHand, actualCount);
             for (int i = 0; i < toHand; i++)
             {
@@ -82,7 +88,7 @@ namespace MutationChess.Core
                 if (selected != null)
                 {
                     handManager.AddCardToHand(selected);
-                    GameLogger.Log($"[DiscoverEffect] 将卡牌加入手牌: {selected.cardName}");
+                    GameLogger.Log($"[DiscoverEffect] �����Ƽ�������: {selected.cardName}");
                 }
             }
         }
@@ -120,7 +126,7 @@ namespace MutationChess.Core
                     break;
             }
 
-            // 排除自身
+            // �ų�����
             if (excludeSelf && context?.sourceCard != null)
             {
                 pool.RemoveAll(c => c == context.sourceCard);

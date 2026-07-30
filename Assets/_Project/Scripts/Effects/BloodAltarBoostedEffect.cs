@@ -6,10 +6,10 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "BloodAltarBoostedEffect", menuName = "MutationChess/Relic Effects/Blood Altar Boosted")]
     public class BloodAltarBoostedEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("恢复的生命值数量")]
         public int healthCostReduction = 1;
 
-        [Tooltip("")]
+        [Tooltip("额外获得的力量层数")]
         public int extraStrength = 1;
 
         public override void Execute(CombatContext context)
@@ -34,7 +34,7 @@ namespace MutationChess.Core
                 duration = -1
             });
 
-            GameLogger.Log($"[BloodAltarBoosted] +{healthCostReduction}+{extraStrength}");
+            GameLogger.Log($"[BloodAltarBoosted] 恢复生命 +{healthCostReduction}，获得力量 +{extraStrength}");
         }
     }
 }

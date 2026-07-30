@@ -6,10 +6,10 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "Every4TurnsLoseDexEffect", menuName = "MutationChess/Relic Effects/Every 4 Turns Lose Dex")]
     public class Every4TurnsLoseDexEffect : CardEffect
     {
-        [Tooltip("?N")]
+        [Tooltip("每次损失的敏捷值")]
         public int loseDex = 1;
 
-        [Tooltip("")]
+        [Tooltip("触发损失的回合间隔")]
         public int turnInterval = 4;
 
         public override void Execute(CombatContext context) { }
@@ -25,7 +25,7 @@ namespace MutationChess.Core
             if (playerData == null) return;
 
             playerData.AddBuff(new Buff { type = BuffType.Dexterity, amount = -loseDex, duration = -1 });
-            GameLogger.Log($"[Every4TurnsLoseDex] ??{ConversionModifier.TurnCounterForMemoryLens}{loseDex}");
+            GameLogger.Log($"[Every4TurnsLoseDex] 第 {ConversionModifier.TurnCounterForMemoryLens} 回合，损失敏捷 {loseDex}");
         }
     }
 }

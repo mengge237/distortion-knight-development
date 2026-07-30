@@ -5,14 +5,13 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-    ///
-    ///
+    /// 鲜血费用减少效果：降低鲜血系卡牌的费用
     /// </summary>
     [CreateAssetMenu(fileName = "BloodCostReductionEffect", menuName = "MutationChess/Relic Effects/Blood Cost Reduction")]
     public class BloodCostReductionEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("费用减少配置")]
+        [Tooltip("鲜血卡牌费用减少值")]
         public int costReduction = 1;
 
         public override void Execute(CombatContext context)

@@ -6,9 +6,7 @@ using System.Collections.Generic;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
+    /// 粘液效果：打出粘液系卡牌时触发相邻粘液卡牌的效果
     /// </summary>
     [CreateAssetMenu(fileName = "SlimeEffect", menuName = "MutationChess/Card Effects/Slime Effect")]
     public class SlimeEffect : CardEffect
@@ -17,14 +15,14 @@ namespace MutationChess.Core
         {
             if (context == null || context.sourceCard == null)
             {
-                GameLogger.LogWarning("SlimeEffect: ");
+                GameLogger.LogWarning("SlimeEffect: context 或 sourceCard 为空");
                 return;
             }
 
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("SlimeEffect: HandManager ");
+                GameLogger.LogWarning("SlimeEffect: HandManager 为空");
                 return;
             }
 
@@ -35,7 +33,7 @@ namespace MutationChess.Core
             int playedIndex = handCards.IndexOf(playedCard);
             if (playedIndex < 0)
             {
-                GameLogger.LogWarning("SlimeEffect: ");
+                GameLogger.LogWarning("SlimeEffect: 未在手牌中找到打出的卡牌");
                 return;
             }
 
@@ -51,7 +49,7 @@ namespace MutationChess.Core
                     Card adj = handCards[idx];
                     if (adj != null && (adj.HasTag(CardTag.Slime) || adj.faction == CardFaction.Slime))
                     {
-                        GameLogger.Log($"SlimeEffect:  {adj.cardName} ( {offset})");
+                        GameLogger.Log($"SlimeEffect: 触发相邻卡牌 {adj.cardName}（偏移 {offset}）");
                         CombatContext adjCtx = new CombatContext(
                             context.battleManager,
                             context.targetEnemy,
@@ -65,5 +63,3 @@ namespace MutationChess.Core
         }
     }
 }
-
-

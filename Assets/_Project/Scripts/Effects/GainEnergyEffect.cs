@@ -8,20 +8,28 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "GainEnergyEffect", menuName = "MutationChess/Relic Effects/Gain Energy")]
     public class GainEnergyEffect : CardEffect
     {
-        [Header("��������")]
-        [Tooltip("���λ�õ���������")]
+        [Header("能量配置")]
+        [Tooltip("每位获得的能量数")]
         public int energyGain = 1;
 
-        [Header("��������")]
-        [Tooltip("Ч���������������������0=�����ƣ�")]
+        [Header("弃牌配置")]
+        [Tooltip("效果触发后随机弃牌的数量（0=不弃牌）")]
         public int discardRandomCount = 0;
+
+        public override string GetDescription(Card card)
+        {
+            string desc = $"获得 {energyGain} 点能量";
+            if (discardRandomCount > 0)
+                desc += $"，随机弃 {discardRandomCount} 张手牌";
+            return desc;
+        }
 
         public override void Execute(CombatContext context)
         {
             var handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("[GainEnergyEffect] HandManager Ϊ��");
+                GameLogger.LogWarning("[GainEnergyEffect] HandManager 为空");
                 return;
             }
 
@@ -38,12 +46,12 @@ namespace MutationChess.Core
 
             if (context?.battleManager != null)
             {
-                string log = $"��һ�� {energyGain} ������";
-                if (discardRandomCount > 0) log += $"��������� {discardRandomCount} ����";
+                string log = $"获得 {energyGain} 点能量";
+                if (discardRandomCount > 0) log += $"，随机弃牌 {discardRandomCount} 张";
                 context.battleManager.AddLog(log);
             }
 
-            GameLogger.Log($"[GainEnergyEffect] ����+{energyGain}" + (discardRandomCount > 0 ? $" ����{discardRandomCount}" : ""));
+            GameLogger.Log($"[GainEnergyEffect] 能量+{energyGain}" + (discardRandomCount > 0 ? $" 弃牌{discardRandomCount}" : ""));
         }
 
         public void ExecuteGainEnergy(BattleManager battleManager)
@@ -51,7 +59,7 @@ namespace MutationChess.Core
             var handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("[GainEnergyEffect] HandManager Ϊ��");
+                GameLogger.LogWarning("[GainEnergyEffect] HandManager 为空");
                 return;
             }
 
@@ -59,7 +67,7 @@ namespace MutationChess.Core
 
             if (battleManager != null)
             {
-                battleManager.AddLog($"��һ�� {energyGain} ������");
+                battleManager.AddLog($"获得 {energyGain} 点能量");
             }
         }
     }

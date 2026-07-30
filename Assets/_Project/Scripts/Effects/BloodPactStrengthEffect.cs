@@ -6,11 +6,16 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "BloodPactStrengthEffect", menuName = "MutationChess/Relic Effects/Blood Pact Str & HP")]
     public class BloodPactStrengthEffect : CardEffect
     {
-        [Tooltip("+2+1??")]
+        [Tooltip("额外增加的力量值")]
         public int extraStr = 1;
 
-        [Tooltip("")]
+        [Tooltip("减少的最大生命值")]
         public int loseMaxHp = 5;
+
+        public override string GetDescription(Card card)
+        {
+            return $"获得 {extraStr} 力量，最大生命 -{loseMaxHp}";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -30,7 +35,7 @@ namespace MutationChess.Core
             playerData.maxHealth = Mathf.Max(1, playerData.maxHealth - loseMaxHp);
             playerData.currentHealth = Mathf.Min(playerData.currentHealth, playerData.maxHealth);
 
-            GameLogger.Log($"[BloodPact] +{extraStr}-{loseMaxHp}");
+            GameLogger.Log($"[BloodPact] 获得力量 +{extraStr}，降低最大生命值 -{loseMaxHp}");
         }
     }
 }

@@ -5,22 +5,25 @@ using System.Collections.Generic;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
+    /// ����Ч�����ӳ��ƶѳ�ȡ����ϵ���Ƶ�����
     /// </summary>
     [CreateAssetMenu(fileName = "ReluctantEffect", menuName = "MutationChess/Card Effects/Reluctant Effect")]
     public class ReluctantEffect : CardEffect
     {
-        [Tooltip("鿨")]
+        [Tooltip("��ȡ�Ĳ���ϵ��������")]
         public int drawCount = 1;
+
+        public override string GetDescription(Card card)
+        {
+            return $"�ӳ��ƶѳ� {drawCount} �Ų���ϵ���Ƶ�����";
+        }
 
         public override void Execute(CombatContext context)
         {
             HandManager handManager = HandManager.Instance;
             if (handManager == null)
             {
-                GameLogger.LogWarning("ReluctantEffect: HandManager ");
+                GameLogger.LogWarning("ReluctantEffect: HandManager Ϊ��");
                 return;
             }
 
@@ -35,16 +38,14 @@ namespace MutationChess.Core
                 {
                     handManager.RemoveCardFromDrawPile(i);
                     handManager.AddCardToHand(c);
-                    GameLogger.Log($"ReluctantEffect: 鵽 {c.cardName}");
+                    GameLogger.Log($"ReluctantEffect: �鵽���Ῠ�� {c.cardName}");
                     drawn++;
                     i--;
                 }
             }
 
             if (drawn == 0)
-                GameLogger.Log("ReluctantEffect: ");
+                GameLogger.Log("ReluctantEffect: ���ƶ����޲���ϵ����");
         }
     }
 }
-
-

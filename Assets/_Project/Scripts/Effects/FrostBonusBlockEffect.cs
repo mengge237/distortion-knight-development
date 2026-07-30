@@ -11,8 +11,8 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "FrostBonusBlockEffect", menuName = "MutationChess/Relic Effects/Frost Bonus Block")]
     public class FrostBonusBlockEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("冰霜格挡配置")]
+        [Tooltip("打出冰霜卡牌时给予的额外格挡值")]
         public int bonusBlock = 8;
 
         public override void Execute(CombatContext context)
@@ -40,7 +40,7 @@ namespace MutationChess.Core
                 effectiveBlock *= 2;
 
             context.battleManager.PlayerBlock(effectiveBlock);
-            GameLogger.Log($"[FrostBonusBlock] {playedCard.cardName} +{effectiveBlock} ??{(ConversionModifier.BossFrostHeartActive ? "??Boss" : "")}");
+            GameLogger.Log($"[FrostBonusBlock] {playedCard.cardName} +{effectiveBlock} 格挡{(ConversionModifier.BossFrostHeartActive ? " (Boss加倍)" : "")}");
         }
     }
 }

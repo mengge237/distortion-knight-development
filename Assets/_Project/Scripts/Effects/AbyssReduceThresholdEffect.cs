@@ -3,14 +3,13 @@
 namespace MutationChess.Core
 {
     /// <summary>
-    ///
-    ///
-    /// AbyssEvery4AttackEffect 
+    /// 深渊阈值降低效果：降低深渊触发所需的攻击牌数量
+    /// 影响 AbyssEvery4AttackEffect 的触发阈值
     /// </summary>
     [CreateAssetMenu(fileName = "AbyssReduceThresholdEffect", menuName = "MutationChess/Relic Effects/Abyss Reduce Threshold")]
     public class AbyssReduceThresholdEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("深渊触发阈值降低的数量")]
         public int reduce = 1;
 
         public override void Execute(CombatContext context)
@@ -26,7 +25,7 @@ namespace MutationChess.Core
         private void ApplyThresholdReduction()
         {
             ConversionModifier.AbyssThresholdReduction += reduce;
-            GameLogger.Log($"[AbyssReduceThreshold] {reduce}{ConversionModifier.AbyssThresholdReduction}");
+            GameLogger.Log($"[AbyssReduceThreshold] 阈值降低 {reduce}，当前累计：{ConversionModifier.AbyssThresholdReduction}");
         }
     }
 }

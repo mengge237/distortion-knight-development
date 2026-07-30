@@ -85,7 +85,7 @@ namespace MutationChess.Battle
         private static void InitializePatterns()
         {
             patterns["CorruptedSoldier"] = new EnemyAIPattern(
-                "",
+                "腐化士兵",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -97,7 +97,7 @@ namespace MutationChess.Battle
             );
 
             patterns["MutantHound"] = new EnemyAIPattern(
-                "",
+                "畸变猎犬",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -133,7 +133,7 @@ namespace MutationChess.Battle
             );
 
             patterns["CorruptedKnight"] = new EnemyAIPattern(
-                "",
+                "腐蚀骑士",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -147,7 +147,7 @@ namespace MutationChess.Battle
             );
 
             patterns["HellInquisitor"] = new EnemyAIPattern(
-                "",
+                "炼狱审判官",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -160,7 +160,7 @@ namespace MutationChess.Battle
             );
 
             patterns["VoidWizard"] = new EnemyAIPattern(
-                "",
+                "虚空法师",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -174,7 +174,7 @@ namespace MutationChess.Battle
             );
 
             patterns["CorruptedGolem"] = new EnemyAIPattern(
-                "",
+                "腐化魔像",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -189,7 +189,7 @@ namespace MutationChess.Battle
 
 
             patterns["AbyssLord"] = new EnemyAIPattern(
-                "",
+                "深渊之主",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),
@@ -211,7 +211,7 @@ namespace MutationChess.Battle
 
 
             patterns["CorruptedKing"] = new EnemyAIPattern(
-                "",
+                "腐化君王",
                 new List<EnemyAction>
                 {
                     new EnemyAction(EnemyIntentType.Wait, 0, 0),

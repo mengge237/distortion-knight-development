@@ -9,11 +9,20 @@ namespace MutationChess.Core
 
         public abstract void Execute(CombatContext context);
 
+        /// <summary>
+        /// 根据关联卡牌动态生成效果描述（带数值）。默认返回静态 effectDescription。
+        /// 子类可以 override 以输出带具体数值的中文描述。
+        /// </summary>
+        public virtual string GetDescription(Card card)
+        {
+            return effectDescription ?? "";
+        }
+
         public virtual void Execute(EffectContext context)
         {
             if (context == null)
             {
-                GameLogger.LogError($"[CardEffect] {name} EffectContext  null");
+                GameLogger.LogError($"[CardEffect] {name} EffectContext 为 null");
                 return;
             }
 
@@ -42,8 +51,7 @@ namespace MutationChess.Core
 
 
             GameLogger.LogError(
-                $"[CardEffect] {name} EffectContext.combat  null  battleManager  null" +
-                $" CombatContext"
+                $"[CardEffect] {name} EffectContext.combat 为 null 且 battleManager 为 null，无法创建 CombatContext"
             );
         }
     }

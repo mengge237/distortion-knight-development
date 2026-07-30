@@ -6,7 +6,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "AttackHeal1Effect", menuName = "MutationChess/Relic Effects/Attack Heal 1")]
     public class AttackHeal1Effect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("打出攻击牌时恢复的生命值")]
         public int healAmount = 1;
 
         public override void Execute(CombatContext context)
@@ -33,7 +33,7 @@ namespace MutationChess.Core
             if (dataManager == null) return;
 
             dataManager.Heal(healAmount);
-            GameLogger.Log($"[AttackHeal1] {playedCard.cardName} {healAmount} HP");
+            GameLogger.Log($"[AttackHeal1] 打出 {playedCard.cardName}，恢复 {healAmount} 点生命");
         }
     }
 }

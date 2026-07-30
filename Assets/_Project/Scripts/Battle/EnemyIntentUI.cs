@@ -21,7 +21,7 @@ namespace MutationChess.Battle
         [SerializeField] private Image intentIcon;
         [SerializeField] private TMP_Text intentText;
 
-        [Header("")]
+        [Header("意图图标")]
         [SerializeField] private Sprite attackIcon;
         [SerializeField] private Sprite defendIcon;
         [SerializeField] private Sprite specialIcon;

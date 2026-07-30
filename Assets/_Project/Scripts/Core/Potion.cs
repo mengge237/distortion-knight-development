@@ -51,10 +51,10 @@ namespace MutationChess.Core
         {
             switch (rarity)
             {
-                case PotionRarity.Common: return "1";
-                case PotionRarity.Uncommon: return "2";
-                case PotionRarity.Rare: return "3";
-                default: return "";
+                case PotionRarity.Common: return "普通";
+                case PotionRarity.Uncommon: return "罕见";
+                case PotionRarity.Rare: return "稀有";
+                default: return "未知";
             }
         }
     }

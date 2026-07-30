@@ -6,21 +6,28 @@ using System.Collections.Generic;
 namespace MutationChess.Core
 {
     /// <summary>
-    /// 腐化力量 / 影刃效果：消耗手牌中的腐化(Corrupt)标签卡，每消耗一张获得对应力量。
-    /// 默认卡牌配置：magicNumber=消耗上限(3)，每次消耗1张腐化卡获得1点力量。
-    /// 触发方式：玩家主动打出影刃等卡时，Execute(CombatContext) 执行消耗逻辑并加力量。
+    /// �������� / Ӱ��Ч�������������еĸ���(Corrupt)��ǩ����ÿ����һ�Ż�ö�Ӧ������
+    /// Ĭ�Ͽ������ã�magicNumber=��������(3)��ÿ������1�Ÿ��������1��������
+    /// ������ʽ������������Ӱ�еȿ�ʱ��Execute(CombatContext) ִ�������߼�����������
     /// </summary>
     [CreateAssetMenu(fileName = "CorruptPowerEffect", menuName = "MutationChess/Relic Effects/Corrupt Heart")]
     public class CorruptPowerEffect : CardEffect
     {
-        [Header("力量配置")]
-        [Tooltip("每张消耗的腐化卡提供的力量点数")]
+        [Header("��������")]
+        [Tooltip("ÿ�����ĵĸ������ṩ����������")]
         [Min(1)]
         public int strengthPerCard = 1;
 
-        [Tooltip("单次最大消耗数量（0=消耗全部），若卡牌 magicNumber>0 则优先用 magicNumber")]
+        [Tooltip("�����������������0=����ȫ����������� magicNumber>0 �������� magicNumber")]
         [Min(0)]
         public int maxExhaustPerUse = 0;
+
+        public override string GetDescription(Card card)
+        {
+            int limit = (card != null && card.magicNumber > 0) ? card.magicNumber : maxExhaustPerUse;
+            string limitText = limit > 0 ? $"����� {limit} �ţ�" : "";
+            return $"�������Ƹ�������ÿ�Ż�� {strengthPerCard} ����{limitText}";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -54,7 +61,7 @@ namespace MutationChess.Core
 
             if (toExhaust.Count == 0)
             {
-                GameLogger.Log("[CorruptPowerEffect] 手牌中无腐化卡，跳过");
+                GameLogger.Log("[CorruptPowerEffect] �������޸�����������");
                 return;
             }
 
@@ -71,8 +78,8 @@ namespace MutationChess.Core
                 hm.AddToExhaustPile(toExhaust[i]);
 
             GameLogger.Log(
-                $"[CorruptPowerEffect] 消耗 {toExhaust.Count} 张腐化卡，获得 {strengthGain} 力量" +
-                $"（{strengthPerCard}力量/卡，上限{(limit > 0 ? limit.ToString() : "全部")}）");
+                $"[CorruptPowerEffect] ���� {toExhaust.Count} �Ÿ���������� {strengthGain} ����" +
+                $"��{strengthPerCard}����/��������{(limit > 0 ? limit.ToString() : "ȫ��")}��");
         }
     }
 }

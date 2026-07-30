@@ -15,7 +15,7 @@ namespace MutationChess.Map
 
     public class MapGenerator : MonoBehaviour
     {
-        [Header("")]
+        [Header("地图布局参数")]
         [SerializeField] private int rows = 8;
         [SerializeField] private int maxNodesPerRow = 4;
         [SerializeField] private float horizontalSpacing = 3.0f;
@@ -25,23 +25,23 @@ namespace MutationChess.Map
         [SerializeField] private float positionOffsetY = 0.3f;
         [SerializeField] private int extraBranches = 2;
 
-        [Header("壨")]
+        [Header("节点预制体")]
         [SerializeField] private GameObject nodePrefab;
 
-        [Header("")]
+        [Header("连线材质")]
         [SerializeField] private Material lineMaterial;
 
-        [Header("")]
+        [Header("节点蓝图")]
         [SerializeField] private List<NodeBlueprint> nodeBlueprints = new List<NodeBlueprint>();
 
-        [Header(" - ")]
+        [Header("地图显示设置")]
         [SerializeField] private bool enableMapDisplay = true;
         [SerializeField] private List<MapTextureListEntry> mapTextureLists = new List<MapTextureListEntry>();
         [SerializeField] private Vector3 mapDisplayOffset = new Vector3(0, -0.4f, 0);
         [SerializeField] private float mapDisplayScale = 0.6f;
         [SerializeField] private Color mapTintColor = new Color(1, 1, 1, 0.8f);
 
-        [Header("?")]
+        [Header("特殊层设置")]
         [SerializeField] private bool bossLayerHasRestBefore = true;
         [SerializeField] private int treasureLayerIndex = 6;
 

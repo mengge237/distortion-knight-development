@@ -18,10 +18,10 @@ namespace MutationChess.Battle
             }
         }
 
-        [Header("Boss ")]
+        [Header("Boss奖励配置")]
         [SerializeField] private BossRewardConfig config;
 
-        [Header("")]
+        [Header("调试设置")]
         [SerializeField] private bool debugMode = true;
 
         public BossRewardConfig Config => config;
@@ -85,12 +85,12 @@ namespace MutationChess.Battle
                     {
                         result.factionUnlockRelic = relicManager.CreateRelicFromAsset(asset);
                         if (debugMode)
-                            GameLogger.Log($"[BossRewardService] Boss : {asset.relicName} (: {asset.unlockedFaction})");
+                            GameLogger.Log($"[BossRewardService] Boss掉落阵营解锁遗物：{asset.relicName}（阵营：{asset.unlockedFaction}）");
                     }
                 }
                 else if (debugMode)
                 {
-                    GameLogger.Log("[BossRewardService] ");
+                    GameLogger.Log("[BossRewardService] 无可用的阵营解锁遗物");
                 }
             }
 
@@ -109,7 +109,7 @@ namespace MutationChess.Battle
                     {
                         result.bonusRelic = relicManager.CreateRelicFromAsset(asset);
                         if (debugMode)
-                            GameLogger.Log($"[BossRewardService] Boss : {asset.relicName}");
+                            GameLogger.Log($"[BossRewardService] Boss掉落额外遗物：{asset.relicName}");
                     }
                 }
             }
@@ -132,7 +132,7 @@ namespace MutationChess.Battle
                         {
                             result.factionCard = card;
                             if (debugMode)
-                                GameLogger.Log($"[BossRewardService] Boss : {asset.cardName} (: {asset.faction})");
+                                GameLogger.Log($"[BossRewardService] Boss掉落阵营卡牌：{asset.cardName}（阵营：{asset.faction}）");
                         }
                     }
                 }

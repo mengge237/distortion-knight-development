@@ -15,8 +15,8 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "SlimeEnergyEffect", menuName = "MutationChess/Relic Effects/Slime Energy")]
     public class SlimeEnergyEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("能量配置")]
+        [Tooltip("打出史莱姆卡牌时获得的能量")]
         public int energyGain = 1;
 
         [Tooltip("Boss")]
@@ -47,7 +47,7 @@ namespace MutationChess.Core
             {
                 int totalEnergy = energyGain + (ConversionModifier.BossSlimeGlandActive ? bossExtraEnergy : 0);
                 handManager.RestoreEnergy(totalEnergy);
-                GameLogger.Log($"[SlimeEnergy]  {context.sourceCard.cardName}  +{totalEnergy}" +
+                GameLogger.Log($"[SlimeEnergy] 史莱姆卡 {context.sourceCard.cardName} 能量+{totalEnergy}" +
                     (ConversionModifier.BossSlimeGlandActive ? " (Boss加成)" : ""));
             }
         }

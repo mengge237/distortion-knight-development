@@ -5,7 +5,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "Gain12GoldOnVictoryEffect", menuName = "MutationChess/Relic Effects/Gain 12 Gold Victory")]
     public class Gain12GoldOnVictoryEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("战斗胜利时获得的金币数量")]
         public int gold = 12;
 
         public override void Execute(CombatContext context)
@@ -25,7 +25,7 @@ namespace MutationChess.Core
 
             dataManager.AddGold(gold);
             dataManager.UpdateUI();
-            GameLogger.Log($"[Gain12GoldOnVictory] {gold} ");
+            GameLogger.Log($"[Gain12GoldOnVictory] 获得金币 {gold}");
         }
     }
 }

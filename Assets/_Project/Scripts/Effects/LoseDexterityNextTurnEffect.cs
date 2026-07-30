@@ -5,20 +5,22 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
-
+    /// 下回合失去敏捷效果
     /// </summary>
     [CreateAssetMenu(fileName = "LoseDexterityNextTurnEffect", menuName = "MutationChess/Potion Effects/Lose Dexterity Next Turn")]
     public class LoseDexterityNextTurnEffect : CardEffect
     {
-        [Header("")]
-        [Tooltip("")]
+        [Header("敏捷损失配置")]
+        [Tooltip("损失的敏捷值")]
         public int dexterityLoss = 3;
 
         [Tooltip("2=+")]
         public int duration = 2;
+
+        public override string GetDescription(Card card)
+        {
+            return $"{duration} 回合失去 {dexterityLoss} 敏捷";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -45,12 +47,10 @@ namespace MutationChess.Core
                 duration = duration
             });
 
-            GameLogger.Log($"[LoseDexterity] ���ʧȥ{dexterityLoss}����ݣ�����{duration}�غ�");
+            GameLogger.Log($"[LoseDexterity] 下回合失去{dexterityLoss}点敏捷，持续{duration}回合");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($"���ʧȥ{dexterityLoss}����ݣ�����{duration}�غ�");
+                battleManager.AddBattleLog($"下回合失去{dexterityLoss}点敏捷，持续{duration}回合");
         }
     }
 }
-
-

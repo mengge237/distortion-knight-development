@@ -6,47 +6,47 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "CardDataAsset", menuName = "MutationChess/Card Data Asset")]
     public class CardDataAsset : ScriptableObject
     {
-        [Header("")]
+        [Header("卡牌基础信息")]
         public string cardName;
         public CardType cardType;
         public CardRarity rarity;
         public CardFaction faction;
 
-        [Header("")]
+        [Header("卡牌数值")]
         public int cost = 1;
         public int damage;
         public int block;
         public int magicNumber;
         public bool exhaust = false;
 
-        [Header("")]
-        [Tooltip("")]
+        [Header("卡牌标签")]
+        [Tooltip("卡牌标签列表，用于标签联动与效果触发")]
         public List<CardTag> tags = new List<CardTag>();
 
-        [Header("")]
-        [Tooltip("33=10")]
+        [Header("鲜血转换")]
+        [Tooltip("鲜血换能量比率（3=3滴血换1点能量，0=使用默认值）")]
         public int bloodPerEnergy = 0;
 
-        [Header("")]
-        [Tooltip("55=10")]
+        [Header("格挡转换")]
+        [Tooltip("格挡换能量比率（5=5点格挡换1点能量，0=使用默认值）")]
         public int blockPerEnergy = 0;
 
-        [Header("")]
+        [Header("卡牌描述")]
         [TextArea(2, 4)]
         public string description;
 
-        [Header("")]
+        [Header("卡牌效果")]
         public List<string> effectIds = new List<string>();
 
-        [Header("")]
-        [Tooltip("ID Resources/InherentEffects ")]
+        [Header("固有效果")]
+        [Tooltip("固有效果ID列表，从 Resources/InherentEffects 加载")]
         public List<string> inherentEffectIds = new List<string>();
 
-        [Header("")]
+        [Header("卡牌属性")]
         public bool isColorless = false;
         public bool isFactionLocked = true;
 
-        [Header("")]
+        [Header("资源路径")]
         public string cardArtPath;
     }
 }

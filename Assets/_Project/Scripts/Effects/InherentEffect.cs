@@ -5,9 +5,7 @@ using MutationChess.UI;
 namespace MutationChess.Core
 {
     /// <summary>
-    ///
-    ///
-    ///
+    /// 卡牌标签枚举：标识卡牌所属系列
     /// </summary>
     public enum CardTag
     {
@@ -22,20 +20,17 @@ namespace MutationChess.Core
     }
 
     /// <summary>
-    ///
-    ///
-    ///
-    ///
+    /// 固有效果抽象基类：卡牌开局时自动触发的效果
     /// </summary>
     public abstract class InherentEffect : CardEffect
     {
         /// <summary>
-        ///
+        /// 获取该固有效果对应的卡牌标签
         /// </summary>
         public abstract CardTag Tag { get; }
 
         /// <summary>
-        ///
+        /// 应用固有效果
         /// </summary>
         public abstract void ApplyInherent(CombatContext context);
 
@@ -45,7 +40,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
+        /// 判断该卡牌是否应该应用此固有效果
         /// </summary>
         public bool ShouldApply(Card card)
         {

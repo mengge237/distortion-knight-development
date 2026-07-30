@@ -4,14 +4,12 @@ using MutationChess.Battle;
 namespace MutationChess.Core
 {
     /// <summary>
-
-
-
+    /// ��˸���Ч������ұ���ʱ����ָ�һ������������ֵ
     /// </summary>
     [CreateAssetMenu(fileName = "PhoenixReviveEffect", menuName = "MutationChess/Relic Effects/Phoenix Revive")]
     public class PhoenixReviveEffect : CardEffect
     {
-        [Tooltip("0~1")]
+        [Tooltip("����ʱ�ָ����������ֵ������0~1��")]
         [Range(0f, 1f)]
         public float reviveHealthPercent = 0.5f;
 
@@ -19,11 +17,17 @@ namespace MutationChess.Core
         [System.NonSerialized]
         private bool usedThisBattle = false;
 
+        public override string GetDescription(Card card)
+        {
+            int percent = Mathf.RoundToInt(reviveHealthPercent * 100f);
+            return $"����ʱ����ָ� {percent}% �������ֵ��ÿ��ս��1�Σ�";
+        }
+
         public override void Execute(CombatContext context)
         {
 
             usedThisBattle = false;
-            GameLogger.Log("[PhoenixReviveEffect] ");
+            GameLogger.Log("[PhoenixReviveEffect] ��˸���Ч��������");
         }
 
         public override void Execute(EffectContext context)
@@ -37,7 +41,7 @@ namespace MutationChess.Core
             PlayerData playerData = context.combat?.targetPlayer ?? context.battleManager?.GetPlayerData();
             if (playerData == null)
             {
-                GameLogger.LogWarning("[PhoenixReviveEffect] playerData ");
+                GameLogger.LogWarning("[PhoenixReviveEffect] playerData Ϊ null");
                 return;
             }
 
@@ -55,15 +59,13 @@ namespace MutationChess.Core
                 playerData.currentHealth = reviveHealth;
                 usedThisBattle = true;
 
-                GameLogger.Log($"[PhoenixReviveEffect] �����ë��������Ҵӱ���״̬����ָ�{reviveHealth}������ֵ���������ֵ��{reviveHealthPercent * 100f}%��");
+                GameLogger.Log($"[PhoenixReviveEffect] ���֮�𱣻���Ҵӱ���״̬����ָ�{reviveHealth}������ֵ���������ֵ��{reviveHealthPercent * 100f}%��");
 
                 if (context.battleManager != null)
                 {
-                    context.battleManager.AddBattleLog($"�����ë��������Ҵӱ���״̬����ָ����������ֵ��{reviveHealthPercent * 100f}%");
+                    context.battleManager.AddBattleLog($"���֮�𱣻���Ҵӱ���״̬����ָ�����ֵ���������ֵ��{reviveHealthPercent * 100f}%��");
                 }
             }
         }
     }
 }
-
-

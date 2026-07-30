@@ -6,7 +6,7 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "EnergyCoreBattleStartEffect", menuName = "MutationChess/Relic Effects/Energy Core")]
     public class EnergyCoreBattleStartEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("战斗开始时恢复的能量数")]
         public int energy = 2;
 
         public override void Execute(CombatContext context)
@@ -15,7 +15,7 @@ namespace MutationChess.Core
             if (handManager != null)
             {
                 handManager.RestoreEnergy(energy);
-                GameLogger.Log($"[EnergyCore] +{energy} ");
+                GameLogger.Log($"[EnergyCore] 恢复能量 +{energy}");
             }
         }
     }

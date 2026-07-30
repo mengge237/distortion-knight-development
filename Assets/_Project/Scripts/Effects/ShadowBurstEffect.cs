@@ -6,9 +6,15 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "ShadowBurst", menuName = "MutationChess/Effects/Shadow Burst")]
     public class ShadowBurstEffect : CardEffect
     {
-        [Header("��Ӱ��������")]
-        [Tooltip("����ת��Ϊ�˺��ı���(magicNumber>0ʱʹ�ÿ���ֵ)")]
+        [Header("暗影爆发配置")]
+        [Tooltip("力量转化为伤害的倍率（magicNumber>0时使用卡牌值）")]
         public int multiplier = 2;
+
+        public override string GetDescription(Card card)
+        {
+            int mult = (card != null && card.magicNumber > 0) ? card.magicNumber : multiplier;
+            return $"总暗影力量×{mult} 造成伤害并移除";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -19,12 +25,12 @@ namespace MutationChess.Core
 
             if (player == null)
             {
-                GameLogger.LogError("ShadowBurstEffect: targetPlayer Ϊ��");
+                GameLogger.LogError("ShadowBurstEffect: targetPlayer 为空");
                 return;
             }
             if (enemy == null)
             {
-                GameLogger.LogError("ShadowBurstEffect: targetEnemy Ϊ��");
+                GameLogger.LogError("ShadowBurstEffect: targetEnemy 为空");
                 return;
             }
 
@@ -40,20 +46,20 @@ namespace MutationChess.Core
             if (damage > 0)
             {
                 enemy.TakeDamage(damage);
-                context.battleManager?.AddLog($"��Ӱ������������� {totalStrength} ���������� {enemy.enemyName} ��� {damage} ���˺���x{mult}��");
+                context.battleManager?.AddLog($"暗影爆发：将 {totalStrength} 点力量对 {enemy.enemyName} 造成 {damage} 点伤害（x{mult}）");
             }
             else
             {
-                context.battleManager?.AddLog($"��Ӱ��������������ҵ�ǰ������������");
+                context.battleManager?.AddLog($"暗影爆发：玩家当前无暗影力量可用");
             }
 
             int removed = player.RemoveShadowStrengthBuffs();
             if (removed > 0)
             {
-                context.battleManager?.AddLog($"�Ƴ���������� {removed} ����Ӱ����Ч��");
+                context.battleManager?.AddLog($"移除了 {removed} 层暗影力量效果");
             }
 
-            GameLogger.Log($"[ShadowBurst] ����{totalStrength} x ����{mult} = �˺�{damage}���Ƴ���Ӱbuff{removed}��");
+            GameLogger.Log($"[ShadowBurst] 力量{totalStrength} x 倍率{mult} = 伤害{damage}，移除暗影buff{removed}层");
         }
     }
 }

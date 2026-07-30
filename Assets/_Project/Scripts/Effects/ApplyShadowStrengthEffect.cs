@@ -6,9 +6,15 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "ApplyShadowStrength", menuName = "MutationChess/Effects/Apply Shadow Strength")]
     public class ApplyShadowStrengthEffect : CardEffect
     {
-        [Header("��Ӱ��������")]
-        [Tooltip("��Ӱ������ֵ������magicNumber>0ʱʹ�ÿ���ֵ")]
+        [Header("暗影力量配置")]
+        [Tooltip("暗影力量数值（magicNumber>0时使用卡牌值）")]
         public int strengthAmount = 2;
+
+        public override string GetDescription(Card card)
+        {
+            int amount = (card != null && card.magicNumber > 0) ? card.magicNumber : strengthAmount;
+            return $"暗影获得 {amount} 点力量";
+        }
 
         public override void Execute(CombatContext context)
         {
@@ -30,8 +36,8 @@ namespace MutationChess.Core
                     isShadow = true
                 };
                 context.targetPlayer.AddBuff(buff);
-                context.battleManager?.AddLog($"��һ�� {amount} �㰵Ӱ�������ɱ���Ӱ�������ģ�");
-                GameLogger.Log($"[ApplyShadowStrength] ��һ�ð�Ӱ���� +{amount}");
+                context.battleManager?.AddLog($"获得 {amount} 点暗影力量（可被暗影爆发触发）");
+                GameLogger.Log($"[ApplyShadowStrength] 获得暗影力量 +{amount}");
             }
             else if (context.targetEnemy != null)
             {
@@ -47,7 +53,7 @@ namespace MutationChess.Core
                     duration = -1,
                     isShadow = true
                 });
-                context.battleManager?.AddLog($"{context.targetEnemy.enemyName} ��� {amount} �㰵Ӱ����");
+                context.battleManager?.AddLog($"{context.targetEnemy.enemyName} 获得 {amount} 点暗影力量");
             }
         }
 

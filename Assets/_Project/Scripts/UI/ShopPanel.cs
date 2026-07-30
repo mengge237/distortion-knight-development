@@ -8,27 +8,27 @@ namespace MutationChess.UI
 {
     public class ShopPanel : MonoBehaviour
     {
-        [Header("")]
+        [Header("面板基础")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private Button closeButton;
 
-        [Header("")]
+        [Header("文本显示")]
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private TMP_Text goldText;
         [SerializeField] private TMP_Text removalInfoText;
 
-        [Header("")]
+        [Header("容器")]
         [SerializeField] private Transform cardContainer;
         [SerializeField] private Transform relicContainer;
         [SerializeField] private Transform potionContainer;
 
-        [Header("")]
+        [Header("槽位预制体")]
         [SerializeField] private GameObject cardSlotPrefab;
         [SerializeField] private GameObject relicSlotPrefab;
         [SerializeField] private GameObject potionSlotPrefab;
         [SerializeField] private GameObject removalSlotPrefab;
 
-        [Header("")]
+        [Header("移除服务")]
         [SerializeField] private Transform removalContainer;
 
         private List<ShopItem> shopItems = new List<ShopItem>();

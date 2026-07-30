@@ -6,10 +6,10 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "AbyssEvery4AttackEffect", menuName = "MutationChess/Relic Effects/Abyss Every 4 Attack")]
     public class AbyssEvery4AttackEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("触发伤害加成所需的攻击牌数量阈值")]
         public int threshold = 4;
 
-        [Tooltip("")]
+        [Tooltip("触发时的伤害倍率")]
         public float dmgMultiplier = 2f;
 
         public override void Execute(CombatContext context) { }
@@ -34,7 +34,7 @@ namespace MutationChess.Core
             if (ConversionModifier.AttackCardsPlayedThisBattle < effectiveThreshold) return;
 
             context.finalValue = Mathf.RoundToInt(context.baseValue * dmgMultiplier);
-            GameLogger.Log($"[AbyssEvery4Attack] {effectiveThreshold}x{dmgMultiplier}: {context.baseValue} -> {context.finalValue}");
+            GameLogger.Log($"[AbyssEvery4Attack] 阈值 {effectiveThreshold} 触发，伤害倍率 {dmgMultiplier}：{context.baseValue} -> {context.finalValue}");
         }
     }
 }

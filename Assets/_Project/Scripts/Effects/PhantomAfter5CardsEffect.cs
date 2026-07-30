@@ -6,13 +6,13 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "PhantomAfter5CardsEffect", menuName = "MutationChess/Relic Effects/Phantom After 5 Cards")]
     public class PhantomAfter5CardsEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("触发减伤所需的出牌数量阈值")]
         public int cardThreshold = 5;
 
-        [Tooltip("")]
+        [Tooltip("触发后减少的伤害值")]
         public int dmgReduction = 5;
 
-        [Tooltip("Boss")]
+        [Tooltip("Boss遗物激活时的减伤值")]
         public int bossDmgReduction = 8;
 
         private bool triggeredThisTurn = false;
@@ -30,7 +30,7 @@ namespace MutationChess.Core
 
             triggeredThisTurn = true;
             int effectiveReduction = GetActiveReduction();
-            GameLogger.Log($"[PhantomAfter5Cards] {cardThreshold}+{effectiveReduction}");
+            GameLogger.Log($"[PhantomAfter5Cards] 出牌达 {cardThreshold} 张，触发减伤 {effectiveReduction}");
         }
 
         public int GetActiveReduction()

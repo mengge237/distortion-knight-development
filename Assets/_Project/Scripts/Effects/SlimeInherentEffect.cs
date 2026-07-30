@@ -3,7 +3,7 @@
 namespace MutationChess.Core
 {
     /// <summary>
-    ///
+    /// 粘液固有效果：打出粘液系卡牌时触发相邻粘液卡牌的效果
     /// </summary>
     [CreateAssetMenu(fileName = "SlimeInherentEffect", menuName = "MutationChess/Inherent/Slime")]
     public class SlimeInherentEffect : InherentEffect
@@ -33,7 +33,7 @@ namespace MutationChess.Core
                     Card adj = handCards[idx];
                     if (adj != null && adj.HasTag(CardTag.Slime))
                     {
-                        GameLogger.Log($"[??] : {adj.cardName} ({offset})");
+                        GameLogger.Log($"[史莱姆联动] 触发相邻: {adj.cardName} ({offset})");
                         CombatContext adjCtx = new CombatContext(
                             context.battleManager,
                             context.targetEnemy,

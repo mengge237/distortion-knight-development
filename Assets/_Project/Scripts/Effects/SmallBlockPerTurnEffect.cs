@@ -9,20 +9,20 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "SmallBlockPerTurnEffect", menuName = "MutationChess/Relic Effects/Small Block Per Turn")]
     public class SmallBlockPerTurnEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("每回合获得的格挡值")]
         public int blockAmount = 3;
 
         public override void Execute(CombatContext context)
         {
             if (context == null || context.battleManager == null)
             {
-                GameLogger.LogWarning("[SmallBlockPerTurnEffect] context  battleManager ");
+                GameLogger.LogWarning("[SmallBlockPerTurnEffect] context 或 battleManager 为空");
                 return;
             }
 
 
             context.battleManager.PlayerBlock(blockAmount);
-            GameLogger.Log($"[SmallBlockPerTurnEffect]  {blockAmount} ");
+            GameLogger.Log($"[SmallBlockPerTurnEffect] 获得格挡 {blockAmount} 点");
         }
     }
 }

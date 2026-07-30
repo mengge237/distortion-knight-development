@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        //
+        // 确保调试控制台存在
         MutationChess.Debug.DebugConsole.EnsureExists();
 
         var dataManager = PlayerDataManager.Instance;
@@ -361,12 +361,12 @@ public class GameManager : MonoBehaviour
         {
             GameLogger.Log($"[GameManager] Battle won. Enemy type: {currentEnemyType}");
 
-            //
+            // 胜利后回复20%最大生命值
             if (dataManager != null)
             {
                 int healAmount = Mathf.RoundToInt(dataManager.GetPlayerData().maxHealth * 0.2f);
                 dataManager.Heal(healAmount);
-                GameLogger.Log($"[GameManager] {healAmount} ");
+                GameLogger.Log($"[GameManager] 回复 {healAmount} 点生命值");
             }
 
             if (wasBossBattle)
@@ -379,7 +379,7 @@ public class GameManager : MonoBehaviour
             GameLogger.Log("[GameManager] Battle lost.");
         }
 
-        //
+        // 确保地图视图存在
         if (mapView == null)
         {
             mapView = FindObjectOfType<MapView>();
@@ -397,7 +397,7 @@ public class GameManager : MonoBehaviour
         if (mapView != null)
             mapView.RefreshAllNodes();
 
-        //
+        // 更新玩家UI
         if (dataManager != null)
             dataManager.UpdateUI();
     }

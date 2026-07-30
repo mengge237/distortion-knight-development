@@ -10,8 +10,8 @@ namespace MutationChess.Core
         {
             if (context.sourceCard == null) return;
             context.sourceCard.exhaust = true;
-            context.battleManager?.AddLog($"���ơ�{context.sourceCard.cardName}��ʹ�ú󽫱����ģ����������ƶѣ�");
-            GameLogger.Log($"[ExhaustCardEffect] �������: {context.sourceCard.cardName}");
+            context.battleManager?.AddLog($"卡牌【{context.sourceCard.cardName}】使用后将被消耗");
+            GameLogger.Log($"[ExhaustCardEffect] 标记卡牌消耗：{context.sourceCard.cardName}");
         }
     }
 }

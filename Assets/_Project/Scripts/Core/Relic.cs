@@ -51,12 +51,12 @@ namespace MutationChess.Core
         {
             switch (rarity)
             {
-                case RelicRarity.Starting: return "";
-                case RelicRarity.Common: return "";
-                case RelicRarity.Rare: return "";
-                case RelicRarity.Legendary: return "";
-                case RelicRarity.Special: return "";
-                default: return "";
+                case RelicRarity.Starting: return "初始";
+                case RelicRarity.Common: return "普通";
+                case RelicRarity.Rare: return "稀有";
+                case RelicRarity.Legendary: return "传说";
+                case RelicRarity.Special: return "特殊";
+                default: return "未知";
             }
         }
 
@@ -64,14 +64,14 @@ namespace MutationChess.Core
         {
             switch (faction)
             {
-                case CardFaction.None: return "";
-                case CardFaction.Slime: return "";
-                case CardFaction.Reluctant: return "";
-                case CardFaction.Blood: return "";
-                case CardFaction.Frost: return "";
-                case CardFaction.Shadow: return "";
-                case CardFaction.Corrupt: return "";
-                default: return "";
+                case CardFaction.None: return "无阵营";
+                case CardFaction.Slime: return "粘液";
+                case CardFaction.Reluctant: return "不舍";
+                case CardFaction.Blood: return "鲜血";
+                case CardFaction.Frost: return "寒霜";
+                case CardFaction.Shadow: return "暗影";
+                case CardFaction.Corrupt: return "腐化";
+                default: return "未知";
             }
         }
 

@@ -6,10 +6,10 @@ namespace MutationChess.Core
     [CreateAssetMenu(fileName = "TempDexterity3TurnsEffect", menuName = "MutationChess/Relic Effects/Temp Dexterity 3 Turns")]
     public class TempDexterity3TurnsEffect : CardEffect
     {
-        [Tooltip("")]
+        [Tooltip("获得的敏捷层数")]
         public int dex = 1;
 
-        [Tooltip("")]
+        [Tooltip("敏捷持续回合数")]
         public int turns = 3;
 
         public override void Execute(CombatContext context)
@@ -33,7 +33,7 @@ namespace MutationChess.Core
                 duration = turns
             });
 
-            GameLogger.Log($"[TempDex3Turns] {dex} {turns} ");
+            GameLogger.Log($"[TempDex3Turns] 获得 {dex} 层敏捷，持续 {turns} 回合");
         }
     }
 }
