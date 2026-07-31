@@ -146,15 +146,49 @@ namespace MutationChess.UI
             }
         }
 
+        private GameObject GetSlotPrefab(ShopItemType type)
+        {
+            switch (type)
+            {
+                case ShopItemType.ColoredCard:
+                case ShopItemType.ColorlessCard:
+                    return cardSlotPrefab != null ? cardSlotPrefab : relicSlotPrefab;
+                case ShopItemType.Potion:
+                    return potionSlotPrefab != null ? potionSlotPrefab : relicSlotPrefab;
+                case ShopItemType.CardRemoval:
+                    return removalSlotPrefab != null ? removalSlotPrefab : relicSlotPrefab;
+                default:
+                    return relicSlotPrefab;
+            }
+        }
+
+        private Transform GetContainer(ShopItemType type)
+        {
+            switch (type)
+            {
+                case ShopItemType.ColoredCard:
+                case ShopItemType.ColorlessCard:
+                    return cardContainer != null ? cardContainer : relicContainer;
+                case ShopItemType.Potion:
+                    return potionContainer != null ? potionContainer : relicContainer;
+                case ShopItemType.CardRemoval:
+                    return removalContainer != null ? removalContainer : relicContainer;
+                default:
+                    return relicContainer;
+            }
+        }
+
         private void PopulateCardSlot(ShopItem item)
         {
-            if (cardContainer == null || cardSlotPrefab == null) return;
+            Transform container = GetContainer(item.type);
+            GameObject prefab = GetSlotPrefab(item.type);
+            if (container == null || prefab == null) return;
 
             Card card = item.item as Card;
             if (card == null) return;
 
-            GameObject slotObj = Instantiate(cardSlotPrefab, cardContainer);
-            SetupSlotBase(slotObj, item, $"[] {card.cardName}");
+            GameObject slotObj = Instantiate(prefab, container);
+            SetupSlotBase(slotObj, item, card.cardName);
 
             TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null)
@@ -163,17 +197,33 @@ namespace MutationChess.UI
             TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
             if (descText != null)
                 descText.text = card.GetDescription();
+
+            Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
+            if (iconImage != null)
+            {
+                if (card.cardArt != null)
+                {
+                    iconImage.sprite = card.cardArt;
+                    iconImage.enabled = true;
+                }
+                else
+                {
+                    iconImage.enabled = false;
+                }
+            }
         }
 
         private void PopulateRelicSlot(ShopItem item)
         {
-            if (relicContainer == null || relicSlotPrefab == null) return;
+            Transform container = GetContainer(item.type);
+            GameObject prefab = GetSlotPrefab(item.type);
+            if (container == null || prefab == null) return;
 
             Relic relic = item.item as Relic;
             if (relic == null) return;
 
-            GameObject slotObj = Instantiate(relicSlotPrefab, relicContainer);
-            SetupSlotBase(slotObj, item, $"[] {relic.relicName}");
+            GameObject slotObj = Instantiate(prefab, container);
+            SetupSlotBase(slotObj, item, relic.relicName);
 
             TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null)
@@ -184,19 +234,41 @@ namespace MutationChess.UI
                 descText.text = relic.description;
 
             Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
-            if (iconImage != null && relic.icon != null)
-                iconImage.sprite = relic.icon;
+            if (iconImage != null)
+            {
+                Sprite icon = relic.icon;
+
+                if (icon == null && !string.IsNullOrEmpty(relic.relicName))
+                {
+                    icon = Resources.Load<Sprite>($"RelicsArt/{relic.relicName}");
+                }
+
+                if (icon != null)
+                {
+                    iconImage.sprite = icon;
+                    iconImage.color = Color.white;
+                    iconImage.preserveAspect = true;
+                    iconImage.enabled = true;
+                }
+                else
+                {
+                    iconImage.enabled = false;
+                    GameLogger.LogWarning($"[ShopPanel] 遗物图标未找到：{relic.relicName}");
+                }
+            }
         }
 
         private void PopulatePotionSlot(ShopItem item)
         {
-            if (potionContainer == null || potionSlotPrefab == null) return;
+            Transform container = GetContainer(item.type);
+            GameObject prefab = GetSlotPrefab(item.type);
+            if (container == null || prefab == null) return;
 
             Potion potion = item.item as Potion;
             if (potion == null) return;
 
-            GameObject slotObj = Instantiate(potionSlotPrefab, potionContainer);
-            SetupSlotBase(slotObj, item, $"[] {potion.potionName}");
+            GameObject slotObj = Instantiate(prefab, container);
+            SetupSlotBase(slotObj, item, potion.potionName);
 
             TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null)
@@ -205,18 +277,34 @@ namespace MutationChess.UI
             TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
             if (descText != null)
                 descText.text = potion.description;
+
+            Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
+            if (iconImage != null)
+            {
+                if (potion.icon != null)
+                {
+                    iconImage.sprite = potion.icon;
+                    iconImage.enabled = true;
+                }
+                else
+                {
+                    iconImage.enabled = false;
+                }
+            }
         }
 
         private void PopulateRemovalSlot(ShopItem item)
         {
-            if (removalContainer == null || removalSlotPrefab == null) return;
+            Transform container = GetContainer(item.type);
+            GameObject prefab = GetSlotPrefab(item.type);
+            if (container == null || prefab == null) return;
 
-            GameObject slotObj = Instantiate(removalSlotPrefab, removalContainer);
-            SetupSlotBase(slotObj, item, "");
+            GameObject slotObj = Instantiate(prefab, container);
+            SetupSlotBase(slotObj, item, "移除卡牌");
 
             TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
             if (descText != null)
-                descText.text = "";
+                descText.text = "从牌组中永久移除一张卡牌";
         }
 
         private void SetupSlotBase(GameObject slotObj, ShopItem item, string slotName)
@@ -246,13 +334,13 @@ namespace MutationChess.UI
 
             if (playerDataManager == null)
             {
-                GameLogger.LogError("[ShopPanel] PlayerDataManager ");
+                GameLogger.LogError("[ShopPanel] PlayerDataManager 未找到");
                 return;
             }
 
             if (!playerDataManager.RemoveGold(item.finalPrice))
             {
-                GameLogger.Log($"[ShopPanel] :  {item.finalPrice},  {playerDataManager.GetGold()}");
+                GameLogger.Log($"[ShopPanel] 金币不足：需要 {item.finalPrice}，当前 {playerDataManager.GetGold()}");
                 return;
             }
 
@@ -262,19 +350,28 @@ namespace MutationChess.UI
                 case ShopItemType.ColorlessCard:
                     var card = item.item as Card;
                     if (card != null && playerDataManager != null)
+                    {
                         playerDataManager.AddCardToDeck(card);
+                        GameLogger.Log($"[ShopPanel] 购买卡牌：{card.cardName}");
+                    }
                     break;
 
                 case ShopItemType.Relic:
                     var relic = item.item as Relic;
                     if (relic != null && relicManager != null)
+                    {
                         relicManager.AddRelic(relic);
+                        GameLogger.Log($"[ShopPanel] 购买遗物：{relic.relicName}");
+                    }
                     break;
 
                 case ShopItemType.Potion:
                     var potion = item.item as Potion;
-                    if (potion != null)
-                        GameLogger.Log($"[ShopPanel] : {potion.potionName}");
+                    if (potion != null && playerDataManager != null)
+                    {
+                        playerDataManager.AddPotion(potion);
+                        GameLogger.Log($"[ShopPanel] 购买药水：{potion.potionName}");
+                    }
                     break;
 
                 case ShopItemType.CardRemoval:
@@ -298,11 +395,11 @@ namespace MutationChess.UI
 
                 TMP_Text priceText = slotObj.transform.Find("Price")?.GetComponent<TMP_Text>();
                 if (priceText != null)
-                    priceText.text = "<color=#888></color>";
+                    priceText.text = "<color=#888>已售出</color>";
             }
             else
             {
-                GameLogger.Log("[ShopPanel] ");
+                GameLogger.Log("[ShopPanel] 补货符生效，商品未标记为已售出");
             }
 
             UpdateGoldDisplay();
@@ -314,14 +411,14 @@ namespace MutationChess.UI
             var deck = playerDataManager?.GetRuntimeDeckRef();
             if (deck == null || deck.Count == 0) return;
 
-            GameLogger.Log("[ShopPanel]  - UI");
+            GameLogger.Log("[ShopPanel] 开启卡牌移除 - 暂未实现完整UI选择");
 
             if (deck.Count > 0)
             {
                 int removeIndex = 0;
                 Card cardToRemove = deck[removeIndex];
                 playerDataManager.RemoveCardFromDeck(cardToRemove);
-                GameLogger.Log($"[ShopPanel] : {cardToRemove.cardName}");
+                GameLogger.Log($"[ShopPanel] 移除卡牌：{cardToRemove.cardName}");
             }
         }
 
@@ -343,7 +440,7 @@ namespace MutationChess.UI
         private void UpdateGoldDisplay()
         {
             if (goldText != null && playerDataManager != null)
-                goldText.text = $": {playerDataManager.GetGold()} G";
+                goldText.text = $"金币: {playerDataManager.GetGold()} G";
         }
 
         private void UpdateRemovalInfo()
@@ -351,7 +448,7 @@ namespace MutationChess.UI
             if (removalInfoText != null && shopDataService != null)
             {
                 int nextCost = shopDataService.GetCurrentRemovalCost();
-                removalInfoText.text = $": {nextCost} G";
+                removalInfoText.text = $"移除费用: {nextCost} G";
             }
         }
 

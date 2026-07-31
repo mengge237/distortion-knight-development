@@ -679,6 +679,45 @@ namespace MutationChess.Map
             }
 
             RemoveCrossConnections();
+            EnsureAllNodesCanReachBoss();
+        }
+
+        void EnsureAllNodesCanReachBoss()
+        {
+            if (allLayers.Count < 2) return;
+
+            var bossLayer = allLayers[rows - 1];
+            if (bossLayer.Count == 0) return;
+            MapNode boss = bossLayer[0];
+
+            for (int row = 0; row < rows - 1; row++)
+            {
+                var currentLayer = allLayers[row];
+                var nextLayer = allLayers[row + 1];
+
+                foreach (var node in currentLayer)
+                {
+                    if (node.connections.Count == 0 && nextLayer.Count > 0)
+                    {
+                        var closest = nextLayer
+                            .OrderBy(n => Vector3.Distance(n.position, node.position))
+                            .First();
+                        node.AddConnection(closest);
+                    }
+                }
+            }
+
+            if (rows >= 2)
+            {
+                var preBossLayer = allLayers[rows - 2];
+                foreach (var node in preBossLayer)
+                {
+                    if (!node.connections.Contains(boss))
+                    {
+                        node.AddConnection(boss);
+                    }
+                }
+            }
         }
 
         void RemoveCrossConnections()
