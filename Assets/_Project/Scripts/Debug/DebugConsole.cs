@@ -36,7 +36,7 @@ namespace MutationChess.Debug
         /// </summary>
         public static bool IsAllowedByFile()
         {
-            if (Debug.isDebugBuild || Application.isEditor) return true;
+            if (UnityEngine.Debug.isDebugBuild || Application.isEditor) return true;
 
             float now = Time.realtimeSinceStartup;
             if (now - _allowedCheckTime < 2f) return _allowedCached;

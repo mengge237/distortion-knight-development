@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9acc8e158a2a46d8898b425d6810d5b7, type: 3}
-  m_Name: "\u8840\u7206"
+  m_Name: "\u8840\u7011"
   m_EditorClassIdentifier: 
   cardName: "\u8840\u7011"
   cardType: 0
