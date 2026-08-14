@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,6 +7,12 @@ using TMPro;
 
 namespace MutationChess.UI
 {
+    /// <summary>
+    /// 商店面板——模仿杀戮尖塔（StS）商店布局：
+    /// 遗物一排居中在顶部、药水在右上角、卡牌一排居中、移除服务在左下角、离开按钮在右下角。
+    /// 槽位预制体缺失时在运行时自动构建（无场景接线也能完整工作）。
+    /// 先模仿 StS，后续再迭代自有风格。
+    /// </summary>
     public class ShopPanel : MonoBehaviour
     {
         [Header("面板基础")]
@@ -21,6 +28,7 @@ namespace MutationChess.UI
         [SerializeField] private Transform cardContainer;
         [SerializeField] private Transform relicContainer;
         [SerializeField] private Transform potionContainer;
+        [SerializeField] private Transform removalContainer;
 
         [Header("槽位预制体")]
         [SerializeField] private GameObject cardSlotPrefab;
@@ -28,16 +36,38 @@ namespace MutationChess.UI
         [SerializeField] private GameObject potionSlotPrefab;
         [SerializeField] private GameObject removalSlotPrefab;
 
-        [Header("移除服务")]
-        [SerializeField] private Transform removalContainer;
-
         private List<ShopItem> shopItems = new List<ShopItem>();
+        private Dictionary<ShopItem, GameObject> itemToSlot = new Dictionary<ShopItem, GameObject>();
         private System.Action onShopClosed;
         private CanvasGroup canvasGroup;
 
         private ShopDataService shopDataService;
         private PlayerDataManager playerDataManager;
         private RelicManager relicManager;
+
+        // 运行时构建的槽位预制体（场景未接线时的兜底）
+        private GameObject builtCardSlotPrefab;
+        private GameObject builtPotionSlotPrefab;
+        private GameObject builtRemovalSlotPrefab;
+
+        // 卡牌移除选择弹窗
+        private GameObject removalDialog;
+
+        // 反馈
+        private Text toastText;
+        private Coroutine toastRoutine;
+        private Coroutine goldFlashRoutine;
+
+        private static Font _chineseFont;
+        private static Font ChineseFont
+        {
+            get
+            {
+                if (_chineseFont == null)
+                    _chineseFont = Font.CreateDynamicFontFromOSFont(new[] { "Microsoft YaHei", "SimHei", "SimSun" }, 16);
+                return _chineseFont;
+            }
+        }
 
         void Awake()
         {
@@ -58,6 +88,8 @@ namespace MutationChess.UI
                 closeButton.onClick.RemoveAllListeners();
                 closeButton.onClick.AddListener(CloseShop);
             }
+
+            ApplyStSLayout();
         }
 
         public void OpenShop(System.Action onClosed = null)
@@ -75,6 +107,7 @@ namespace MutationChess.UI
             PopulateAllSlots();
             UpdateGoldDisplay();
             UpdateRemovalInfo();
+            RefreshAffordability();
 
             if (panelRoot != null)
             {
@@ -90,7 +123,7 @@ namespace MutationChess.UI
             }
 
             if (titleText != null)
-                titleText.text = "";
+                titleText.text = "商店";
         }
 
         private void GenerateShopContents()
@@ -152,11 +185,17 @@ namespace MutationChess.UI
             {
                 case ShopItemType.ColoredCard:
                 case ShopItemType.ColorlessCard:
-                    return cardSlotPrefab != null ? cardSlotPrefab : relicSlotPrefab;
+                    if (cardSlotPrefab != null) return cardSlotPrefab;
+                    if (builtCardSlotPrefab == null) builtCardSlotPrefab = BuildCardSlotPrefab();
+                    return builtCardSlotPrefab;
                 case ShopItemType.Potion:
-                    return potionSlotPrefab != null ? potionSlotPrefab : relicSlotPrefab;
+                    if (potionSlotPrefab != null) return potionSlotPrefab;
+                    if (builtPotionSlotPrefab == null) builtPotionSlotPrefab = BuildPotionSlotPrefab();
+                    return builtPotionSlotPrefab;
                 case ShopItemType.CardRemoval:
-                    return removalSlotPrefab != null ? removalSlotPrefab : relicSlotPrefab;
+                    if (removalSlotPrefab != null) return removalSlotPrefab;
+                    if (builtRemovalSlotPrefab == null) builtRemovalSlotPrefab = BuildRemovalSlotPrefab();
+                    return builtRemovalSlotPrefab;
                 default:
                     return relicSlotPrefab;
             }
@@ -193,10 +232,16 @@ namespace MutationChess.UI
             TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null)
                 nameText.text = card.cardName;
+            Text legacyName = slotObj.transform.Find("Name")?.GetComponent<Text>();
+            if (legacyName != null)
+                legacyName.text = card.cardName;
 
             TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
             if (descText != null)
                 descText.text = card.GetDescription();
+            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
+            if (legacyDesc != null)
+                legacyDesc.text = card.GetDescription();
 
             Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImage != null)
@@ -228,10 +273,16 @@ namespace MutationChess.UI
             TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null)
                 nameText.text = $"{relic.relicName} ({relic.GetRarityName()})";
+            Text legacyName = slotObj.transform.Find("Name")?.GetComponent<Text>();
+            if (legacyName != null)
+                legacyName.text = $"{relic.relicName} ({relic.GetRarityName()})";
 
             TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
             if (descText != null)
                 descText.text = relic.description;
+            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
+            if (legacyDesc != null)
+                legacyDesc.text = relic.description;
 
             Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImage != null)
@@ -273,10 +324,16 @@ namespace MutationChess.UI
             TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null)
                 nameText.text = $"{potion.potionName} ({potion.GetRarityName()})";
+            Text legacyName = slotObj.transform.Find("Name")?.GetComponent<Text>();
+            if (legacyName != null)
+                legacyName.text = $"{potion.potionName} ({potion.GetRarityName()})";
 
             TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
             if (descText != null)
                 descText.text = potion.description;
+            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
+            if (legacyDesc != null)
+                legacyDesc.text = potion.description;
 
             Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImage != null)
@@ -305,20 +362,24 @@ namespace MutationChess.UI
             TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
             if (descText != null)
                 descText.text = "从牌组中永久移除一张卡牌";
+            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
+            if (legacyDesc != null)
+                legacyDesc.text = "从牌组中永久移除一张卡牌";
         }
 
         private void SetupSlotBase(GameObject slotObj, ShopItem item, string slotName)
         {
             slotObj.name = slotName;
+            itemToSlot[item] = slotObj;
+
+            string priceStr = item.isOnSale ? $"特价 {item.finalPrice} G" : $"{item.finalPrice} G";
 
             TMP_Text priceText = slotObj.transform.Find("Price")?.GetComponent<TMP_Text>();
             if (priceText != null)
-            {
-                string priceStr = item.isOnSale
-                    ? $"<color=yellow>{item.finalPrice} G</color> <color=#888>( {item.basePrice} G)</color>"
-                    : $"{item.finalPrice} G";
                 priceText.text = priceStr;
-            }
+            Text legacyPrice = slotObj.transform.Find("Price")?.GetComponent<Text>();
+            if (legacyPrice != null)
+                legacyPrice.text = priceStr;
 
             Button buyButton = slotObj.transform.Find("BuyButton")?.GetComponent<Button>();
             if (buyButton != null)
@@ -338,11 +399,22 @@ namespace MutationChess.UI
                 return;
             }
 
+            // 移除服务：先弹出卡牌选择，确认后再扣款
+            if (item.type == ShopItemType.CardRemoval)
+            {
+                OpenCardRemovalDialog(item);
+                return;
+            }
+
             if (!playerDataManager.RemoveGold(item.finalPrice))
             {
                 GameLogger.Log($"[ShopPanel] 金币不足：需要 {item.finalPrice}，当前 {playerDataManager.GetGold()}");
+                ShowFeedback($"金币不足！需要 {item.finalPrice} G", true);
+                FlashGoldText(new Color(1f, 0.35f, 0.3f));
                 return;
             }
+
+            string boughtName = item.Name;
 
             switch (item.type)
             {
@@ -373,12 +445,6 @@ namespace MutationChess.UI
                         GameLogger.Log($"[ShopPanel] 购买药水：{potion.potionName}");
                     }
                     break;
-
-                case ShopItemType.CardRemoval:
-                    OpenCardRemovalDialog();
-                    if (shopDataService != null)
-                        shopDataService.OnRemovalPurchased();
-                    break;
             }
 
             if (shopDataService != null)
@@ -387,38 +453,192 @@ namespace MutationChess.UI
             bool hasRestockTalisman = relicManager != null && relicManager.HasRelic(RelicIds.Shop_RestockTalisman);
             if (!hasRestockTalisman)
             {
-                item.isSold = true;
-
-                Button buyButton = slotObj.transform.Find("BuyButton")?.GetComponent<Button>();
-                if (buyButton != null)
-                    buyButton.interactable = false;
-
-                TMP_Text priceText = slotObj.transform.Find("Price")?.GetComponent<TMP_Text>();
-                if (priceText != null)
-                    priceText.text = "<color=#888>已售出</color>";
+                MarkSold(item);
             }
             else
             {
                 GameLogger.Log("[ShopPanel] 补货符生效，商品未标记为已售出");
             }
 
+            ShowFeedback($"已购买：{boughtName}", false);
+            FlashGoldText(new Color(0.55f, 1f, 0.6f));
             UpdateGoldDisplay();
             UpdateRemovalInfo();
+            RefreshAffordability();
         }
 
-        private void OpenCardRemovalDialog()
+        /// <summary>
+        /// 卡牌移除选择弹窗：运行时构建（遮罩 + 面板 + 牌组网格 + 取消）。
+        /// 选中卡牌后扣款并移除，不再"移除第一张"。
+        /// </summary>
+        private void OpenCardRemovalDialog(ShopItem removalItem)
         {
             var deck = playerDataManager?.GetRuntimeDeckRef();
-            if (deck == null || deck.Count == 0) return;
-
-            GameLogger.Log("[ShopPanel] 开启卡牌移除 - 暂未实现完整UI选择");
-
-            if (deck.Count > 0)
+            if (deck == null || deck.Count == 0)
             {
-                int removeIndex = 0;
-                Card cardToRemove = deck[removeIndex];
-                playerDataManager.RemoveCardFromDeck(cardToRemove);
-                GameLogger.Log($"[ShopPanel] 移除卡牌：{cardToRemove.cardName}");
+                ShowFeedback("牌组为空，无法移除", true);
+                return;
+            }
+
+            CloseRemovalDialog();
+
+            var parent = panelRoot != null ? (RectTransform)panelRoot.transform : (RectTransform)transform;
+
+            // 全屏遮罩
+            var dimGo = new GameObject("CardRemovalDialog", typeof(RectTransform), typeof(Image));
+            var dimRt = (RectTransform)dimGo.transform;
+            dimRt.SetParent(parent, false);
+            dimRt.anchorMin = Vector2.zero;
+            dimRt.anchorMax = Vector2.one;
+            dimRt.offsetMin = Vector2.zero;
+            dimRt.offsetMax = Vector2.zero;
+            dimGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.78f);
+
+            // 面板
+            var panelRt = CreateChild("Panel", dimGo.transform, new Vector2(920, 620), Vector2.zero);
+            panelRt.gameObject.AddComponent<Image>().color = new Color(0.10f, 0.08f, 0.06f, 0.98f);
+
+            // 标题
+            var titleRt = CreateChild("Title", panelRt, new Vector2(560, 44), new Vector2(0, 274));
+            var titleT = titleRt.gameObject.AddComponent<Text>();
+            InitText(titleT, 22, TextAnchor.MiddleCenter, new Color(1f, 0.9f, 0.6f), true);
+            titleT.text = $"选择要移除的卡牌（费用 {removalItem.finalPrice} G）";
+
+            // 取消按钮
+            var cancelRt = CreateChild("Cancel", panelRt, new Vector2(110, 40), new Vector2(392, 274));
+            cancelRt.gameObject.AddComponent<Image>().color = new Color(0.45f, 0.3f, 0.25f, 1f);
+            var cancelBtn = cancelRt.gameObject.AddComponent<Button>();
+            cancelBtn.onClick.AddListener(CloseRemovalDialog);
+            var cancelLabel = CreateChild("Label", cancelRt, new Vector2(110, 40), Vector2.zero);
+            cancelLabel.anchorMin = Vector2.zero;
+            cancelLabel.anchorMax = Vector2.one;
+            cancelLabel.sizeDelta = Vector2.zero;
+            var cancelT = cancelLabel.gameObject.AddComponent<Text>();
+            InitText(cancelT, 18, TextAnchor.MiddleCenter, Color.white, true);
+            cancelT.text = "取消";
+
+            // 滚动区域
+            var viewRt = CreateChild("Viewport", panelRt, new Vector2(860, 520), new Vector2(0, -16));
+            var viewImg = viewRt.gameObject.AddComponent<Image>();
+            viewImg.color = new Color(0f, 0f, 0f, 0.35f);
+            var mask = viewRt.gameObject.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+            var scrollRect = viewRt.gameObject.AddComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.viewport = viewRt;
+
+            var contentRt = CreateChild("Content", viewRt, new Vector2(840, 100), Vector2.zero);
+            contentRt.anchorMin = new Vector2(0.5f, 1f);
+            contentRt.anchorMax = new Vector2(0.5f, 1f);
+            contentRt.pivot = new Vector2(0.5f, 1f);
+            contentRt.anchoredPosition = Vector2.zero;
+            var grid = contentRt.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(190, 210);
+            grid.spacing = new Vector2(14, 14);
+            grid.padding = new RectOffset(12, 12, 12, 12);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
+            grid.childAlignment = TextAnchor.UpperCenter;
+            scrollRect.content = contentRt;
+
+            int rows = Mathf.CeilToInt(deck.Count / 4f);
+            contentRt.sizeDelta = new Vector2(840, rows * 224 + 24);
+
+            foreach (var card in deck)
+            {
+                var cellRt = CreateChild("Card", contentRt, new Vector2(190, 210), Vector2.zero);
+                cellRt.gameObject.AddComponent<Image>().color = new Color(0.24f, 0.2f, 0.16f, 1f);
+                var cellBtn = cellRt.gameObject.AddComponent<Button>();
+                var captured = card;
+                cellBtn.onClick.AddListener(() => ConfirmRemoval(removalItem, captured));
+
+                var nameRt = CreateChild("Name", cellRt, new Vector2(170, 190), new Vector2(0, 4));
+                var nameT = nameRt.gameObject.AddComponent<Text>();
+                InitText(nameT, 16, TextAnchor.MiddleCenter, new Color(0.95f, 0.9f, 0.8f), true);
+                nameT.text = captured.cardName;
+            }
+
+            removalDialog = dimGo;
+        }
+
+        private void ConfirmRemoval(ShopItem item, Card card)
+        {
+            if (item.isSold || card == null) return;
+            if (playerDataManager == null) return;
+
+            if (!playerDataManager.RemoveGold(item.finalPrice))
+            {
+                ShowFeedback($"金币不足！需要 {item.finalPrice} G", true);
+                return;
+            }
+
+            playerDataManager.RemoveCardFromDeck(card);
+            if (shopDataService != null)
+                shopDataService.OnItemPurchased(item);
+
+            MarkSold(item);
+            CloseRemovalDialog();
+
+            ShowFeedback($"已移除「{card.cardName}」", false);
+            FlashGoldText(new Color(0.55f, 1f, 0.6f));
+            UpdateGoldDisplay();
+            UpdateRemovalInfo();
+            RefreshAffordability();
+        }
+
+        private void CloseRemovalDialog()
+        {
+            if (removalDialog != null)
+            {
+                Destroy(removalDialog);
+                removalDialog = null;
+            }
+        }
+
+        private void MarkSold(ShopItem item)
+        {
+            item.isSold = true;
+
+            if (!itemToSlot.TryGetValue(item, out var slot) || slot == null) return;
+
+            Button buyButton = slot.transform.Find("BuyButton")?.GetComponent<Button>();
+            if (buyButton != null)
+                buyButton.interactable = false;
+
+            TMP_Text priceText = slot.transform.Find("Price")?.GetComponent<TMP_Text>();
+            if (priceText != null)
+            {
+                priceText.text = "已售出";
+                priceText.color = new Color(0.5f, 0.5f, 0.5f);
+            }
+            Text legacyPrice = slot.transform.Find("Price")?.GetComponent<Text>();
+            if (legacyPrice != null)
+            {
+                legacyPrice.text = "已售出";
+                legacyPrice.color = new Color(0.5f, 0.5f, 0.5f);
+            }
+        }
+
+        /// <summary>根据当前金币刷新所有商品的买得起/买不起配色</summary>
+        private void RefreshAffordability()
+        {
+            int gold = playerDataManager != null ? playerDataManager.GetGold() : 0;
+
+            foreach (var kv in itemToSlot)
+            {
+                if (kv.Key == null || kv.Value == null || kv.Key.isSold) continue;
+
+                bool afford = kv.Key.finalPrice <= gold;
+                Color target = !afford
+                    ? new Color(1f, 0.5f, 0.45f)
+                    : (kv.Key.isOnSale ? new Color(1f, 0.83f, 0.35f) : Color.white);
+
+                TMP_Text tmp = kv.Value.transform.Find("Price")?.GetComponent<TMP_Text>();
+                if (tmp != null) tmp.color = target;
+                Text legacy = kv.Value.transform.Find("Price")?.GetComponent<Text>();
+                if (legacy != null) legacy.color = target;
             }
         }
 
@@ -428,6 +648,7 @@ namespace MutationChess.UI
             ClearContainer(relicContainer);
             ClearContainer(potionContainer);
             ClearContainer(removalContainer);
+            itemToSlot.Clear();
         }
 
         private void ClearContainer(Transform container)
@@ -452,11 +673,69 @@ namespace MutationChess.UI
             }
         }
 
+        /// <summary>底部居中提示条（金币不足/购买成功反馈）</summary>
+        private void ShowFeedback(string msg, bool error)
+        {
+            if (toastText == null)
+            {
+                var parent = panelRoot != null ? (RectTransform)panelRoot.transform : (RectTransform)transform;
+                var rt = CreateChild("Toast", parent, new Vector2(560, 40), Vector2.zero);
+                rt.anchorMin = new Vector2(0.5f, 0f);
+                rt.anchorMax = new Vector2(0.5f, 0f);
+                rt.anchoredPosition = new Vector2(0, 90);
+                toastText = rt.gameObject.AddComponent<Text>();
+                InitText(toastText, 20, TextAnchor.MiddleCenter, Color.white, true);
+            }
+
+            if (toastRoutine != null) StopCoroutine(toastRoutine);
+            toastText.text = msg;
+            toastText.color = error ? new Color(1f, 0.5f, 0.45f) : new Color(0.6f, 1f, 0.65f);
+            toastRoutine = StartCoroutine(ToastFade());
+        }
+
+        private IEnumerator ToastFade()
+        {
+            var cg = toastText.GetComponent<CanvasGroup>();
+            if (cg == null) cg = toastText.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 1f;
+
+            yield return new WaitForSeconds(1.6f);
+
+            float t = 0f;
+            while (t < 0.5f)
+            {
+                t += Time.deltaTime;
+                cg.alpha = Mathf.Lerp(1f, 0f, t / 0.5f);
+                yield return null;
+            }
+            cg.alpha = 0f;
+        }
+
+        private void FlashGoldText(Color flash)
+        {
+            if (goldText == null) return;
+            if (goldFlashRoutine != null) StopCoroutine(goldFlashRoutine);
+            goldFlashRoutine = StartCoroutine(FlashRoutine(flash));
+        }
+
+        private IEnumerator FlashRoutine(Color flash)
+        {
+            Color original = goldText.color;
+            for (int i = 0; i < 2; i++)
+            {
+                goldText.color = flash;
+                yield return new WaitForSeconds(0.12f);
+                goldText.color = original;
+                yield return new WaitForSeconds(0.12f);
+            }
+        }
+
         public void CloseShop()
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
 
+            CloseRemovalDialog();
             ClearAllContainers();
             shopItems.Clear();
             onShopClosed?.Invoke();
@@ -466,6 +745,198 @@ namespace MutationChess.UI
         {
             return panelRoot != null && panelRoot.activeSelf;
         }
+
+        #region StS 风格布局
+
+        /// <summary>
+        /// 将四个容器按杀戮尖塔商店布局摆放：
+        /// 遗物顶部居中、药水右上、卡牌居中、移除服务左下、离开按钮右下。
+        /// 容器为 null 时在运行时创建；已有布局组件统一替换为横排。
+        /// </summary>
+        private void ApplyStSLayout()
+        {
+            var parent = panelRoot != null ? (RectTransform)panelRoot.transform : (RectTransform)transform;
+
+            if (cardContainer == null) cardContainer = CreateChild("CardRow", parent, new Vector2(1500, 370), Vector2.zero);
+            if (potionContainer == null) potionContainer = CreateChild("PotionRow", parent, new Vector2(400, 170), Vector2.zero);
+            if (removalContainer == null) removalContainer = CreateChild("RemovalRow", parent, new Vector2(440, 160), Vector2.zero);
+
+            // 遗物：顶部居中一排（StS 遗物区在商店顶部）
+            PlaceHorizontalRow(relicContainer, new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(1100, 180));
+            // 药水：右上角一排
+            PlaceHorizontalRow(potionContainer, new Vector2(1f, 1f), new Vector2(-230, -160), new Vector2(400, 170));
+            // 卡牌：中央一排
+            PlaceHorizontalRow(cardContainer, new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(1500, 370));
+            // 移除服务：左下角
+            PlaceHorizontalRow(removalContainer, new Vector2(0f, 0f), new Vector2(240, 140), new Vector2(440, 160));
+
+            // 离开按钮：右下角
+            if (closeButton != null)
+            {
+                var rt = closeButton.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchorMin = new Vector2(1f, 0f);
+                    rt.anchorMax = new Vector2(1f, 0f);
+                    rt.pivot = new Vector2(0.5f, 0.5f);
+                    rt.anchoredPosition = new Vector2(-160, 140);
+                    rt.sizeDelta = new Vector2(240, 90);
+                }
+                var tmpLabel = closeButton.GetComponentInChildren<TMP_Text>(true);
+                if (tmpLabel != null) tmpLabel.text = "离开";
+                var legacyLabel = closeButton.GetComponentInChildren<Text>(true);
+                if (legacyLabel != null) legacyLabel.text = "离开";
+            }
+        }
+
+        private static void PlaceHorizontalRow(Transform container, Vector2 anchor, Vector2 pos, Vector2 size)
+        {
+            if (container == null) return;
+            var rt = container.GetComponent<RectTransform>();
+            if (rt == null) return;
+
+            rt.anchorMin = anchor;
+            rt.anchorMax = anchor;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+
+            // 清掉其它类型的布局组件，统一为横排
+            foreach (var lg in container.GetComponents<LayoutGroup>())
+            {
+                if (!(lg is HorizontalLayoutGroup))
+                    Destroy(lg);
+            }
+
+            var hlg = container.GetComponent<HorizontalLayoutGroup>();
+            if (hlg == null) hlg = container.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 14;
+            hlg.padding = new RectOffset(10, 10, 10, 10);
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+        }
+
+        private static RectTransform CreateChild(string name, Transform parent, Vector2 size, Vector2 pos)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            var rt = (RectTransform)go.transform;
+            rt.SetParent(parent, false);
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = size;
+            rt.anchoredPosition = pos;
+            return rt;
+        }
+
+        private static Text AddText(Transform parent, string name, Vector2 size, Vector2 pos, int fontSize, Color color, bool bold = false)
+        {
+            var rt = CreateChild(name, parent, size, pos);
+            var t = rt.gameObject.AddComponent<Text>();
+            InitText(t, fontSize, TextAnchor.MiddleCenter, color, bold);
+            return t;
+        }
+
+        private static void InitText(Text t, int size, TextAnchor anchor, Color color, bool bold = false)
+        {
+            t.font = ChineseFont;
+            t.fontSize = size;
+            t.alignment = anchor;
+            t.color = color;
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
+            t.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
+            t.raycastTarget = false;
+        }
+
+        /// <summary>运行时构建卡牌槽位：插画 + 名称 + 描述 + 价格 + 购买按钮</summary>
+        private GameObject BuildCardSlotPrefab()
+        {
+            var root = new GameObject("CardSlot", typeof(RectTransform), typeof(Image));
+            var rt = (RectTransform)root.transform;
+            rt.sizeDelta = new Vector2(160, 350);
+            root.GetComponent<Image>().color = new Color(0.14f, 0.12f, 0.09f, 0.95f);
+
+            var icon = CreateChild("Icon", root.transform, new Vector2(140, 175), new Vector2(0, 66));
+            var iconImg = icon.gameObject.AddComponent<Image>();
+            iconImg.preserveAspect = true;
+            iconImg.raycastTarget = false;
+
+            AddText(root.transform, "Name", new Vector2(140, 30), new Vector2(0, -38), 16, new Color(0.96f, 0.91f, 0.8f), true);
+            AddText(root.transform, "Description", new Vector2(140, 68), new Vector2(0, -87), 12, new Color(0.8f, 0.76f, 0.68f));
+            AddText(root.transform, "Price", new Vector2(140, 24), new Vector2(0, -123), 16, new Color(1f, 0.83f, 0.35f));
+
+            var buy = CreateChild("BuyButton", root.transform, new Vector2(130, 34), new Vector2(0, -150));
+            buy.gameObject.AddComponent<Image>().color = new Color(0.55f, 0.3f, 0.22f, 1f);
+            buy.gameObject.AddComponent<Button>();
+            var label = CreateChild("Label", buy, new Vector2(130, 34), Vector2.zero);
+            label.anchorMin = Vector2.zero;
+            label.anchorMax = Vector2.one;
+            label.sizeDelta = Vector2.zero;
+            var lt = label.gameObject.AddComponent<Text>();
+            InitText(lt, 15, TextAnchor.MiddleCenter, Color.white, true);
+            lt.text = "购买";
+
+            return root;
+        }
+
+        /// <summary>运行时构建药水槽位：图标 + 名称 + 价格 + 购买按钮</summary>
+        private GameObject BuildPotionSlotPrefab()
+        {
+            var root = new GameObject("PotionSlot", typeof(RectTransform), typeof(Image));
+            var rt = (RectTransform)root.transform;
+            rt.sizeDelta = new Vector2(110, 160);
+            root.GetComponent<Image>().color = new Color(0.12f, 0.15f, 0.12f, 0.95f);
+
+            var icon = CreateChild("Icon", root.transform, new Vector2(84, 84), new Vector2(0, 26));
+            var iconImg = icon.gameObject.AddComponent<Image>();
+            iconImg.preserveAspect = true;
+            iconImg.raycastTarget = false;
+
+            AddText(root.transform, "Name", new Vector2(100, 24), new Vector2(0, -30), 12, new Color(0.85f, 0.95f, 0.85f), true);
+            AddText(root.transform, "Price", new Vector2(100, 20), new Vector2(0, -44), 14, new Color(1f, 0.83f, 0.35f));
+
+            var buy = CreateChild("BuyButton", root.transform, new Vector2(100, 32), new Vector2(0, -62));
+            buy.gameObject.AddComponent<Image>().color = new Color(0.3f, 0.5f, 0.3f, 1f);
+            buy.gameObject.AddComponent<Button>();
+            var label = CreateChild("Label", buy, new Vector2(100, 32), Vector2.zero);
+            label.anchorMin = Vector2.zero;
+            label.anchorMax = Vector2.one;
+            label.sizeDelta = Vector2.zero;
+            var lt = label.gameObject.AddComponent<Text>();
+            InitText(lt, 14, TextAnchor.MiddleCenter, Color.white, true);
+            lt.text = "购买";
+
+            return root;
+        }
+
+        /// <summary>运行时构建移除服务槽位：说明 + 价格 + 选择按钮</summary>
+        private GameObject BuildRemovalSlotPrefab()
+        {
+            var root = new GameObject("RemovalSlot", typeof(RectTransform), typeof(Image));
+            var rt = (RectTransform)root.transform;
+            rt.sizeDelta = new Vector2(220, 140);
+            root.GetComponent<Image>().color = new Color(0.15f, 0.13f, 0.18f, 0.95f);
+
+            AddText(root.transform, "Description", new Vector2(200, 40), new Vector2(0, 20), 14, new Color(0.85f, 0.82f, 0.9f));
+            AddText(root.transform, "Price", new Vector2(200, 24), new Vector2(0, -16), 16, new Color(1f, 0.83f, 0.35f));
+
+            var buy = CreateChild("BuyButton", root.transform, new Vector2(140, 36), new Vector2(0, -52));
+            buy.gameObject.AddComponent<Image>().color = new Color(0.45f, 0.3f, 0.25f, 1f);
+            buy.gameObject.AddComponent<Button>();
+            var label = CreateChild("Label", buy, new Vector2(140, 36), Vector2.zero);
+            label.anchorMin = Vector2.zero;
+            label.anchorMax = Vector2.one;
+            label.sizeDelta = Vector2.zero;
+            var lt = label.gameObject.AddComponent<Text>();
+            InitText(lt, 15, TextAnchor.MiddleCenter, Color.white, true);
+            lt.text = "选择卡牌";
+
+            return root;
+        }
+
+        #endregion
     }
 }
-
