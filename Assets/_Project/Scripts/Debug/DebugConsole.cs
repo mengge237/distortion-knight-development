@@ -43,6 +43,7 @@ namespace MutationChess.Debug
         private int energyAmount = 3, blockAmount = 20, damageToEnemy = 50;
         private string logBuffer = "";
         private const int MaxLogLines = 200;
+        private Font chineseFont; // 调试台中文显示用（IMGUI 默认字体无中文字形，运行时挂系统雅黑）
         private int logLineCount;
 
         #endregion
@@ -73,10 +74,12 @@ namespace MutationChess.Debug
             if (!visible)
             {
                 // Small button in bottom-right when hidden
-                if (GUI.Button(new Rect(Screen.width - 110, Screen.height - 30, 110, 25), "Debug (F1/~)"))
+                if (GUI.Button(new Rect(Screen.width - 110, Screen.height - 30, 110, 25), "调试 (F1/~)"))
                     visible = true;
                 return;
             }
+
+            EnsureChineseFont();
 
             GUI.color = new Color(0, 0, 0, 0.88f);
             GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "");
@@ -107,10 +110,10 @@ namespace MutationChess.Debug
             GUILayout.BeginHorizontal();
             var ts = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold };
             ts.normal.textColor = Color.cyan;
-            GUILayout.Label("[ Debug Console ]", ts);
+            GUILayout.Label("[ 调试控制台 ]", ts);
             GUILayout.FlexibleSpace();
             GUI.color = Color.gray;
-            GUILayout.Label("Press ~ to close");
+            GUILayout.Label("按 ~ 或 F1 关闭");
             GUI.color = Color.white;
             GUILayout.EndHorizontal();
             GUI.color = new Color(0.3f, 0.6f, 0.9f);
@@ -120,7 +123,7 @@ namespace MutationChess.Debug
 
         private void DrawTabs()
         {
-            string[] tabs = { "Cards", "Relics", "Battle", "Player", "Map", "Log" };
+            string[] tabs = { "卡牌", "遗物", "战斗", "玩家", "地图", "日志" };
             GUILayout.BeginHorizontal();
             for (int i = 0; i < tabs.Length; i++)
             {
@@ -152,12 +155,12 @@ namespace MutationChess.Debug
 
         private void DrawCardsTab()
         {
-            GUILayout.Label("Card Manager", RichLabel);
+            GUILayout.Label("卡牌管理", RichLabel);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Filter:", GUILayout.Width(40));
+            GUILayout.Label("筛选:", GUILayout.Width(40));
             cardSearchFilter = GUILayout.TextField(cardSearchFilter, GUILayout.Width(180));
-            if (GUILayout.Button("Clear", GUILayout.Width(50)))
+            if (GUILayout.Button("清除", GUILayout.Width(50)))
                 cardSearchFilter = "";
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -182,7 +185,7 @@ namespace MutationChess.Debug
                     if (template.damage > 0) info += $" Dmg:{template.damage}";
                     if (template.block > 0) info += $" Blk:{template.block}";
                     if (template.magicNumber > 0) info += $" N:{template.magicNumber}";
-                    if (template.faction != CardFaction.None) info += $" ({template.faction})";
+                    if (template.faction != CardFaction.None) info += $" ({FactionDisplayName(template.faction)})";
                 }
 
                 GUILayout.BeginHorizontal();
@@ -228,24 +231,24 @@ namespace MutationChess.Debug
 
         private void DrawRelicsTab()
         {
-            GUILayout.Label("Relic Manager", RichLabel);
+            GUILayout.Label("遗物管理器", RichLabel);
 
             var rm = RelicManager.Instance;
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Add:", GUILayout.Width(40));
-            if (GUILayout.Button("Comm", GUILayout.Width(40))) AddRandomRelic(RelicRarity.Common);
-            if (GUILayout.Button("Rare", GUILayout.Width(40))) AddRandomRelic(RelicRarity.Rare);
-            if (GUILayout.Button("Legd", GUILayout.Width(40))) AddRandomRelic(RelicRarity.Legendary);
+            GUILayout.Label("随机添加:", GUILayout.Width(70));
+            if (GUILayout.Button("普通", GUILayout.Width(40))) AddRandomRelic(RelicRarity.Common);
+            if (GUILayout.Button("稀有", GUILayout.Width(40))) AddRandomRelic(RelicRarity.Rare);
+            if (GUILayout.Button("传说", GUILayout.Width(40))) AddRandomRelic(RelicRarity.Legendary);
             if (GUILayout.Button("Boss", GUILayout.Width(50))) AddRandomRelic(RelicRarity.Special);
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Clear All", GUILayout.Width(80))) ClearAllRelics();
+            if (GUILayout.Button("清空全部", GUILayout.Width(80))) ClearAllRelics();
             GUILayout.EndHorizontal();
 
             GUILayout.Space(2);
 
-            // Current relics
-            GUILayout.Label("<b>Owned Relics</b>", RichLabel);
+            // 已拥有遗物
+            GUILayout.Label("<b>已拥有遗物</b>", RichLabel);
             var owned = rm?.GetAllRelics();
             if (owned != null && owned.Count > 0)
             {
@@ -253,27 +256,45 @@ namespace MutationChess.Debug
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Label($"<color=yellow>{r.relicName}</color> <color=gray>[{r.relicId}]</color>", RichLabel);
-                    if (GUILayout.Button("X", GUILayout.Width(30)))
+                    if (GUILayout.Button("移除", GUILayout.Width(40)))
                         rm.RemoveRelic(r.relicId);
                     GUILayout.EndHorizontal();
                 }
             }
-            else GUILayout.Label("  (none)", RichLabel);
+            else GUILayout.Label("  (无)", RichLabel);
 
             GUILayout.Space(4);
 
-            // All relics
-            GUILayout.Label("<b>All Relics</b>", RichLabel);
+            var assets = rm?.LoadAllRelicAssets();
+            relicsScrollPos = GUILayout.BeginScrollView(relicsScrollPos, GUILayout.Height(Screen.height * 0.45f));
+
+            // ── 阵营遗物：按阵营单独分区（非稀有度查询），添加时自动附带 Boss 激活器 ──
+            GUILayout.Label("<b><color=#ffd24d>═══ 阵营遗物 ═══</color></b> <color=gray>（添加时自动附带对应 Boss 激活器，隐藏效果立即生效）</color>", RichLabel);
+            if (assets != null)
+            {
+                foreach (var f in FactionOrder)
+                {
+                    var factionAssets = assets.Where(a => a.faction == f).ToList();
+                    if (factionAssets.Count == 0) continue;
+                    GUILayout.Space(2);
+                    GUILayout.Label($"<b><color={FactionColorHex(f)}>◆ {FactionDisplayName(f)}阵营 ◆</color></b>", RichLabel);
+                    foreach (var a in factionAssets)
+                        DrawRelicAddRow(rm, assets, a, true);
+                }
+            }
+
+            GUILayout.Space(6);
+
+            // ── 全部遗物：原有列表，含隐藏效果的遗物依旧在此直接添加，不过滤阵营 ──
+            GUILayout.Label("<b><color=#9adcff>═══ 全部遗物 ═══</color></b>", RichLabel);
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Filter:", GUILayout.Width(40));
+            GUILayout.Label("搜索:", GUILayout.Width(40));
             relicSearchFilter = GUILayout.TextField(relicSearchFilter, GUILayout.Width(180));
-            if (GUILayout.Button("Clear", GUILayout.Width(50)))
+            if (GUILayout.Button("清除", GUILayout.Width(50)))
                 relicSearchFilter = "";
             GUILayout.EndHorizontal();
 
-            relicsScrollPos = GUILayout.BeginScrollView(relicsScrollPos, GUILayout.Height(220));
             // 调试台列出全部遗物（绕过阵营解锁过滤），否则未解锁阵营的遗物（如鲜血-吸血獠牙）无法添加
-            var assets = rm?.LoadAllRelicAssets();
             if (assets != null)
             {
                 foreach (var a in assets)
@@ -281,20 +302,79 @@ namespace MutationChess.Debug
                     if (!string.IsNullOrEmpty(relicSearchFilter) &&
                         a.relicName.IndexOf(relicSearchFilter, StringComparison.OrdinalIgnoreCase) < 0)
                         continue;
-
-                    GUILayout.BeginHorizontal();
-                    GUI.color = GetRelicRarityColor(a.rarity);
-                    if (GUILayout.Button("[+]", GUILayout.Width(40)))
-                    {
-                        var r = rm.CreateRelicFromAsset(a);
-                        if (r != null) rm.AddRelic(r);
-                    }
-                    GUI.color = Color.white;
-                    GUILayout.Label($"<color=white>{a.relicName}</color> <color=gray>[{a.rarity}]</color>", RichLabel, GUILayout.Width(320));
-                    GUILayout.EndHorizontal();
+                    DrawRelicAddRow(rm, assets, a, false);
                 }
             }
             GUILayout.EndScrollView();
+        }
+
+        /// <summary>
+        /// 遗物添加行：[+] 按钮 + 名称/稀有度；阵营行额外标出配套的 Boss 激活器遗物。
+        /// </summary>
+        private void DrawRelicAddRow(RelicManager rm, List<RelicDataAsset> assets, RelicDataAsset a, bool isFactionRow)
+        {
+            GUILayout.BeginHorizontal();
+            GUI.color = GetRelicRarityColor(a.rarity);
+            if (GUILayout.Button("[+]", GUILayout.Width(40)))
+            {
+                if (isFactionRow) AddFactionRelicWithActivator(rm, a);
+                else AddSingleRelic(rm, a);
+            }
+            GUI.color = Color.white;
+            string label = $"<color=white>{a.relicName}</color> <color=gray>[{RelicRarityText(a.rarity)}]</color>";
+            if (isFactionRow && !string.IsNullOrEmpty(a.hiddenActivatorRelicId))
+            {
+                var activator = assets.FirstOrDefault(x => x.relicId == a.hiddenActivatorRelicId);
+                label += $" <color=#ffa54d>↔ {(activator != null ? activator.relicName : a.hiddenActivatorRelicId)}</color>";
+            }
+            GUILayout.Label(label, RichLabel, GUILayout.Width(420));
+            GUILayout.EndHorizontal();
+        }
+
+        /// <summary>单独添加一个遗物（全部遗物列表用，不做激活器联动）</summary>
+        private void AddSingleRelic(RelicManager rm, RelicDataAsset asset)
+        {
+            if (rm == null) return;
+            var r = rm.CreateRelicFromAsset(asset);
+            if (r != null) rm.AddRelic(r);
+        }
+
+        /// <summary>
+        /// 添加阵营遗物，并自动附带其 hiddenActivatorRelicId 指向的 Boss 激活器遗物，
+        /// 确保隐藏效果（hiddenEffectIds）生效，避免缺少激活器导致添加无效。
+        /// </summary>
+        private void AddFactionRelicWithActivator(RelicManager rm, RelicDataAsset asset)
+        {
+            if (rm == null) return;
+
+            var r = rm.CreateRelicFromAsset(asset);
+            if (r != null)
+            {
+                rm.AddRelic(r);
+                GameLogger.Log($"[调试台] 已添加阵营遗物「{asset.relicName}」");
+            }
+
+            if (string.IsNullOrEmpty(asset.hiddenActivatorRelicId)) return;
+
+            if (rm.HasRelic(asset.hiddenActivatorRelicId))
+            {
+                GameLogger.Log($"[调试台] 「{asset.relicName}」的激活器遗物已拥有，无需重复添加");
+                return;
+            }
+
+            var activator = rm.LoadAllRelicAssets().FirstOrDefault(x => x.relicId == asset.hiddenActivatorRelicId);
+            if (activator == null)
+            {
+                GameLogger.LogWarning($"[调试台] 未找到激活器遗物「{asset.hiddenActivatorRelicId}」，请检查配置");
+                return;
+            }
+
+            var ar = rm.CreateRelicFromAsset(activator);
+            if (ar != null)
+            {
+                rm.AddRelic(ar);
+                GameLogger.Log($"[调试台] 已自动添加 Boss 激活器遗物「{activator.relicName}」，隐藏效果生效");
+            }
         }
 
         private void AddRandomRelic(RelicRarity rarity)
@@ -325,7 +405,7 @@ namespace MutationChess.Debug
 
         private void DrawBattleTab()
         {
-            GUILayout.Label("Battle Cheats", RichLabel);
+            GUILayout.Label("战斗作弊", RichLabel);
 
             var bm = FindObjectOfType<BattleManager>();
             var pdm = PlayerDataManager.Instance;
@@ -333,7 +413,7 @@ namespace MutationChess.Debug
 
             if (bm == null || pdm == null || hm == null)
             {
-                GUILayout.Label("<color=red>Not in battle</color>", RichLabel);
+                GUILayout.Label("<color=red>不在战斗中</color>", RichLabel);
                 return;
             }
 
@@ -365,7 +445,7 @@ namespace MutationChess.Debug
             GUILayout.Label($"Block: <color=cyan>{currentBlock}</color>", RichLabel, GUILayout.Width(180));
             if (GUILayout.Button($"+{blockAmount}", GUILayout.Width(40)))
             { bm.PlayerBlock(blockAmount); GameLogger.Log($"[Debug] Block +{blockAmount}"); }
-            if (GUILayout.Button("Clear", GUILayout.Width(40)))
+            if (GUILayout.Button("清零", GUILayout.Width(40)))
             { if (currentBlock > 0) bm.ConsumePlayerBlock(currentBlock); }
             blockAmount = ParseIntSafe(GUILayout.TextField(blockAmount.ToString(), GUILayout.Width(35)));
             GUILayout.EndHorizontal();
@@ -380,47 +460,47 @@ namespace MutationChess.Debug
             GUILayout.Space(4);
 
             // Buffs
-            GUILayout.Label("<b>Player Buffs</b>", RichLabel);
+            GUILayout.Label("<b>玩家 Buff</b>", RichLabel);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button($"+{strengthAmount} Str", GUILayout.Width(60)))
+            if (GUILayout.Button($"+{strengthAmount} 力量", GUILayout.Width(70)))
                 pd.AddBuff(new Buff { type = BuffType.Strength, amount = strengthAmount, duration = -1 });
-            if (GUILayout.Button($"+{dexterityAmount} Dex", GUILayout.Width(60)))
+            if (GUILayout.Button($"+{dexterityAmount} 敏捷", GUILayout.Width(70)))
                 pd.AddBuff(new Buff { type = BuffType.Dexterity, amount = dexterityAmount, duration = -1 });
-            if (GUILayout.Button("-Str", GUILayout.Width(40)))
+            if (GUILayout.Button("-力量", GUILayout.Width(50)))
                 pd.AddBuff(new Buff { type = BuffType.Strength, amount = -strengthAmount, duration = -1 });
-            if (GUILayout.Button("-Dex", GUILayout.Width(40)))
+            if (GUILayout.Button("-敏捷", GUILayout.Width(50)))
                 pd.AddBuff(new Buff { type = BuffType.Dexterity, amount = -dexterityAmount, duration = -1 });
             GUILayout.EndHorizontal();
 
             GUILayout.Space(4);
 
             // Enemy
-            GUILayout.Label("<b>Enemy Control</b>", RichLabel);
+            GUILayout.Label("<b>敌人控制</b>", RichLabel);
             var enemy = bm.GetCurrentEnemy();
             if (enemy != null)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label($"{enemy.enemyName} HP: <color=red>{enemy.currentHealth}</color>/{enemy.maxHealth}", RichLabel, GUILayout.Width(280));
                 if (GUILayout.Button($"-{damageToEnemy}", GUILayout.Width(50))) enemy.TakeDamage(damageToEnemy);
-                if (GUILayout.Button("Kill", GUILayout.Width(50))) enemy.TakeDamage(enemy.currentHealth);
+                if (GUILayout.Button("击杀", GUILayout.Width(50))) enemy.TakeDamage(enemy.currentHealth);
                 damageToEnemy = ParseIntSafe(GUILayout.TextField(damageToEnemy.ToString(), GUILayout.Width(35)));
                 GUILayout.EndHorizontal();
             }
-            else GUILayout.Label("No enemy", RichLabel);
+            else GUILayout.Label("无敌人", RichLabel);
 
             GUILayout.Space(4);
 
             // Quick actions
-            GUILayout.Label("<b>Quick Actions</b>", RichLabel);
+            GUILayout.Label("<b>快捷操作</b>", RichLabel);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("End Turn", GUILayout.Width(80))) hm.OnEndTurn();
-            if (GUILayout.Button("Draw 3", GUILayout.Width(60))) hm.DrawCards(3);
-            if (GUILayout.Button("Full MP", GUILayout.Width(70))) hm.RestoreEnergy(hm.GetMaxEnergy());
-            if (GUILayout.Button("Full HP", GUILayout.Width(70))) pdm.Heal(pd.maxHealth);
+            if (GUILayout.Button("结束回合", GUILayout.Width(80))) hm.OnEndTurn();
+            if (GUILayout.Button("抽 3 张", GUILayout.Width(60))) hm.DrawCards(3);
+            if (GUILayout.Button("满能量", GUILayout.Width(70))) hm.RestoreEnergy(hm.GetMaxEnergy());
+            if (GUILayout.Button("满生命", GUILayout.Width(70))) pdm.Heal(pd.maxHealth);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Exhaust All", GUILayout.Width(90))) hm.ExhaustHand();
-            if (GUILayout.Button("Discard All", GUILayout.Width(80))) hm.DiscardHand();
+            if (GUILayout.Button("消耗全部手牌", GUILayout.Width(90))) hm.ExhaustHand();
+            if (GUILayout.Button("弃全部手牌", GUILayout.Width(80))) hm.DiscardHand();
             GUILayout.EndHorizontal();
         }
 
@@ -430,12 +510,12 @@ namespace MutationChess.Debug
 
         private void DrawPlayerTab()
         {
-            GUILayout.Label("Player Data", RichLabel);
+            GUILayout.Label("玩家数据", RichLabel);
 
             var pdm = PlayerDataManager.Instance;
             if (pdm == null)
             {
-                GUILayout.Label("<color=red>PlayerDataManager not found</color>", RichLabel);
+                GUILayout.Label("<color=red>PlayerDataManager 未找到</color>", RichLabel);
                 return;
             }
 
@@ -444,10 +524,10 @@ namespace MutationChess.Debug
 
             GUILayout.Label($"HP: {pd.currentHealth}/{pd.maxHealth}", RichLabel);
             GUILayout.Label($"Gold: {pd.gold}", RichLabel);
-            GUILayout.Label($"Deck: {pdm.GetRuntimeDeckCopy()?.Count ?? 0} cards", RichLabel);
+            GUILayout.Label($"牌组: {pdm.GetRuntimeDeckCopy()?.Count ?? 0} 张", RichLabel);
 
             GUILayout.Space(4);
-            GUILayout.Label("<b>Gold Management</b>", RichLabel);
+            GUILayout.Label("<b>金币管理</b>", RichLabel);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("+100", GUILayout.Width(50))) pdm.AddGold(100);
             if (GUILayout.Button("+500", GUILayout.Width(50))) pdm.AddGold(500);
@@ -461,7 +541,7 @@ namespace MutationChess.Debug
             GUILayout.EndHorizontal();
 
             GUILayout.Space(4);
-            GUILayout.Label("<b>Health Control</b>", RichLabel);
+            GUILayout.Label("<b>生命控制</b>", RichLabel);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Full", GUILayout.Width(50))) pdm.Heal(pd.maxHealth);
             if (GUILayout.Button("+50", GUILayout.Width(50))) pdm.Heal(50);
@@ -474,7 +554,7 @@ namespace MutationChess.Debug
             GUILayout.EndHorizontal();
 
             GUILayout.Space(4);
-            if (GUILayout.Button("Print Deck", GUILayout.Width(140)))
+            if (GUILayout.Button("打印牌组", GUILayout.Width(140)))
             {
                 var deck = pdm.GetRuntimeDeckCopy();
                 if (deck != null)
@@ -486,7 +566,7 @@ namespace MutationChess.Debug
             }
 
             GUILayout.Space(4);
-            if (GUILayout.Button("Reset All (Caution)", GUILayout.Width(140)))
+            if (GUILayout.Button("重置全部（谨慎）", GUILayout.Width(140)))
             {
                 pdm.ResetDeck();
                 pdm.ResetData();
@@ -500,33 +580,33 @@ namespace MutationChess.Debug
 
         private void DrawMapTab()
         {
-            GUILayout.Label("Map Control", RichLabel);
+            GUILayout.Label("地图控制", RichLabel);
 
             var gm = FindObjectOfType<GameManager>();
             if (gm == null)
             {
-                GUILayout.Label("<color=red>GameManager not found</color>", RichLabel);
+                GUILayout.Label("<color=red>GameManager 未找到</color>", RichLabel);
                 return;
             }
 
             int cf = gm.GetCurrentFloor();
             int mf = gm.GetMaxFloor();
-            GUILayout.Label($"Floor: {cf}/{mf}", RichLabel);
-            GUILayout.Label($"Progress: {gm.GetFloorProgress():P0}", RichLabel);
-            GUILayout.Label($"In Battle: {gm.IsInBattle()}", RichLabel);
-            GUILayout.Label($"Moving: {gm.IsMoving()}", RichLabel);
+            GUILayout.Label($"楼层: {cf}/{mf}", RichLabel);
+            GUILayout.Label($"进度: {gm.GetFloorProgress():P0}", RichLabel);
+            GUILayout.Label($"战斗中: {gm.IsInBattle()}", RichLabel);
+            GUILayout.Label($"移动中: {gm.IsMoving()}", RichLabel);
 
             GUILayout.Space(4);
 
-            GUILayout.Label("<b>Floor Actions</b>", RichLabel);
-            if (GUILayout.Button("Next Floor", GUILayout.Width(140)))
+            GUILayout.Label("<b>楼层操作</b>", RichLabel);
+            if (GUILayout.Button("下一层", GUILayout.Width(140)))
             {
                 if (cf < mf) gm.AdvanceToNextFloor();
             }
 
             GUILayout.Space(4);
 
-            GUILayout.Label("<b>Factions</b>", RichLabel);
+            GUILayout.Label("<b>阵营</b>", RichLabel);
             var fs = FactionUnlockService.Instance;
             if (fs != null)
             {
@@ -537,21 +617,21 @@ namespace MutationChess.Debug
                     if (f == CardFaction.None) continue;
                     bool u = fs.IsFactionUnlocked(f);
                     GUI.color = u ? Color.green : Color.red;
-                    if (GUILayout.Button($"{(u ? "V" : "X")} {f}", GUILayout.Width(75)))
+                    if (GUILayout.Button($"{(u ? "√" : "×")} {FactionDisplayName(f)}", GUILayout.Width(75)))
                     { if (!u) fs.UnlockFaction(f); }
                 }
                 GUI.color = Color.white;
                 GUILayout.EndHorizontal();
             }
-            else GUILayout.Label("FactionUnlockService not found", RichLabel);
+            else GUILayout.Label("FactionUnlockService 未找到", RichLabel);
 
             GUILayout.Space(4);
 
-            GUILayout.Label("<b>Reset Actions</b>", RichLabel);
+            GUILayout.Label("<b>重置操作</b>", RichLabel);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Clear Relics", GUILayout.Width(100))) ClearAllRelics();
+            if (GUILayout.Button("清空遗物", GUILayout.Width(100))) ClearAllRelics();
             var pdm = PlayerDataManager.Instance;
-            if (GUILayout.Button("Reset Player", GUILayout.Width(100)))
+            if (GUILayout.Button("重置玩家", GUILayout.Width(100)))
             { pdm?.ResetDeck(); pdm?.ResetData(); GameLogger.Log("[Debug] Player reset"); }
             GUILayout.EndHorizontal();
         }
@@ -564,11 +644,11 @@ namespace MutationChess.Debug
 
         private void DrawLogTab()
         {
-            GUILayout.Label("Runtime Log", RichLabel);
+            GUILayout.Label("运行时日志", RichLabel);
 
             GUILayout.BeginHorizontal();
-            autoScrollLog = GUILayout.Toggle(autoScrollLog, "Auto Scroll");
-            if (GUILayout.Button("Clear", GUILayout.Width(50)))
+            autoScrollLog = GUILayout.Toggle(autoScrollLog, "自动滚动");
+            if (GUILayout.Button("清除", GUILayout.Width(50)))
             { logBuffer = ""; logLineCount = 0; }
             GUILayout.EndHorizontal();
 
@@ -638,6 +718,59 @@ namespace MutationChess.Debug
                 RelicRarity.Special => new Color(1f, 0.25f, 0.25f),
                 _ => Color.white
             };
+        }
+
+        /// <summary>阵营遗物分区显示顺序（调试台用）</summary>
+        private static readonly CardFaction[] FactionOrder =
+        {
+            CardFaction.Blood, CardFaction.Frost, CardFaction.Shadow,
+            CardFaction.Slime, CardFaction.Corrupt, CardFaction.Reluctant
+        };
+
+        /// <summary>阵营主题色（中国特色配色：朱红/冰蓝/暗紫/凝绿/腐橙/鎏金）</summary>
+        private static string FactionColorHex(CardFaction f)
+        {
+            switch (f)
+            {
+                case CardFaction.Blood: return "#e04848";
+                case CardFaction.Frost: return "#5fc3e8";
+                case CardFaction.Shadow: return "#a86fe0";
+                case CardFaction.Slime: return "#7ddf7d";
+                case CardFaction.Corrupt: return "#d07a2f";
+                case CardFaction.Reluctant: return "#d9b45b";
+                default: return "white";
+            }
+        }
+
+        private static string FactionDisplayName(CardFaction f)
+        {
+            var fs = FactionUnlockService.Instance;
+            return fs != null ? fs.GetFactionDisplayName(f) : f.ToString();
+        }
+
+        private static string RelicRarityText(RelicRarity r)
+        {
+            return r switch
+            {
+                RelicRarity.Starting => "初始",
+                RelicRarity.Common => "普通",
+                RelicRarity.Rare => "稀有",
+                RelicRarity.Legendary => "传说",
+                RelicRarity.Special => "Boss",
+                _ => r.ToString()
+            };
+        }
+
+        /// <summary>
+        /// IMGUI 默认字体不含中文字形。Windows 目标平台直接挂系统雅黑动态字体，
+        /// 保证调试台中文界面正常显示。
+        /// </summary>
+        private void EnsureChineseFont()
+        {
+            if (chineseFont == null)
+                chineseFont = Font.CreateDynamicFontFromOSFont(new[] { "Microsoft YaHei", "SimHei", "SimSun" }, 14);
+            if (chineseFont != null && GUI.skin.font != chineseFont)
+                GUI.skin.font = chineseFont;
         }
 
         #endregion
