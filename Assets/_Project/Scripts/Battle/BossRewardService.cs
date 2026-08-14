@@ -40,7 +40,7 @@ namespace MutationChess.Battle
         {
             if (config == null)
             {
-                config = Resources.Load<BossRewardConfig>("BossRewardConfig");
+                config = Resources.Load<BossRewardConfig>(ResourcePaths.BossRewardConfig);
                 if (config == null && debugMode)
                     GameLogger.LogWarning("[BossRewardService] BossRewardConfig not found, please create Resources/BossRewardConfig.asset");
             }
@@ -152,7 +152,7 @@ namespace MutationChess.Battle
             }
 
 
-            RelicDataAsset[] allRelics = Resources.LoadAll<RelicDataAsset>("Relics");
+            RelicDataAsset[] allRelics = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
             foreach (var relic in allRelics)
             {
                 if (relic != null && relic.isFactionUnlocker)

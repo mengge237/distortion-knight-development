@@ -5,6 +5,7 @@ using DG.Tweening;
 using System;
 using System.Collections;
 using MutationChess.Battle;
+using MutationChess.Core;
 
 namespace MutationChess.UI
 {
@@ -82,7 +83,7 @@ namespace MutationChess.UI
 
             playerNameText.text = pName;
             playerHpText.text = $"{pHp}/{pMaxHp}";
-            playerImage.sprite = Resources.Load<Sprite>("Player/player");
+            playerImage.sprite = Resources.Load<Sprite>(ResourcePaths.Player_player);
             playerInfoGroup.localScale = Vector3.one * 3.5f;
             playerInfoCanvasGroup.alpha = 1f;
 

@@ -19,7 +19,7 @@ namespace MutationChess.Core
         {
             if (allCardsLoaded) return;
 
-            CardDataAsset[] allAssets = Resources.LoadAll<CardDataAsset>("Cards");
+            CardDataAsset[] allAssets = Resources.LoadAll<CardDataAsset>(ResourcePaths.Cards);
             foreach (var asset in allAssets)
             {
                 if (asset != null && !string.IsNullOrEmpty(asset.cardName))
@@ -161,18 +161,9 @@ namespace MutationChess.Core
 
             CardEffect effect = null;
 
-            string effectPath = $"Effects/{effectId}";
-            effect = Resources.Load<CardEffect>(effectPath);
-
+            effect = Resources.Load<CardEffect>($"{ResourcePaths.Effects}/{effectId}");
             if (effect == null)
-            {
-                effect = Resources.Load<CardEffect>($"CardEffects/{effectId}");
-            }
-
-            if (effect == null)
-            {
-                effect = Resources.Load<CardEffect>(effectId);
-            }
+                effect = Resources.Load<CardEffect>($"{ResourcePaths.InherentEffects}/{effectId}");
 
             if (effect != null)
             {
@@ -195,11 +186,9 @@ namespace MutationChess.Core
 
             InherentEffect inherent = null;
 
-            inherent = Resources.Load<InherentEffect>($"InherentEffects/{effectId}");
+            inherent = Resources.Load<InherentEffect>($"{ResourcePaths.InherentEffects}/{effectId}");
             if (inherent == null)
-                inherent = Resources.Load<InherentEffect>($"Effects/{effectId}");
-            if (inherent == null)
-                inherent = Resources.Load<InherentEffect>(effectId);
+                inherent = Resources.Load<InherentEffect>($"{ResourcePaths.Effects}/{effectId}");
 
             if (inherent != null)
             {
@@ -234,13 +223,13 @@ namespace MutationChess.Core
 
             if (card.HasTag(CardTag.Slime) && !existingTags.Contains(CardTag.Slime))
             {
-                var inherent = LoadInherentEffect("SlimeInherentEffect");
+                var inherent = LoadInherentEffect(EffectIds.SlimeInherentEffect);
                 if (inherent != null) card.inherentEffects.Add(inherent);
             }
 
             if (card.HasTag(CardTag.Reluctant) && !existingTags.Contains(CardTag.Reluctant))
             {
-                var inherent = LoadInherentEffect("ReluctantInherentEffect");
+                var inherent = LoadInherentEffect(EffectIds.ReluctantInherentEffect);
                 if (inherent != null) card.inherentEffects.Add(inherent);
             }
 

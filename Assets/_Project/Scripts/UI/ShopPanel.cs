@@ -240,7 +240,7 @@ namespace MutationChess.UI
 
                 if (icon == null && !string.IsNullOrEmpty(relic.relicName))
                 {
-                    icon = Resources.Load<Sprite>($"RelicsArt/{relic.relicName}");
+                    icon = Resources.Load<Sprite>($"{ResourcePaths.RelicsArt}/{relic.relicName}");
                 }
 
                 if (icon != null)
@@ -384,7 +384,7 @@ namespace MutationChess.UI
             if (shopDataService != null)
                 shopDataService.OnItemPurchased(item);
 
-            bool hasRestockTalisman = relicManager != null && relicManager.HasRelic("Shop_RestockTalisman");
+            bool hasRestockTalisman = relicManager != null && relicManager.HasRelic(RelicIds.Shop_RestockTalisman);
             if (!hasRestockTalisman)
             {
                 item.isSold = true;

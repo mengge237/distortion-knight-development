@@ -136,11 +136,11 @@ namespace MutationChess.Battle
         {
             if (playerImage == null) return;
 
-            Sprite playerSprite = Resources.Load<Sprite>("PlayerSprites/Player");
+            Sprite playerSprite = Resources.Load<Sprite>(ResourcePaths.PlayerSprites_Player);
 
             if (playerSprite == null)
             {
-                playerSprite = Resources.Load<Sprite>("Player");
+                playerSprite = Resources.Load<Sprite>(ResourcePaths.Player_player);
             }
 
             if (playerSprite != null)
@@ -967,7 +967,7 @@ namespace MutationChess.Battle
             if (mapGen == null || mapGen.CurrentNode == null) return 0f;
 
             int totalRows = 8;
-            var mapConfig = Resources.Load<Map.MapConfig>("MapConfig");
+            var mapConfig = Resources.Load<Map.MapConfig>(ResourcePaths.MapConfig);
             if (mapConfig != null)
                 totalRows = Mathf.Max(1, mapConfig.rows);
 
@@ -1047,7 +1047,7 @@ namespace MutationChess.Battle
             List<Card> cardRewards = GetRewardCardsForEnemy(enemyType);
 
             var relicMgrChk = RelicManager.Instance;
-            if (relicMgrChk != null && enemyType == EnemyType.Elite && relicMgrChk.HasRelic("Shop_TreasureChest"))
+            if (relicMgrChk != null && enemyType == EnemyType.Elite && relicMgrChk.HasRelic(RelicIds.Shop_TreasureChest))
             {
                 List<Card> extraCards = GetRewardCardsForEnemy(enemyType);
                 if (extraCards != null && extraCards.Count > 0)

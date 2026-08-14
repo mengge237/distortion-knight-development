@@ -176,9 +176,9 @@ namespace MutationChess.Map
         private List<Texture2D> LoadTexturesFromResources(NodeType type)
         {
             List<Texture2D> result = new List<Texture2D>();
-            string basePath = $"MapTextures/{type}";
+            string basePath = $"{ResourcePaths.MapTextures}/{type}";
 
-            Texture2D[] allInFolder = Resources.LoadAll<Texture2D>($"MapTextures/{type}");
+            Texture2D[] allInFolder = Resources.LoadAll<Texture2D>($"{ResourcePaths.MapTextures}/{type}");
             if (allInFolder != null && allInFolder.Length > 0)
             {
                 result.AddRange(allInFolder);

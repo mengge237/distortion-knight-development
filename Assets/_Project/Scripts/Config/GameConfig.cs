@@ -103,7 +103,7 @@ namespace MutationChess.Core
             {
                 if (_instance == null)
                 {
-                    _instance = Resources.Load<GameConfig>("GameConfig");
+                    _instance = Resources.Load<GameConfig>(ResourcePaths.GameConfig);
                     if (_instance == null)
                     {
                         _instance = CreateInstance<GameConfig>();

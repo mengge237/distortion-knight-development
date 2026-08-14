@@ -43,10 +43,11 @@ namespace MutationChess.Core
 
             if (recipes.Count == 0)
             {
+                // 默认配方：剑刃碎片 + 剑柄碎片 → 剑核（ID 与 RelicBalanceConfig 保持一致）
                 var recipe = new MergeRecipe
                 {
-                    materialRelicIds = new List<string> { "01", "06" },
-                    resultRelicId = "relic_sword_core"
+                    materialRelicIds = new List<string> { RelicIds.Synth_SwordShard, RelicIds.Synth_HiltShard },
+                    resultRelicId = RelicIds.Synth_SwordCore
                 };
                 recipes.Add(recipe);
             }
@@ -100,7 +101,7 @@ namespace MutationChess.Core
                 relicManager.RemoveRelic(materialId);
             }
 
-            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>("Relics");
+            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
             foreach (var asset in allAssets)
             {
                 if (asset.relicId == recipe.resultRelicId)

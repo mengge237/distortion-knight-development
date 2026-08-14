@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f33c7747e3b55a4cb2be1fe756cf661, type: 3}
+  m_Name: ShopConfig
+  m_EditorClassIdentifier: 
+  coloredCardCount:
+    min: 5
+    max: 5
+  colorlessCardCount:
+    min: 2
+    max: 2
+  commonCardPrice:
+    min: 40
+    max: 65
+  uncommonCardPrice:
+    min: 60
+    max: 95
+  rareCardPrice:
+    min: 120
+    max: 180
+  legendaryCardPrice:
+    min: 220
+    max: 320
+  colorlessCommonPrice:
+    min: 70
+    max: 100
+  colorlessUncommonPrice:
+    min: 100
+    max: 140
+  colorlessRarePrice:
+    min: 200
+    max: 280
+  colorlessLegendaryPrice:
+    min: 320
+    max: 450
+  attackCardRatio: 0.4
+  skillCardRatio: 0.4
+  powerCardRatio: 0.2
+  relicCount:
+    min: 3
+    max: 3
+  guaranteeShopRelic: 1
+  commonRelicPrice:
+    min: 130
+    max: 180
+  uncommonRelicPrice:
+    min: 220
+    max: 290
+  rareRelicPrice:
+    min: 260
+    max: 350
+  legendaryRelicPrice:
+    min: 280
+    max: 380
+  shopRelicPrice:
+    min: 130
+    max: 180
+  factionUnlockRelicPrice:
+    min: 300
+    max: 420
+  potionCount:
+    min: 3
+    max: 3
+  commonPotionPrice:
+    min: 40
+    max: 65
+  uncommonPotionPrice:
+    min: 65
+    max: 90
+  rarePotionPrice:
+    min: 85
+    max: 120
+  baseRemovalCost: 70
+  removalCostIncrease: 25
+  maxRemovalCost: 200
+  saleDiscount: 0.5
+  saleCardCount: 1
+  ascensionPriceMultiplier: 0.1

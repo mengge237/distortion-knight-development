@@ -523,7 +523,7 @@ namespace MutationChess.Core
         /// </summary>
         public List<RelicDataAsset> LoadAllRelicAssets()
         {
-            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>("Relics");
+            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
             var result = new List<RelicDataAsset>(allAssets);
             result.Sort((x, y) => string.Compare(x.relicName, y.relicName, System.StringComparison.OrdinalIgnoreCase));
             return result;
@@ -531,7 +531,7 @@ namespace MutationChess.Core
 
         public List<RelicDataAsset> LoadAllObtainableRelicAssets()
         {
-            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>("Relics");
+            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
             List<RelicDataAsset> result = new List<RelicDataAsset>();
 
             foreach (var asset in allAssets)
@@ -548,7 +548,7 @@ namespace MutationChess.Core
 
         public List<RelicDataAsset> LoadShopRelicAssets()
         {
-            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>("Relics");
+            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
             List<RelicDataAsset> result = new List<RelicDataAsset>();
 
             foreach (var asset in allAssets)
@@ -564,7 +564,7 @@ namespace MutationChess.Core
 
         public List<RelicDataAsset> LoadNonShopRelicAssets()
         {
-            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>("Relics");
+            RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
             List<RelicDataAsset> result = new List<RelicDataAsset>();
 
             foreach (var asset in allAssets)
@@ -620,7 +620,7 @@ namespace MutationChess.Core
 
                 if (relic.icon == null && !string.IsNullOrEmpty(asset.relicName))
                 {
-                    relic.icon = Resources.Load<Sprite>($"RelicsArt/{asset.relicName}");
+                    relic.icon = Resources.Load<Sprite>($"{ResourcePaths.RelicsArt}/{asset.relicName}");
                 }
 
                 if (relic.icon == null)
@@ -628,7 +628,7 @@ namespace MutationChess.Core
             }
             else if (!string.IsNullOrEmpty(asset.relicName))
             {
-                relic.icon = Resources.Load<Sprite>($"RelicsArt/{asset.relicName}");
+                relic.icon = Resources.Load<Sprite>($"{ResourcePaths.RelicsArt}/{asset.relicName}");
                 if (relic.icon == null)
                     GameLogger.LogWarning($"[RelicManager] 遗物图标加载失败：iconPath为空，尝试relicName={asset.relicName}");
             }
@@ -653,21 +653,13 @@ namespace MutationChess.Core
 
         private CardEffect LoadEffect(string effectId)
         {
-            string effectPath = $"Effects/{effectId}";
-            CardEffect loaded = Resources.Load<CardEffect>(effectPath);
-
-            if (loaded == null)
-                loaded = Resources.Load<CardEffect>($"CardEffects/{effectId}");
-
-            if (loaded == null)
-                loaded = Resources.Load<CardEffect>(effectId);
+            CardEffect loaded = Resources.Load<CardEffect>($"{ResourcePaths.Effects}/{effectId}");
 
             if (loaded == null)
             {
                 GameLogger.LogError(
-                    $"[RelicManager] effectId='{effectId}' " +
-                    $".asset Resources/Effects/{effectId} " +
-                    $"?? Resources/CardEffects/{effectId} ?? Resources/{effectId}"
+                    $"[RelicManager] effectId='{effectId}' 未找到：" +
+                    $"Resources/{ResourcePaths.Effects}/{effectId}.asset"
                 );
                 return null;
             }

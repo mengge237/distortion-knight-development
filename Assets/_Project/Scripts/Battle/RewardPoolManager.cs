@@ -19,7 +19,7 @@ namespace MutationChess.Battle
         public void LoadAllCards()
         {
             allCards.Clear();
-            CardDataAsset[] assets = Resources.LoadAll<CardDataAsset>("Cards");
+            CardDataAsset[] assets = Resources.LoadAll<CardDataAsset>(ResourcePaths.Cards);
             foreach (var asset in assets)
             {
                 allCards.Add(asset);

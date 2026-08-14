@@ -67,7 +67,7 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Starter_BurningHeart",
+                relicId = RelicIds.Starter_BurningHeart,
                 relicName = "燃烧之心",
                 rarity = RelicRarity.Starting,
                 faction = CardFaction.None,
@@ -88,7 +88,7 @@ namespace MutationChess.Core
             // --- 1. 鲜血 Boss 遗物 ---
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Boss_BloodVein",
+                relicId = RelicIds.Boss_BloodVein,
                 relicName = "鲜血脉络",
                 rarity = RelicRarity.Starting,
                 faction = CardFaction.Blood,
@@ -104,7 +104,7 @@ namespace MutationChess.Core
             // --- 2. 寒霜 Boss 遗物（新增补全） ---
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Boss_FrostHeart",
+                relicId = RelicIds.Boss_FrostHeart,
                 relicName = "寒霜之心",
                 rarity = RelicRarity.Starting,
                 faction = CardFaction.Frost,
@@ -121,7 +121,7 @@ namespace MutationChess.Core
             // --- 3. 腐化 Boss 遗物 ---
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Boss_CorruptLiver",
+                relicId = RelicIds.Boss_CorruptLiver,
                 relicName = "腐化肝脏",
                 rarity = RelicRarity.Starting,
                 faction = CardFaction.Corrupt,
@@ -138,7 +138,7 @@ namespace MutationChess.Core
             // --- 4. 粘液 Boss 遗物 ---
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Boss_SlimeGland",
+                relicId = RelicIds.Boss_SlimeGland,
                 relicName = "粘液腺体",
                 rarity = RelicRarity.Starting,
                 faction = CardFaction.Slime,
@@ -155,7 +155,7 @@ namespace MutationChess.Core
             // --- 5. 不舍 Boss 遗物（新增补全） ---
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Boss_ReluctantChain",
+                relicId = RelicIds.Boss_ReluctantChain,
                 relicName = "不舍锁链",
                 rarity = RelicRarity.Starting,
                 faction = CardFaction.Reluctant,
@@ -172,7 +172,7 @@ namespace MutationChess.Core
             // --- 6. 暗影 Boss 遗物（记忆晶状体+负面效果） ---
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Boss_MemoryLens",
+                relicId = RelicIds.Boss_MemoryLens,
                 relicName = "记忆晶状体",
                 rarity = RelicRarity.Starting,
                 faction = CardFaction.Shadow,
@@ -192,13 +192,13 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Blood_BloodCharm",
+                relicId = RelicIds.Blood_BloodCharm,
                 relicName = "血护符",
                 rarity = RelicRarity.Rare, // 稀有度调高：Common → Rare
                 faction = CardFaction.Blood,
                 designNotes = "基础：+8最大生命值【拥有鲜血脉络后：鲜血卡牌费用-1】",
                 price = 285,
-                hiddenActivatorRelicId = "Boss_BloodVein",
+                hiddenActivatorRelicId = RelicIds.Boss_BloodVein,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "MaxHealthSmallEffect", trigger = EffectTrigger.BattleStart, value1 = 8f }
@@ -211,13 +211,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Blood_VampireFang",
+                relicId = RelicIds.Blood_VampireFang,
                 relicName = "吸血獠牙",
                 rarity = RelicRarity.Common, // 稀有度调低：Rare → Common
                 faction = CardFaction.Blood,
                 designNotes = "基础：打出攻击牌回复1HP【拥有鲜血脉络后：回复量+1（共2HP）】",
                 price = 150,
-                hiddenActivatorRelicId = "Boss_BloodVein",
+                hiddenActivatorRelicId = RelicIds.Boss_BloodVein,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "AttackHeal1Effect", trigger = EffectTrigger.CardPlayed, value1 = 1f }
@@ -230,13 +230,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Blood_BloodPact",
+                relicId = RelicIds.Blood_BloodPact,
                 relicName = "血契",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.Blood,
                 designNotes = "基础：战斗开始永久+2力量【拥有鲜血脉络后：改为+3力量但-5最大生命】",
                 price = 300,
-                hiddenActivatorRelicId = "Boss_BloodVein",
+                hiddenActivatorRelicId = RelicIds.Boss_BloodVein,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "GainStrengthBattleStartEffect", trigger = EffectTrigger.BattleStart, value1 = 2f }
@@ -249,13 +249,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Blood_CrimsonAltar",
+                relicId = RelicIds.Blood_CrimsonAltar,
                 relicName = "血祭坛",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.Blood,
                 designNotes = "基础：战斗开始失3血获得2力量【拥有鲜血脉络后：失血-1（失2血获得3力量）】",
                 price = 285,
-                hiddenActivatorRelicId = "Boss_BloodVein",
+                hiddenActivatorRelicId = RelicIds.Boss_BloodVein,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "BloodAltarEffect", trigger = EffectTrigger.BattleStart }
@@ -271,13 +271,13 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Frost_IceCrystal",
+                relicId = RelicIds.Frost_IceCrystal,
                 relicName = "冰晶符",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.Frost,
                 designNotes = "基础：战斗开始获得5格挡【拥有寒霜之心后：格挡卡牌费用-1】",
                 price = 150,
-                hiddenActivatorRelicId = "Boss_FrostHeart",
+                hiddenActivatorRelicId = RelicIds.Boss_FrostHeart,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "ApplyBlockEffect", trigger = EffectTrigger.BattleStart, value1 = 5f }
@@ -290,13 +290,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Frost_Permafrost",
+                relicId = RelicIds.Frost_Permafrost,
                 relicName = "永冻土",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.Frost,
                 designNotes = "基础：战斗开始获得15格挡（一次性，非每回合）【拥有寒霜之心后：+10格挡】",
                 price = 285,
-                hiddenActivatorRelicId = "Boss_FrostHeart",
+                hiddenActivatorRelicId = RelicIds.Boss_FrostHeart,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "FrostPermafrostEffect", trigger = EffectTrigger.BattleStart }
@@ -309,7 +309,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Frost_FrostGiant",
+                relicId = RelicIds.Frost_FrostGiant,
                 relicName = "霜巨人",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.Frost,
@@ -324,13 +324,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Frost_Snowflake",
+                relicId = RelicIds.Frost_Snowflake,
                 relicName = "雪符",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.Frost,
                 designNotes = "基础：战斗开始获得10格挡【拥有寒霜之心后：敏捷+1】",
                 price = 150,
-                hiddenActivatorRelicId = "Boss_FrostHeart",
+                hiddenActivatorRelicId = RelicIds.Boss_FrostHeart,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "FrostSnowflakeEffect", trigger = EffectTrigger.BattleStart }
@@ -346,13 +346,13 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Corrupt_DarkTome",
+                relicId = RelicIds.Corrupt_DarkTome,
                 relicName = "暗法典",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.Corrupt,
                 designNotes = "基础：卡牌消耗时回复1点能量【拥有腐化肝脏后：额外抽1张牌】",
                 price = 150,
-                hiddenActivatorRelicId = "Boss_CorruptLiver",
+                hiddenActivatorRelicId = RelicIds.Boss_CorruptLiver,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "ExhaustEnergyEffect", trigger = EffectTrigger.CardExhausted }
@@ -365,13 +365,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Corrupt_Necronomicon",
+                relicId = RelicIds.Corrupt_Necronomicon,
                 relicName = "邪典遗书",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.Corrupt,
                 designNotes = "基础：卡牌消耗时抽1张牌【拥有腐化肝脏后：消耗时回复1能量】",
                 price = 350,
-                hiddenActivatorRelicId = "Boss_CorruptLiver",
+                hiddenActivatorRelicId = RelicIds.Boss_CorruptLiver,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "ExhaustDrawEffect", trigger = EffectTrigger.CardExhausted }
@@ -384,13 +384,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Corrupt_DeadBranch",
+                relicId = RelicIds.Corrupt_DeadBranch,
                 relicName = "枯枝",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.Corrupt,
                 designNotes = "基础：卡牌消耗时往牌堆加1张腐化卡【拥有腐化肝脏后：加2张】",
                 price = 285,
-                hiddenActivatorRelicId = "Boss_CorruptLiver",
+                hiddenActivatorRelicId = RelicIds.Boss_CorruptLiver,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "CorruptAddCardEffect", trigger = EffectTrigger.CardExhausted, value1 = 1f }
@@ -406,13 +406,13 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Slime_SlimeHeart",
+                relicId = RelicIds.Slime_SlimeHeart,
                 relicName = "粘液核",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.Slime,
                 designNotes = "基础：打出粘液牌时回复1点能量【拥有粘液腺体后：额外回复1格挡】",
                 price = 285,
-                hiddenActivatorRelicId = "Boss_SlimeGland",
+                hiddenActivatorRelicId = RelicIds.Boss_SlimeGland,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "SlimeEnergyEffect", trigger = EffectTrigger.CardPlayed }
@@ -425,13 +425,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Slime_AcidicCore",
+                relicId = RelicIds.Slime_AcidicCore,
                 relicName = "酸核",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.Slime,
                 designNotes = "基础：战斗开始对所有敌人施加3层虚弱+3层脆弱+3层易伤（3种debuff各持续3回合）【拥有粘液腺体后：改为各4层】",
                 price = 300,
-                hiddenActivatorRelicId = "Boss_SlimeGland",
+                hiddenActivatorRelicId = RelicIds.Boss_SlimeGland,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "AcidicCoreDebuff3StacksEffect", trigger = EffectTrigger.BattleStart, value1 = 3f }
@@ -444,13 +444,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Slime_StickyGlove",
+                relicId = RelicIds.Slime_StickyGlove,
                 relicName = "粘液手套",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.Slime,
                 designNotes = "基础：打出粘液牌施加1层虚弱【拥有粘液腺体后：虚弱+1】",
                 price = 150,
-                hiddenActivatorRelicId = "Boss_SlimeGland",
+                hiddenActivatorRelicId = RelicIds.Boss_SlimeGland,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "SlimeWeakEffect", trigger = EffectTrigger.CardPlayed, value1 = 1f }
@@ -466,13 +466,13 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Reluctant_EchoRing",
+                relicId = RelicIds.Reluctant_EchoRing,
                 relicName = "回响戒",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.Reluctant,
                 designNotes = "基础：打出不舍牌时抽1张牌【拥有不舍锁链后：额外+1抽牌】",
                 price = 285,
-                hiddenActivatorRelicId = "Boss_ReluctantChain",
+                hiddenActivatorRelicId = RelicIds.Boss_ReluctantChain,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "ReluctantBonusDrawEffect", trigger = EffectTrigger.CardPlayed, value1 = 1f }
@@ -485,13 +485,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Reluctant_Nostalgia",
+                relicId = RelicIds.Reluctant_Nostalgia,
                 relicName = "怀旧链",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.Reluctant,
                 designNotes = "基础：打出不舍牌时获得2格挡【拥有不舍锁链后：格挡+2（共4）】",
                 price = 150,
-                hiddenActivatorRelicId = "Boss_ReluctantChain",
+                hiddenActivatorRelicId = RelicIds.Boss_ReluctantChain,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "ReluctantBlockBonusEffect", trigger = EffectTrigger.CardPlayed, value1 = 2f }
@@ -507,13 +507,13 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shadow_Cloak",
+                relicId = RelicIds.Shadow_Cloak,
                 relicName = "暗影斗篷",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.Shadow,
                 designNotes = "基础：战斗开始获得10格挡【拥有记忆晶状体后：额外获得1敏捷】",
                 price = 150,
-                hiddenActivatorRelicId = "Boss_MemoryLens",
+                hiddenActivatorRelicId = RelicIds.Boss_MemoryLens,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "ApplyBlockEffect", trigger = EffectTrigger.BattleStart, value1 = 10f }
@@ -526,13 +526,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shadow_PhantomMask",
+                relicId = RelicIds.Shadow_PhantomMask,
                 relicName = "幻影面具",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.Shadow,
                 designNotes = "基础：打出5张牌后，本回合受到伤害-5（原25%概率闪避→计数触发）【拥有记忆晶状体后：减伤+3（共-8）】",
                 price = 285,
-                hiddenActivatorRelicId = "Boss_MemoryLens",
+                hiddenActivatorRelicId = RelicIds.Boss_MemoryLens,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "PhantomAfter5CardsEffect", trigger = EffectTrigger.AfterCardsPlayed, value1 = 5f }
@@ -545,13 +545,13 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shadow_AbyssGaze",
+                relicId = RelicIds.Shadow_AbyssGaze,
                 relicName = "深渊凝视",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.Shadow,
                 designNotes = "基础：打出4张攻击牌后，下一张攻击牌伤害翻倍（原15%暴击→计数触发）【拥有记忆晶状体后：改为3张攻击牌就触发】",
                 price = 320,
-                hiddenActivatorRelicId = "Boss_MemoryLens",
+                hiddenActivatorRelicId = RelicIds.Boss_MemoryLens,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "AbyssEvery4AttackEffect", trigger = EffectTrigger.CalculateAttackDamage, value1 = 4f }
@@ -567,7 +567,7 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_IronRing",
+                relicId = RelicIds.Generic_IronRing,
                 relicName = "铁戒指",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
@@ -581,7 +581,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_BronzeShield",
+                relicId = RelicIds.Generic_BronzeShield,
                 relicName = "铜盾",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
@@ -595,7 +595,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_LeatherArmor",
+                relicId = RelicIds.Generic_LeatherArmor,
                 relicName = "皮甲",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
@@ -609,7 +609,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_WarriorBelt",
+                relicId = RelicIds.Generic_WarriorBelt,
                 relicName = "战士腰带",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
@@ -623,7 +623,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_SwiftBoots",
+                relicId = RelicIds.Generic_SwiftBoots,
                 relicName = "疾行靴",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
@@ -637,7 +637,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_PowerPendant",
+                relicId = RelicIds.Generic_PowerPendant,
                 relicName = "力量坠饰",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
@@ -651,7 +651,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_IronWill",
+                relicId = RelicIds.Generic_IronWill,
                 relicName = "钢铁意志",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
@@ -665,7 +665,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_GoldenChalice",
+                relicId = RelicIds.Generic_GoldenChalice,
                 relicName = "金杯",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
@@ -679,7 +679,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_BattleStandard",
+                relicId = RelicIds.Generic_BattleStandard,
                 relicName = "战旗",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
@@ -693,7 +693,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_PhoenixFeather",
+                relicId = RelicIds.Generic_PhoenixFeather,
                 relicName = "凤凰羽毛",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
@@ -707,7 +707,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_TitanHeart",
+                relicId = RelicIds.Generic_TitanHeart,
                 relicName = "泰坦核",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
@@ -721,7 +721,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_EternalFlame",
+                relicId = RelicIds.Generic_EternalFlame,
                 relicName = "永焰",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
@@ -738,7 +738,7 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Combo_ResonanceStone",
+                relicId = RelicIds.Combo_ResonanceStone,
                 relicName = "共鸣石",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
@@ -752,7 +752,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Combo_ChessMaster",
+                relicId = RelicIds.Combo_ChessMaster,
                 relicName = "棋王冠",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
@@ -770,7 +770,7 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shop_EnergyCore",
+                relicId = RelicIds.Shop_EnergyCore,
                 relicName = "能核",
                 rarity = RelicRarity.Legendary, // 稀有度调高：Rare → Legendary
                 faction = CardFaction.None,
@@ -785,7 +785,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shop_DrawingPad",
+                relicId = RelicIds.Shop_DrawingPad,
                 relicName = "画板",
                 rarity = RelicRarity.Legendary, // 稀有度调高：Rare → Legendary
                 faction = CardFaction.None,
@@ -800,7 +800,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shop_TreasureChest",
+                relicId = RelicIds.Shop_TreasureChest,
                 relicName = "宝箱",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
@@ -815,7 +815,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shop_GoldenIdol",
+                relicId = RelicIds.Shop_GoldenIdol,
                 relicName = "金像",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
@@ -830,7 +830,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Shop_RestockTalisman",
+                relicId = RelicIds.Shop_RestockTalisman,
                 relicName = "补货符",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
@@ -848,7 +848,7 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Synth_SwordShard",
+                relicId = RelicIds.Synth_SwordShard,
                 relicName = "剑碎片",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
@@ -863,7 +863,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Synth_HiltShard",
+                relicId = RelicIds.Synth_HiltShard,
                 relicName = "剑柄碎片",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
@@ -878,7 +878,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Synth_SwordCore",
+                relicId = RelicIds.Synth_SwordCore,
                 relicName = "剑核",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
@@ -896,7 +896,7 @@ namespace MutationChess.Core
             // ============================================================
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_PiggyBank",
+                relicId = RelicIds.Generic_PiggyBank,
                 relicName = "储蓄罐",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
@@ -910,7 +910,7 @@ namespace MutationChess.Core
 
             config.entries.Add(new RelicBalanceEntry
             {
-                relicId = "Generic_VictorySword",
+                relicId = RelicIds.Generic_VictorySword,
                 relicName = "胜利誓约剑",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,

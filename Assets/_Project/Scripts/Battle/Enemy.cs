@@ -61,7 +61,7 @@ namespace MutationChess.Battle
             // 2. 回退：EnemySprites 根目录 + spriteName
             if (enemySprite == null)
             {
-                enemySprite = Resources.Load<Sprite>($"EnemySprites/{data.spriteName}");
+                enemySprite = Resources.Load<Sprite>($"{ResourcePaths.EnemySprites}/{data.spriteName}");
             }
 
             // 3. 回退：按类型文件夹 + enemyName 加载（覆盖 spriteName 与文件名不一致的情况）
@@ -73,7 +73,7 @@ namespace MutationChess.Battle
             // 4. 回退：EnemySprites 根目录 + enemyName
             if (enemySprite == null && !string.IsNullOrEmpty(enemyName))
             {
-                enemySprite = Resources.Load<Sprite>($"EnemySprites/{enemyName}");
+                enemySprite = Resources.Load<Sprite>($"{ResourcePaths.EnemySprites}/{enemyName}");
             }
 
             if (enemySprite == null)
@@ -110,7 +110,7 @@ namespace MutationChess.Battle
 
                 if (newSprite == null)
                 {
-                    newSprite = Resources.Load<Sprite>($"EnemySprites/{secondFormSpriteName}");
+                    newSprite = Resources.Load<Sprite>($"{ResourcePaths.EnemySprites}/{secondFormSpriteName}");
                 }
 
                 if (newSprite != null)

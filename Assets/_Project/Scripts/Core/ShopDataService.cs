@@ -109,7 +109,7 @@ namespace MutationChess.Core
         {
             if (config == null)
             {
-                config = Resources.Load<ShopConfig>("ShopConfig");
+                config = Resources.Load<ShopConfig>(ResourcePaths.ShopConfig);
                 if (config == null)
                     GameLogger.LogWarning("[ShopDataService] ShopConfig not found, please create Resources/ShopConfig.asset");
             }
@@ -398,7 +398,7 @@ namespace MutationChess.Core
         {
             if (potionAssetCache != null) return potionAssetCache;
 
-            PotionDataAsset[] allAssets = Resources.LoadAll<PotionDataAsset>("Potions");
+            PotionDataAsset[] allAssets = Resources.LoadAll<PotionDataAsset>(ResourcePaths.Potions);
             potionAssetCache = new List<PotionDataAsset>(allAssets);
             return potionAssetCache;
         }
@@ -441,16 +441,7 @@ namespace MutationChess.Core
 
         private CardEffect LoadPotionEffect(string effectId)
         {
-            string effectPath = $"Effects/{effectId}";
-            CardEffect effect = Resources.Load<CardEffect>(effectPath);
-
-            if (effect == null)
-                effect = Resources.Load<CardEffect>($"CardEffects/{effectId}");
-
-            if (effect == null)
-                effect = Resources.Load<CardEffect>(effectId);
-
-            return effect;
+            return Resources.Load<CardEffect>($"{ResourcePaths.Effects}/{effectId}");
         }
 
         private ShopItem GenerateCardRemoval()
