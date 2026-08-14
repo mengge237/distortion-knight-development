@@ -10,7 +10,9 @@ namespace MutationChess.UI
     /// <summary>
     /// 商店面板——模仿杀戮尖塔（StS）商店布局：
     /// 遗物一排居中在顶部、药水在右上角、卡牌一排居中、移除服务在左下角、离开按钮在右下角。
-    /// 槽位预制体缺失时在运行时自动构建（无场景接线也能完整工作）。
+    /// 场景接线（MainScene）与代码双重驱动：场景提供 CardRow/PotionRow/RemovalRow 容器、
+    /// 移除费用文本与三种槽位预制体（Prefabs/Shop/）；代码负责布局统一、内容填充与交互。
+    /// 场景接线缺失时全部回退到运行时自动构建，无场景接线也能完整工作。
     /// 先模仿 StS，后续再迭代自有风格。
     /// </summary>
     public class ShopPanel : MonoBehaviour
@@ -66,6 +68,18 @@ namespace MutationChess.UI
                 if (_chineseFont == null)
                     _chineseFont = Font.CreateDynamicFontFromOSFont(new[] { "Microsoft YaHei", "SimHei", "SimSun" }, 16);
                 return _chineseFont;
+            }
+        }
+
+        // 场景文本统一使用的 TMP 中文字体（SIMSUN SDF，位于 TMP 插件 Resources 目录，运行时可直接加载）
+        private static TMP_FontAsset _tmpChineseFont;
+        private static TMP_FontAsset TmpChineseFont
+        {
+            get
+            {
+                if (_tmpChineseFont == null)
+                    _tmpChineseFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+                return _tmpChineseFont;
             }
         }
 
@@ -229,19 +243,8 @@ namespace MutationChess.UI
             GameObject slotObj = Instantiate(prefab, container);
             SetupSlotBase(slotObj, item, card.cardName);
 
-            TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
-            if (nameText != null)
-                nameText.text = card.cardName;
-            Text legacyName = slotObj.transform.Find("Name")?.GetComponent<Text>();
-            if (legacyName != null)
-                legacyName.text = card.cardName;
-
-            TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
-            if (descText != null)
-                descText.text = card.GetDescription();
-            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
-            if (legacyDesc != null)
-                legacyDesc.text = card.GetDescription();
+            SetSlotText(slotObj.transform, "Name", card.cardName);
+            SetSlotText(slotObj.transform, "Description", card.GetDescription());
 
             Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImage != null)
@@ -270,19 +273,8 @@ namespace MutationChess.UI
             GameObject slotObj = Instantiate(prefab, container);
             SetupSlotBase(slotObj, item, relic.relicName);
 
-            TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
-            if (nameText != null)
-                nameText.text = $"{relic.relicName} ({relic.GetRarityName()})";
-            Text legacyName = slotObj.transform.Find("Name")?.GetComponent<Text>();
-            if (legacyName != null)
-                legacyName.text = $"{relic.relicName} ({relic.GetRarityName()})";
-
-            TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
-            if (descText != null)
-                descText.text = relic.description;
-            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
-            if (legacyDesc != null)
-                legacyDesc.text = relic.description;
+            SetSlotText(slotObj.transform, "Name", $"{relic.relicName} ({relic.GetRarityName()})");
+            SetSlotText(slotObj.transform, "Description", relic.description);
 
             Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImage != null)
@@ -321,19 +313,8 @@ namespace MutationChess.UI
             GameObject slotObj = Instantiate(prefab, container);
             SetupSlotBase(slotObj, item, potion.potionName);
 
-            TMP_Text nameText = slotObj.transform.Find("Name")?.GetComponent<TMP_Text>();
-            if (nameText != null)
-                nameText.text = $"{potion.potionName} ({potion.GetRarityName()})";
-            Text legacyName = slotObj.transform.Find("Name")?.GetComponent<Text>();
-            if (legacyName != null)
-                legacyName.text = $"{potion.potionName} ({potion.GetRarityName()})";
-
-            TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
-            if (descText != null)
-                descText.text = potion.description;
-            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
-            if (legacyDesc != null)
-                legacyDesc.text = potion.description;
+            SetSlotText(slotObj.transform, "Name", $"{potion.potionName} ({potion.GetRarityName()})");
+            SetSlotText(slotObj.transform, "Description", potion.description);
 
             Image iconImage = slotObj.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImage != null)
@@ -359,12 +340,7 @@ namespace MutationChess.UI
             GameObject slotObj = Instantiate(prefab, container);
             SetupSlotBase(slotObj, item, "移除卡牌");
 
-            TMP_Text descText = slotObj.transform.Find("Description")?.GetComponent<TMP_Text>();
-            if (descText != null)
-                descText.text = "从牌组中永久移除一张卡牌";
-            Text legacyDesc = slotObj.transform.Find("Description")?.GetComponent<Text>();
-            if (legacyDesc != null)
-                legacyDesc.text = "从牌组中永久移除一张卡牌";
+            SetSlotText(slotObj.transform, "Description", "从牌组中永久移除一张卡牌");
         }
 
         private void SetupSlotBase(GameObject slotObj, ShopItem item, string slotName)
@@ -374,12 +350,7 @@ namespace MutationChess.UI
 
             string priceStr = item.isOnSale ? $"特价 {item.finalPrice} G" : $"{item.finalPrice} G";
 
-            TMP_Text priceText = slotObj.transform.Find("Price")?.GetComponent<TMP_Text>();
-            if (priceText != null)
-                priceText.text = priceStr;
-            Text legacyPrice = slotObj.transform.Find("Price")?.GetComponent<Text>();
-            if (legacyPrice != null)
-                legacyPrice.text = priceStr;
+            SetSlotText(slotObj.transform, "Price", priceStr);
 
             Button buyButton = slotObj.transform.Find("BuyButton")?.GetComponent<Button>();
             if (buyButton != null)
@@ -607,18 +578,8 @@ namespace MutationChess.UI
             if (buyButton != null)
                 buyButton.interactable = false;
 
-            TMP_Text priceText = slot.transform.Find("Price")?.GetComponent<TMP_Text>();
-            if (priceText != null)
-            {
-                priceText.text = "已售出";
-                priceText.color = new Color(0.5f, 0.5f, 0.5f);
-            }
-            Text legacyPrice = slot.transform.Find("Price")?.GetComponent<Text>();
-            if (legacyPrice != null)
-            {
-                legacyPrice.text = "已售出";
-                legacyPrice.color = new Color(0.5f, 0.5f, 0.5f);
-            }
+            SetSlotText(slot.transform, "Price", "已售出");
+            SetSlotTextColor(slot.transform, "Price", new Color(0.5f, 0.5f, 0.5f));
         }
 
         /// <summary>根据当前金币刷新所有商品的买得起/买不起配色</summary>
@@ -635,10 +596,7 @@ namespace MutationChess.UI
                     ? new Color(1f, 0.5f, 0.45f)
                     : (kv.Key.isOnSale ? new Color(1f, 0.83f, 0.35f) : Color.white);
 
-                TMP_Text tmp = kv.Value.transform.Find("Price")?.GetComponent<TMP_Text>();
-                if (tmp != null) tmp.color = target;
-                Text legacy = kv.Value.transform.Find("Price")?.GetComponent<Text>();
-                if (legacy != null) legacy.color = target;
+                SetSlotTextColor(kv.Value.transform, "Price", target);
             }
         }
 
@@ -757,9 +715,35 @@ namespace MutationChess.UI
         {
             var parent = panelRoot != null ? (RectTransform)panelRoot.transform : (RectTransform)transform;
 
-            if (cardContainer == null) cardContainer = CreateChild("CardRow", parent, new Vector2(1500, 370), Vector2.zero);
-            if (potionContainer == null) potionContainer = CreateChild("PotionRow", parent, new Vector2(400, 170), Vector2.zero);
-            if (removalContainer == null) removalContainer = CreateChild("RemovalRow", parent, new Vector2(440, 160), Vector2.zero);
+            if (cardContainer == null)
+            {
+                cardContainer = CreateChild("CardRow", parent, new Vector2(1500, 370), Vector2.zero);
+                AddContainerBackground(cardContainer);
+            }
+            if (potionContainer == null)
+            {
+                potionContainer = CreateChild("PotionRow", parent, new Vector2(400, 170), Vector2.zero);
+                AddContainerBackground(potionContainer);
+            }
+            if (removalContainer == null)
+            {
+                removalContainer = CreateChild("RemovalRow", parent, new Vector2(440, 160), Vector2.zero);
+                AddContainerBackground(removalContainer);
+            }
+
+            // 移除费用提示：场景未接线时在金币文本左侧运行时创建（TMP 字体与场景一致）
+            if (removalInfoText == null)
+            {
+                var rt = CreateChild("RemovalInfo", parent, new Vector2(320, 40), Vector2.zero);
+                rt.anchoredPosition = new Vector2(-270, 230);
+                var tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
+                tmp.font = TmpChineseFont;
+                tmp.fontSize = 20;
+                tmp.alignment = TextAlignmentOptions.MidlineLeft;
+                tmp.color = new Color(0.85f, 0.8f, 0.7f);
+                tmp.raycastTarget = false;
+                removalInfoText = tmp;
+            }
 
             // 遗物：顶部居中一排（StS 遗物区在商店顶部）
             PlaceHorizontalRow(relicContainer, new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(1100, 180));
@@ -782,10 +766,7 @@ namespace MutationChess.UI
                     rt.anchoredPosition = new Vector2(-160, 140);
                     rt.sizeDelta = new Vector2(240, 90);
                 }
-                var tmpLabel = closeButton.GetComponentInChildren<TMP_Text>(true);
-                if (tmpLabel != null) tmpLabel.text = "离开";
-                var legacyLabel = closeButton.GetComponentInChildren<Text>(true);
-                if (legacyLabel != null) legacyLabel.text = "离开";
+                SetSlotText(closeButton.transform, "Text (TMP)", "离开");
             }
         }
 
@@ -849,6 +830,58 @@ namespace MutationChess.UI
             t.verticalOverflow = VerticalWrapMode.Overflow;
             t.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
             t.raycastTarget = false;
+        }
+
+        /// <summary>
+        /// 给槽位子文本赋值（按子物体名查找）：同时兼容场景接线用的 TMP_Text
+        /// 与运行时构建用的旧版 UnityEngine.UI.Text。
+        /// </summary>
+        private static void SetSlotText(Transform slotRoot, string childName, string value)
+        {
+            Transform child = slotRoot.Find(childName);
+            if (child == null) return;
+
+            TMP_Text tmp = child.GetComponent<TMP_Text>();
+            if (tmp != null)
+            {
+                tmp.text = value;
+                return;
+            }
+
+            Text legacy = child.GetComponent<Text>();
+            if (legacy != null)
+                legacy.text = value;
+        }
+
+        /// <summary>给槽位子文本设置颜色（TMP 与旧版 Text 通用）。</summary>
+        private static void SetSlotTextColor(Transform slotRoot, string childName, Color color)
+        {
+            Transform child = slotRoot.Find(childName);
+            if (child == null) return;
+
+            TMP_Text tmp = child.GetComponent<TMP_Text>();
+            if (tmp != null)
+            {
+                tmp.color = color;
+                return;
+            }
+
+            Text legacy = child.GetComponent<Text>();
+            if (legacy != null)
+                legacy.color = color;
+        }
+
+        /// <summary>给容器补半透明深色背景（已有背景组件则跳过），统一四排观感。</summary>
+        private static void AddContainerBackground(Transform container)
+        {
+            if (container == null) return;
+            Image img = container.GetComponent<Image>();
+            if (img == null)
+            {
+                img = container.gameObject.AddComponent<Image>();
+                img.raycastTarget = false;
+            }
+            img.color = new Color(0.05f, 0.04f, 0.03f, 0.55f);
         }
 
         /// <summary>运行时构建卡牌槽位：插画 + 名称 + 描述 + 价格 + 购买按钮</summary>
