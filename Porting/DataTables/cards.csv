@@ -1,4 +1,4 @@
-﻿Name,CardType,Rarity,Faction,Cost,Damage,Block,MagicNumber,Exhaust,Tags,Description,EffectIds,InherentEffectIds,IsColorless,IsFactionLocked,CardArtPath
+Name,CardType,Rarity,Faction,Cost,Damage,Block,MagicNumber,Exhaust,Tags,Description,EffectIds,InherentEffectIds,IsColorless,IsFactionLocked,CardArtPath
 不舍之盾,Skill,Basic,Frost,1,0,6,0,0,2,获得6点格挡。固有：不舍,ApplyBlockEffect,ReluctantInherentEffect,0,1,CardArt/不舍之盾
 回响打击,Attack,Basic,Frost,1,7,0,0,0,2,造成7点伤害。固有：不舍,DealDamageEffect,ReluctantInherentEffect,0,1,CardArt/回响打击
 执念,Power,Common,Frost,1,0,0,2,0,2,获得2点临时力量。固有：不舍,ApplyTemporaryStrengthEffect,ReluctantInherentEffect,0,1,CardArt/执念

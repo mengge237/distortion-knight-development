@@ -1,7 +1,6 @@
+# 全项目文件编码规范：UTF-8 无 BOM（VS / VS Code / Rider 自动遵循）
+# 配套校验工具：Porting/normalize_encoding.py
 root = true
 
-[*.cs]
+[*]
 charset = utf-8
-end_of_line = crlf
-insert_final_newline = true
-trim_trailing_whitespace = false

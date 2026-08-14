@@ -1,4 +1,4 @@
-﻿RelicId,RelicName,Rarity,Faction,Price,IsShopRelic,IsBossRelic,IsStartingRelic,IsSynthesisTarget,HiddenActivatorRelicId,BaseEffectsJson,HiddenEffectsJson
+RelicId,RelicName,Rarity,Faction,Price,IsShopRelic,IsBossRelic,IsStartingRelic,IsSynthesisTarget,HiddenActivatorRelicId,BaseEffectsJson,HiddenEffectsJson
 Starter_BurningHeart,燃烧之心,Starting,None,0,0,0,1,0,,[],
 Boss_BloodVein,鲜血脉络,Starting,Blood,350,0,1,0,0,,[],
 Boss_FrostHeart,寒霜之心,Starting,Frost,350,0,1,0,0,,[],

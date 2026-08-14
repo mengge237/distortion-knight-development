@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Derived from Unity package
  * https://docs.unity3d.com/Packages/com.unity.editorcoroutines@0.0/api/Unity.EditorCoroutines.Editor.html
  */

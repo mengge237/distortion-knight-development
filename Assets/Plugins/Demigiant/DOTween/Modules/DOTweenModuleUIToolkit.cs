@@ -1,4 +1,4 @@
-﻿// Author: Daniele Giardini - http://www.demigiant.com
+// Author: Daniele Giardini - http://www.demigiant.com
 // Created: 2026/01/08
 
 #if DOTWEEN_UITOOLKIT && UNITY_2021_3_OR_NEWER // MODULE_MARKER

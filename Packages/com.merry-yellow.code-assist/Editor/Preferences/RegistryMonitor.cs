@@ -1,4 +1,4 @@
-﻿
+
 /*
  * Thanks to gr0ss for the inspiration.
  * 

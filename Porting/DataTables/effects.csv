@@ -1,4 +1,4 @@
-﻿Name,EffectClass,Description,ParamsJson
+Name,EffectClass,Description,ParamsJson
 AbyssEvery4AttackEffect,AbyssEvery4AttackEffect,"每4次攻击伤害翻倍(阈值4,倍数2)","{""threshold"": ""4"", ""dmgMultiplier"": ""2""}"
 AbyssReduceThresholdEffect,AbyssReduceThresholdEffect,,"{""reduce"": ""1""}"
 AcidicCoreBoostedEffect,AcidicCoreBoostedEffect,,"{""extraStacks"": ""1""}"

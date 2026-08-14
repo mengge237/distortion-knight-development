@@ -1,4 +1,4 @@
-﻿namespace MutationChess.Map
+namespace MutationChess.Map
 {
     public enum NodeType
     {

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 #if DOTWEEN_EPO || EPO_DOTWEEN // MODULE_MARKER
 

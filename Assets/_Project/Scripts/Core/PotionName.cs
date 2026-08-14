@@ -1,4 +1,4 @@
-﻿namespace MutationChess.Core
+namespace MutationChess.Core
 {
     /// <summary>
     /// 药水名称枚举。

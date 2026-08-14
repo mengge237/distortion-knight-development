@@ -1,4 +1,4 @@
-﻿namespace MutationChess.Core
+namespace MutationChess.Core
 {
     public enum CardName
     {

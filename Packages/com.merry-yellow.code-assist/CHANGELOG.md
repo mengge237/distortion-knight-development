@@ -178,7 +178,7 @@ List of new features, bug fixes and improvements
 * New gpt provider: Google Gemini, can be used as an alternative to OpenAI ChatGPT
 * New feature: CodeLens2Gpt. Can request gpt queries from the CodeLens of methods and classes
 * New feature: Context aware gpt, gpt prompts are embedded with Unity, scene and object information
-* New feature: Package, asset has relocated under Packages directory (from Assets directýry), along with Unity setup menu items
+* New feature: Package, asset has relocated under Packages directory (from Assets directé½¬y), along with Unity setup menu items
 * New code completions: Animation and Animator classes and Invoke/Coroutine/Broadcast methods can be auto completed
 * New inline visuals: Animation and Animator classes can display inline information
 
