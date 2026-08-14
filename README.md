@@ -29,6 +29,16 @@
 3. Unity Hub → Add project from disk → 选择仓库根目录
 4. 打开场景 `Assets/_Project/Scenes/MainScene.unity`
 
+## AI/MCP 集成（Claude Code 操作 Unity）
+
+项目内置 [MCP for Unity](https://github.com/CoplayDev/unity-mcp)，Claude Code 可经由 MCP 直接操控 Unity 编辑器（改场景/资产、执行菜单命令、运行 C# 等）：
+
+1. 前置依赖：Python 3.11+ 与 [uv](https://docs.astral.sh/uv/)（首次导入时向导会引导安装）
+2. Unity 打开项目 → 自动解析 `Packages/manifest.json` 中的 `com.coplaydev.unity-mcp` → 弹设置向导确认 Python/uv → Done
+3. 日常使用：`Window → MCP for Unity → Start Server`（状态面板显示 Connected，监听 `http://localhost:8080/mcp`）
+4. Claude Code 通过根目录 `.mcp.json` 连接；**重启会话或 `/mcp` 重连**后 MCP 工具生效
+5. Unity 未启动时 MCP 工具不可用，Claude 会退回直接修改文件的方式
+
 ## 调试台
 
 - 按键 `~` 或 `F1` 开关，含卡牌 / 遗物 / 战斗 / 玩家 / 地图 / 日志六个页面，全中文界面
