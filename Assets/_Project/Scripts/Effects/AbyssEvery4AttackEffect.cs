@@ -18,23 +18,18 @@ namespace MutationChess.Core
         {
             if (context == null) return;
 
-            if (context.trigger == EffectTrigger.CardPlayed)
-            {
-                Card playedCard = context.tag as Card;
-                if (playedCard != null && playedCard.cardType == CardType.Attack)
-                {
-                    ConversionModifier.AttackCardsPlayedThisBattle += Mathf.RoundToInt(context.floatValue > 0 ? context.floatValue : 1);
-                }
-                return;
-            }
-
+            // AttackCardsPlayedThisBattle 已由 Card.ExecuteEffects 统一计数，这里只做取模判定
             if (context.trigger != EffectTrigger.CalculateAttackDamage) return;
 
             int effectiveThreshold = threshold - (ConversionModifier.BossMemoryLensActive ? 1 : 0) - ConversionModifier.AbyssThresholdReduction;
-            if (ConversionModifier.AttackCardsPlayedThisBattle < effectiveThreshold) return;
+            effectiveThreshold = Mathf.Max(1, effectiveThreshold);
+
+            // 第 threshold 次、2*threshold 次……攻击时翻倍（取模消耗计数）
+            int attacks = ConversionModifier.AttackCardsPlayedThisBattle;
+            if (attacks <= 0 || attacks % effectiveThreshold != 0) return;
 
             context.finalValue = Mathf.RoundToInt(context.baseValue * dmgMultiplier);
-            GameLogger.Log($"[AbyssEvery4Attack] 阈值 {effectiveThreshold} 触发，伤害倍率 {dmgMultiplier}：{context.baseValue} -> {context.finalValue}");
+            GameLogger.Log($"[AbyssEvery4Attack] 第 {attacks} 次攻击触发，伤害倍率 {dmgMultiplier}：{context.baseValue} -> {context.finalValue}");
         }
     }
 }

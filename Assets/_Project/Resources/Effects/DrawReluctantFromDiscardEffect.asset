@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a4eb6b7e6f45b54d8f18eb81a001fef, type: 3}
+  m_Name: DrawReluctantFromDiscardEffect
+  m_EditorClassIdentifier: 
+  effectDescription: "\u4ECE\u5F03\u724C\u5806\u56DE\u6536\u4E0D\u820D\u724C"
+  drawCount: 1

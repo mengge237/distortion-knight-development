@@ -295,7 +295,7 @@ namespace MutationChess.Core
 
             if (nonShopAssets.Count == 0 && shopAssets.Count == 0)
             {
-                GameLogger.Log("[ShopDataService] ");
+                GameLogger.Log("[ShopDataService] 遗物池已耗尽，重置已见遗物列表");
                 seenRelicIds.Clear();
                 nonShopAssets = relicManager.LoadNonShopRelicAssets()
                     .Where(a => !relicManager.HasRelic(a.relicId))
@@ -426,7 +426,7 @@ namespace MutationChess.Core
                     }
                     else
                     {
-                        GameLogger.LogWarning($"[ShopDataService] : {effectId}");
+                        GameLogger.LogWarning($"[ShopDataService] 药水效果加载失败：{effectId}");
                     }
                 }
             }

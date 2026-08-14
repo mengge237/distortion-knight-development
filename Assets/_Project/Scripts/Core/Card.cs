@@ -100,7 +100,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
+        /// 检查卡牌是否拥有指定标签
         /// </summary>
         public bool HasTag(CardTag tag)
         {
@@ -109,7 +109,7 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
+        /// 添加卡牌标签
         /// </summary>
         public void AddTag(CardTag tag)
         {
@@ -119,25 +119,23 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
+        /// 是否使用鲜血转换
         /// </summary>
         public bool UsesBloodConversion => bloodPerEnergy > 0 || ConversionModifier.BloodConversionForAll;
 
         /// <summary>
-        ///
+        /// 是否使用格挡转换
         /// </summary>
         public bool UsesBlockConversion => blockPerEnergy > 0 || ConversionModifier.BlockConversionForAll;
 
         /// <summary>
-        ///
+        /// 是否使用特殊费用
         /// </summary>
         public bool UsesSpecialCost => UsesBloodConversion || UsesBlockConversion;
 
         /// <summary>
-        ///
-        ///
-        /// ConversionModifier / 
-        /// effectiveCost 
+        /// 计算鲜血转换费用
+        /// ConversionModifier 修正比率，effectiveCost 指定有效费用
         /// </summary>
         public int CalculateBloodCost(int currentEnergy, int? effectiveCost = null)
         {
@@ -150,10 +148,8 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
-        ///
-        /// ConversionModifier / 
-        /// effectiveCost 
+        /// 计算格挡转换费用
+        /// ConversionModifier 修正比率，effectiveCost 指定有效费用
         /// </summary>
         public int CalculateBlockCost(int currentEnergy, int? effectiveCost = null)
         {
@@ -166,10 +162,8 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
-        ///
-        /// 
-        /// effectiveCost 
+        /// 计算混合转换费用（鲜血+格挡）
+        /// effectiveCost 指定有效费用
         /// </summary>
         public (int bloodCost, int blockCost) CalculateMixedConversionCosts(
             int currentEnergy, int currentHealth, int currentBlock, int? effectiveCost = null)
@@ -188,7 +182,7 @@ namespace MutationChess.Core
 
             int remainingShortfall = energyShortfall;
 
-            //
+            // 优先用鲜血转换
             if (UsesBloodConversion && remainingShortfall > 0)
             {
                 int maxBloodEnergy = remainingShortfall;
@@ -202,7 +196,7 @@ namespace MutationChess.Core
                 remainingShortfall -= maxBloodEnergy;
             }
 
-            //
+            // 再用格挡转换
             if (UsesBlockConversion && remainingShortfall > 0)
             {
                 int blockNeeded = remainingShortfall * effectiveBlockRate;
@@ -217,9 +211,8 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        ///
-        ///
-        /// effectiveCost 
+        /// 检查是否能用混合转换支付
+        /// effectiveCost 指定有效费用
         /// </summary>
         public bool CanPayWithMixedConversion(
             int currentEnergy, int currentHealth, int currentBlock, int? effectiveCost = null)
@@ -235,14 +228,14 @@ namespace MutationChess.Core
 
             int remainingShortfall = energyShortfall;
 
-            //
+            // 鲜血转换
             if (UsesBloodConversion && remainingShortfall > 0)
             {
                 int maxBloodEnergy = Mathf.Min(remainingShortfall, currentHealth / effectiveBloodRate);
                 remainingShortfall -= maxBloodEnergy;
             }
 
-            //
+            // 格挡转换
             if (UsesBlockConversion && remainingShortfall > 0)
             {
                 int maxBlockEnergy = currentBlock / effectiveBlockRate;
@@ -404,6 +397,13 @@ namespace MutationChess.Core
         }
 
         public bool HasFaction() => faction != CardFaction.None;
+
+        /// <summary>
+        /// 本卡在手中时最后一次记录的手牌索引（出牌前由 HandManager 写入）。
+        /// 供移除出牌后的相邻牌判定（史莱姆系列效果）使用。
+        /// </summary>
+        [System.NonSerialized]
+        public int lastHandIndex = -1;
 
         public void ExecuteEffects(CombatContext context)
         {

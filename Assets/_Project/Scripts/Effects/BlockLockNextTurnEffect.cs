@@ -28,6 +28,12 @@ namespace MutationChess.Core
         [System.NonSerialized]
         private System.Action<EffectContext> turnEndHandlerRef;
 
+        [System.NonSerialized]
+        private bool skipFirstDecrement = false;
+
+        [System.NonSerialized]
+        private bool battleResetHookRegistered = false;
+
         public override void Execute(CombatContext context)
         {
             ApplyBlockLock(context?.battleManager);
@@ -40,6 +46,14 @@ namespace MutationChess.Core
 
         private void ApplyBlockLock(BattleManager battleManager)
         {
+            var effectManager = EffectManager.Instance;
+            if (effectManager == null)
+            {
+                // 先判空再置 isActive，避免 EffectManager 缺失时陷入"已激活但未注册"的卡死状态
+                GameLogger.LogWarning("[BlockLock] EffectManager 为空");
+                return;
+            }
+
             if (isActive)
             {
                 remainingTurns = Mathf.Max(remainingTurns, duration);
@@ -47,16 +61,7 @@ namespace MutationChess.Core
                 return;
             }
 
-            isActive = true;
-            remainingTurns = duration;
-
-            var effectManager = EffectManager.Instance;
-            if (effectManager == null)
-            {
-                GameLogger.LogWarning("[BlockLock] EffectManager 为空");
-                return;
-            }
-
+            EnsureBattleResetHook(effectManager);
 
             modifierRef = (ctx, baseValue) =>
             {
@@ -71,6 +76,11 @@ namespace MutationChess.Core
             turnEndHandlerRef = (ctx) => OnTurnEnd();
             effectManager.Register(EffectTrigger.PlayerTurnEnd, turnEndHandlerRef);
 
+            isActive = true;
+            remainingTurns = duration;
+            // 激活当回合的 PlayerTurnEnd 不消耗持续时间，否则锁在生效前就提前过期
+            skipFirstDecrement = true;
+
             GameLogger.Log($"[BlockLock] 玩家被施加封印，{remainingTurns}回合内无法获得格挡");
 
             if (battleManager != null)
@@ -78,11 +88,41 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        /// 回合结束时处理
+        /// 战斗开始时重置状态（药水效果不经过 RelicManager，需要自己挂 BattleStart 钩子）
+        /// </summary>
+        private void EnsureBattleResetHook(EffectManager effectManager)
+        {
+            if (battleResetHookRegistered) return;
+            battleResetHookRegistered = true;
+            effectManager.Register(EffectTrigger.BattleStart, ctx => ResetState());
+        }
+
+        private void ResetState()
+        {
+            isActive = false;
+            remainingTurns = 0;
+            skipFirstDecrement = false;
+            modifierRef = null;
+            turnEndHandlerRef = null;
+        }
+
+        public override void ResetForBattle()
+        {
+            ResetState();
+        }
+
+        /// <summary>
+        /// 玩家回合结束时处理（跳过激活当回合的第一次，之后每次消耗 1 回合）
         /// </summary>
         public void OnTurnEnd()
         {
             if (!isActive) return;
+
+            if (skipFirstDecrement)
+            {
+                skipFirstDecrement = false;
+                return;
+            }
 
             remainingTurns--;
             if (remainingTurns <= 0)

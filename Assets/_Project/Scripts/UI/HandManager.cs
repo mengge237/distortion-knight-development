@@ -465,6 +465,10 @@ namespace MutationChess.UI
             if (card.cardType != CardType.Curse)
                 TriggerCurseDevourEffects();
 
+            // 记录出牌前的手牌索引：Remove 后 handCards.IndexOf(card) 恒为 -1，
+            // 相邻牌判定（史莱姆系列效果）依赖此索引
+            card.lastHandIndex = handCards.IndexOf(card);
+
             handCards.Remove(card);
 
             CardUI targetCardUI = null;

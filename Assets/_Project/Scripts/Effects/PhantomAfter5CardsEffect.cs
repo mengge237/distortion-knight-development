@@ -15,31 +15,31 @@ namespace MutationChess.Core
         [Tooltip("Boss遗物激活时的减伤值")]
         public int bossDmgReduction = 8;
 
-        private bool triggeredThisTurn = false;
-
         public override void Execute(CombatContext context) { }
 
         public override void Execute(EffectContext context)
         {
             if (context == null || context.trigger != EffectTrigger.AfterCardsPlayed) return;
 
-            ConversionModifier.CardsPlayedThisBattle++;
-
-            if (triggeredThisTurn) return;
+            // CardsPlayedThisBattle 已由 Card.ExecuteEffects 统一 +1，此处不再自增（否则每张牌计 2 次）
+            if (ConversionModifier.PhantomReductionActive) return;
             if (ConversionModifier.CardsPlayedThisBattle < cardThreshold) return;
 
-            triggeredThisTurn = true;
+            ConversionModifier.PhantomReductionActive = true;
             int effectiveReduction = GetActiveReduction();
             GameLogger.Log($"[PhantomAfter5Cards] 出牌达 {cardThreshold} 张，触发减伤 {effectiveReduction}");
         }
 
         public int GetActiveReduction()
         {
-            if (!triggeredThisTurn) return 0;
+            if (!ConversionModifier.PhantomReductionActive) return 0;
             int baseValue = ConversionModifier.BossPhantomMaskActive ? bossDmgReduction : dmgReduction;
             return baseValue + ConversionModifier.PhantomExtraReduction;
         }
 
-        public void ResetForNewTurn() { triggeredThisTurn = false; }
+        public override void ResetForBattle()
+        {
+            ConversionModifier.PhantomReductionActive = false;
+        }
     }
 }

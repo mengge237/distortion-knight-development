@@ -22,6 +22,9 @@ namespace MutationChess.Core
         [System.NonSerialized]
         private int triggersThisTurn = 0;
 
+        [System.NonSerialized]
+        private bool turnStartHookRegistered = false;
+
         public override string GetDescription(Card card)
         {
             return $"每回合消耗牌时获 {energyGain} 能量（最多 {triggersPerTurn} 次）";
@@ -39,7 +42,24 @@ namespace MutationChess.Core
                 ResetTurnCount();
                 return;
             }
+            // 确保"每回合重置计数"真正生效：本效果不会以 PlayerTurnStart 注册，
+            // 这里懒注册一个重置钩子
+            EnsureTurnStartHook();
             TryGrantEnergy(context?.combat);
+        }
+
+        private void EnsureTurnStartHook()
+        {
+            if (turnStartHookRegistered) return;
+            turnStartHookRegistered = true;
+            var em = EffectManager.Instance;
+            if (em != null)
+                em.Register(EffectTrigger.PlayerTurnStart, ctx => ResetTurnCount());
+        }
+
+        public override void ResetForBattle()
+        {
+            ResetTurnCount();
         }
 
         private void TryGrantEnergy(CombatContext context)

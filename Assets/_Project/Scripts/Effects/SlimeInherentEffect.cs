@@ -17,32 +17,48 @@ namespace MutationChess.Core
             var handManager = UI.HandManager.Instance;
             if (handManager == null) return;
 
-            var handCards = handManager.GetHandCards();
-            int playedIndex = handCards.IndexOf(context.sourceCard);
-            if (playedIndex < 0) return;
+            // 药水全手牌触发期间抑制相邻联动（只执行卡牌自身效果）
+            if (SlimeTriggerGuard.SuppressAdjacency) return;
 
-            int range = SlimeExpandEffect.SlimeTriggerRange > 0
-                ? SlimeExpandEffect.SlimeTriggerRange : 1;
-
-            for (int offset = -range; offset <= range; offset++)
+            if (!SlimeTriggerGuard.TryEnter(context.sourceCard))
             {
-                if (offset == 0) continue;
-                int idx = playedIndex + offset;
-                if (idx >= 0 && idx < handCards.Count)
+                GameLogger.Log($"[史莱姆联动] {context.sourceCard.cardName} 已在触发链中，跳过（防递归）");
+                return;
+            }
+
+            try
+            {
+                var handCards = handManager.GetHandCards();
+                bool removed = SlimeEffect.ResolvePlayedIndex(handCards, context.sourceCard, out int playedIndex);
+                if (playedIndex < 0) return;
+
+                int range = SlimeExpandEffect.SlimeTriggerRange > 0
+                    ? SlimeExpandEffect.SlimeTriggerRange : 1;
+
+                for (int offset = -range; offset <= range; offset++)
                 {
-                    Card adj = handCards[idx];
-                    if (adj != null && adj.HasTag(CardTag.Slime))
+                    if (offset == 0) continue;
+                    int idx = SlimeEffect.GetAdjacentIndex(playedIndex, offset, removed);
+                    if (idx >= 0 && idx < handCards.Count)
                     {
-                        GameLogger.Log($"[史莱姆联动] 触发相邻: {adj.cardName} ({offset})");
-                        CombatContext adjCtx = new CombatContext(
-                            context.battleManager,
-                            context.targetEnemy,
-                            context.targetPlayer,
-                            adj
-                        );
-                        adj.ExecuteEffects(adjCtx);
+                        Card adj = handCards[idx];
+                        if (adj != null && adj.HasTag(CardTag.Slime))
+                        {
+                            GameLogger.Log($"[史莱姆联动] 触发相邻: {adj.cardName} ({offset})");
+                            CombatContext adjCtx = new CombatContext(
+                                context.battleManager,
+                                context.targetEnemy,
+                                context.targetPlayer,
+                                adj
+                            );
+                            adj.ExecuteEffects(adjCtx);
+                        }
                     }
                 }
+            }
+            finally
+            {
+                SlimeTriggerGuard.Exit(context.sourceCard);
             }
         }
     }

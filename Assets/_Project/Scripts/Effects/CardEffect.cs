@@ -18,6 +18,13 @@ namespace MutationChess.Core
             return effectDescription ?? "";
         }
 
+        /// <summary>
+        /// 战斗开始时重置效果的战斗内实例状态（计数器、一次性标志等）。
+        /// 由 RelicManager.OnBattleStart 对每个已注册的遗物效果调用。
+        /// 需要战斗内状态的子类应 override 此方法。
+        /// </summary>
+        public virtual void ResetForBattle() { }
+
         public virtual void Execute(EffectContext context)
         {
             if (context == null)

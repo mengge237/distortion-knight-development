@@ -272,7 +272,8 @@ namespace MutationChess.Debug
             GUILayout.EndHorizontal();
 
             relicsScrollPos = GUILayout.BeginScrollView(relicsScrollPos, GUILayout.Height(220));
-            var assets = rm?.LoadAllObtainableRelicAssets();
+            // 调试台列出全部遗物（绕过阵营解锁过滤），否则未解锁阵营的遗物（如鲜血-吸血獠牙）无法添加
+            var assets = rm?.LoadAllRelicAssets();
             if (assets != null)
             {
                 foreach (var a in assets)
@@ -299,7 +300,8 @@ namespace MutationChess.Debug
         private void AddRandomRelic(RelicRarity rarity)
         {
             var rm = RelicManager.Instance;
-            var assets = rm?.LoadAllObtainableRelicAssets();
+            // 调试按钮用无过滤池：Boss 遗物在 Obtainable 池中被排除，会导致 Boss 按钮永远无效
+            var assets = rm?.LoadAllRelicAssets();
             if (assets == null || assets.Count == 0) return;
             var pool = assets.Where(a => a.rarity == rarity).ToList();
             if (pool.Count == 0) return;

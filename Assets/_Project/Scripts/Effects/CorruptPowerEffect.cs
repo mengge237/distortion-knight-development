@@ -1,32 +1,32 @@
 ﻿using UnityEngine;
-using MutationChess.UI;
 using MutationChess.Battle;
+using MutationChess.UI;
 using System.Collections.Generic;
 
 namespace MutationChess.Core
 {
     /// <summary>
-    /// �������� / Ӱ��Ч�������������еĸ���(Corrupt)��ǩ����ÿ����һ�Ż�ö�Ӧ������
-    /// Ĭ�Ͽ������ã�magicNumber=��������(3)��ÿ������1�Ÿ��������1��������
-    /// ������ʽ������������Ӱ�еȿ�ʱ��Execute(CombatContext) ִ�������߼�����������
+    /// 腐化力量 / 暗影效果：消耗手牌中的腐化(Corrupt)标签卡，每消耗一张获得对应力量。
+    /// 默认可消耗数量：magicNumber=消耗上限(3)，每消耗1张腐化卡获得1点力量。
+    /// 触发方式：打牌或暗影等时段由 Execute(CombatContext) 执行核心逻辑。
     /// </summary>
     [CreateAssetMenu(fileName = "CorruptPowerEffect", menuName = "MutationChess/Relic Effects/Corrupt Heart")]
     public class CorruptPowerEffect : CardEffect
     {
-        [Header("��������")]
-        [Tooltip("ÿ�����ĵĸ������ṩ����������")]
+        [Header("腐化力量配置")]
+        [Tooltip("每消耗的腐化卡可提供的力量值")]
         [Min(1)]
         public int strengthPerCard = 1;
 
-        [Tooltip("�����������������0=����ȫ����������� magicNumber>0 �������� magicNumber")]
+        [Tooltip("单次消耗上限。0=不限制全部消耗，若 magicNumber>0 则使用 magicNumber")]
         [Min(0)]
         public int maxExhaustPerUse = 0;
 
         public override string GetDescription(Card card)
         {
             int limit = (card != null && card.magicNumber > 0) ? card.magicNumber : maxExhaustPerUse;
-            string limitText = limit > 0 ? $"����� {limit} �ţ�" : "";
-            return $"�������Ƹ�������ÿ�Ż�� {strengthPerCard} ����{limitText}";
+            string limitText = limit > 0 ? $"（上限 {limit} 张）" : "";
+            return $"消耗手牌腐化卡，每张获得 {strengthPerCard} 点力量{limitText}";
         }
 
         public override void Execute(CombatContext context)
@@ -61,7 +61,7 @@ namespace MutationChess.Core
 
             if (toExhaust.Count == 0)
             {
-                GameLogger.Log("[CorruptPowerEffect] �������޸�����������");
+                GameLogger.Log("[CorruptPowerEffect] 手牌无腐化卡可消耗");
                 return;
             }
 
@@ -78,8 +78,8 @@ namespace MutationChess.Core
                 hm.AddToExhaustPile(toExhaust[i]);
 
             GameLogger.Log(
-                $"[CorruptPowerEffect] ���� {toExhaust.Count} �Ÿ���������� {strengthGain} ����" +
-                $"��{strengthPerCard}����/��������{(limit > 0 ? limit.ToString() : "ȫ��")}��");
+                $"[CorruptPowerEffect] 消耗 {toExhaust.Count} 张腐化卡，获得 {strengthGain} 点力量" +
+                $"（{strengthPerCard}点/张，上限{(limit > 0 ? limit.ToString() : "全部")}）");
         }
     }
 }

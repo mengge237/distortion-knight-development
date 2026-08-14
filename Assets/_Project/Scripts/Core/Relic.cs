@@ -18,6 +18,12 @@ namespace MutationChess.Core
     {
         public CardEffect effect;
         public EffectTrigger trigger;
+
+        // 注册到 EffectManager 的委托引用，用于真正注销（而非只从 registeredRelicIds 移除）
+        [NonSerialized]
+        public Action<EffectContext> handler;
+        [NonSerialized]
+        public Func<EffectContext, int, int> valueModifier;
     }
 
     [Serializable]

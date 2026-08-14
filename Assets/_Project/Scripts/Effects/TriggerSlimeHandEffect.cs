@@ -31,24 +31,44 @@ namespace MutationChess.Core
             List<Card> handCards = handManager.GetHandCards();
             int triggered = 0;
 
-            foreach (var card in handCards)
+            // 全手牌触发期间抑制相邻联动链：每张粘液卡只执行自身效果一次，
+            // 否则 A→B→C 相互联动会造成 N² 级重复触发
+            bool prevSuppress = SlimeTriggerGuard.SuppressAdjacency;
+            SlimeTriggerGuard.SuppressAdjacency = true;
+
+            try
             {
-                if (card == null) continue;
+                foreach (var card in handCards)
+                {
+                    if (card == null) continue;
 
-                bool isSlimeCard = card.HasTag(CardTag.Slime) || card.faction == CardFaction.Slime;
-                if (!isSlimeCard) continue;
+                    bool isSlimeCard = card.HasTag(CardTag.Slime) || card.faction == CardFaction.Slime;
+                    if (!isSlimeCard) continue;
 
+                    if (!SlimeTriggerGuard.TryEnter(card)) continue; // 防重入
 
-                CombatContext cardCtx = new CombatContext(
-                    battleManager,
-                    battleManager != null ? battleManager.GetCurrentEnemy() : null,
-                    null,
-                    card
-                );
+                    try
+                    {
+                        CombatContext cardCtx = new CombatContext(
+                            battleManager,
+                            battleManager != null ? battleManager.GetCurrentEnemy() : null,
+                            null,
+                            card
+                        );
 
-                card.ExecuteEffects(cardCtx);
-                triggered++;
-                GameLogger.Log($"[TriggerSlimeHand] 触发卡牌：{card.cardName}");
+                        card.ExecuteEffects(cardCtx);
+                        triggered++;
+                        GameLogger.Log($"[TriggerSlimeHand] 触发卡牌：{card.cardName}");
+                    }
+                    finally
+                    {
+                        SlimeTriggerGuard.Exit(card);
+                    }
+                }
+            }
+            finally
+            {
+                SlimeTriggerGuard.SuppressAdjacency = prevSuppress;
             }
 
             if (battleManager != null)

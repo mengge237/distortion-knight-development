@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9acc8e158a2a46d8898b425d6810d5b7, type: 3}
+  m_Name: "\u7C98\u6DB2\u9632\u5FA1"
+  m_EditorClassIdentifier: 
+  cardName: "\u7C98\u6DB2\u9632\u5FA1"
+  cardType: 1
+  rarity: 0
+  faction: 1
+  cost: 1
+  damage: 0
+  block: 4
+  magicNumber: 1
+  exhaust: 0
+  tags:
+  - 1
+  bloodPerEnergy: 0
+  blockPerEnergy: 0
+  description: "\u83B7\u5F974\u70B9\u683C\u6321\uFF0C\u65BD\u52A01\u5C42\u865A\u5F31\u3002\u56FA\u6709\uFF1A\u7C98\u6DB2"
+  effectIds:
+  - ApplyBlockEffect
+  - ApplyWeakEffect
+  inherentEffectIds:
+  - SlimeInherentEffect
+  isColorless: 0
+  isFactionLocked: 1
+  cardArtPath: "CardArt/\u7C98\u6DB2\u9632\u5FA1"

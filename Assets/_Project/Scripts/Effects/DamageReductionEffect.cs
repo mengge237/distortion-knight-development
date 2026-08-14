@@ -32,6 +32,12 @@ namespace MutationChess.Core
         [System.NonSerialized]
         private System.Action<EffectContext> turnEndHandlerRef;
 
+        [System.NonSerialized]
+        private bool skipFirstDecrement = false;
+
+        [System.NonSerialized]
+        private bool battleResetHookRegistered = false;
+
         public override string GetDescription(Card card)
         {
             int percent = Mathf.RoundToInt(damageReduction * 100f);
@@ -50,6 +56,14 @@ namespace MutationChess.Core
 
         private void ActivateReduction(BattleManager battleManager)
         {
+            var effectManager = EffectManager.Instance;
+            if (effectManager == null)
+            {
+                // 注意：先判空再置 isActive，避免 EffectManager 缺失时陷入"已激活但未注册"的卡死状态
+                GameLogger.LogWarning("[DamageReduction] EffectManager 为空");
+                return;
+            }
+
             if (isActive)
             {
                 remainingTurns = Mathf.Max(remainingTurns, duration);
@@ -57,16 +71,7 @@ namespace MutationChess.Core
                 return;
             }
 
-            isActive = true;
-            remainingTurns = duration;
-
-
-            var effectManager = EffectManager.Instance;
-            if (effectManager == null)
-            {
-                GameLogger.LogWarning("[DamageReduction] EffectManager 为空");
-                return;
-            }
+            EnsureBattleResetHook(effectManager);
 
             modifierRef = (ctx, baseValue) =>
             {
@@ -82,18 +87,54 @@ namespace MutationChess.Core
             turnEndHandlerRef = (ctx) => OnTurnEnd();
             effectManager.Register(EffectTrigger.PlayerTurnEnd, turnEndHandlerRef);
 
-            GameLogger.Log($"[DamageReduction] 下一回合{damageReduction * 100}%伤害减免，持续{remainingTurns}回合");
+            isActive = true;
+            remainingTurns = duration;
+            // 激活当回合的 PlayerTurnEnd 不消耗持续时间，否则 duration=1 时
+            // 敌人在同回合结束后的攻击完全吃不到减伤
+            skipFirstDecrement = true;
+
+            GameLogger.Log($"[DamageReduction] {damageReduction * 100}%伤害减免，持续{remainingTurns}个敌人回合");
 
             if (battleManager != null)
-                battleManager.AddBattleLog($"下一回合{damageReduction * 100}%伤害减免，持续{duration}回合");
+                battleManager.AddBattleLog($"{damageReduction * 100}%伤害减免，持续{duration}回合");
         }
 
         /// <summary>
-        /// 回合结束时处理
+        /// 战斗开始时重置状态（药水效果不经过 RelicManager，需要自己挂 BattleStart 钩子）
+        /// </summary>
+        private void EnsureBattleResetHook(EffectManager effectManager)
+        {
+            if (battleResetHookRegistered) return;
+            battleResetHookRegistered = true;
+            effectManager.Register(EffectTrigger.BattleStart, ctx => ResetState());
+        }
+
+        private void ResetState()
+        {
+            isActive = false;
+            remainingTurns = 0;
+            skipFirstDecrement = false;
+            modifierRef = null;
+            turnEndHandlerRef = null;
+        }
+
+        public override void ResetForBattle()
+        {
+            ResetState();
+        }
+
+        /// <summary>
+        /// 玩家回合结束时处理（跳过激活当回合的第一次，之后每次消耗 1 回合）
         /// </summary>
         public void OnTurnEnd()
         {
             if (!isActive) return;
+
+            if (skipFirstDecrement)
+            {
+                skipFirstDecrement = false;
+                return;
+            }
 
             remainingTurns--;
             if (remainingTurns <= 0)

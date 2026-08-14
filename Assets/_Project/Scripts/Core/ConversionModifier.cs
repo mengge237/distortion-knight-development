@@ -6,7 +6,7 @@ namespace MutationChess.Core
     /// 转换修正器，管理鲜血/格挡转换率的全局修正与Boss遗物激活状态
     /// 包含永久减免、临时覆盖、全卡牌转换启用等修正
     /// 使用 ResetTemporary() 在每回合结束时重置临时修正
-    /// 使用 ResetAll() 在战斗结束时重置所有修正
+    /// 使用 ResetAll() 在战斗开始时重置所有修正
     /// </summary>
     public static class ConversionModifier
     {
@@ -48,6 +48,17 @@ namespace MutationChess.Core
         // === 深渊/幻影减免 ===
         public static int AbyssThresholdReduction = 0;       // 深渊阈值减免
         public static int PhantomExtraReduction = 0;         // 幻影额外减免
+        public static bool PhantomReductionActive = false;   // 幻影减伤是否已在本场触发
+
+        /// <summary>
+        /// 当前幻影减伤值（未触发或非战斗时为 0）
+        /// </summary>
+        public static int GetPhantomReduction()
+        {
+            if (!PhantomReductionActive) return 0;
+            int baseValue = BossPhantomMaskActive ? 8 : 5;
+            return baseValue + PhantomExtraReduction;
+        }
 
         // === Boss计数器 ===
         public static int TurnCounterForMemoryLens = 0;      // 记忆透镜回合计数器
@@ -84,7 +95,9 @@ namespace MutationChess.Core
         }
 
         /// <summary>
-        /// 重置临时修正（每回合结束时调用）
+        /// 重置临时修正（每回合开始时调用）
+        /// 注意：CardsPlayedThisBattle/AttackCardsPlayedThisBattle 是"本场战斗"计数，
+        /// 不在此处清零（由 ResetAll 在战斗开始前清零）。
         /// </summary>
         public static void ResetTemporary()
         {
@@ -94,12 +107,11 @@ namespace MutationChess.Core
             BlockConversionForAll = false;
             AllCardsNoExhaustThisTurn = false;
             TagEffectDoubleTrigger = false;
-            CardsPlayedThisBattle = 0;
-            AttackCardsPlayedThisBattle = 0;
         }
 
         /// <summary>
-        /// 重置所有修正（战斗结束时调用）
+        /// 重置所有修正（战斗开始时调用，需在 RelicManager.OnBattleStart 之前，
+        /// 之后由各遗物效果的 BattleStart 触发器重新建立本场状态）
         /// </summary>
         public static void ResetAll()
         {
@@ -117,7 +129,10 @@ namespace MutationChess.Core
             BossPhantomMaskActive = false;
             AbyssThresholdReduction = 0;
             PhantomExtraReduction = 0;
+            PhantomReductionActive = false;
             TurnCounterForMemoryLens = 0;
+            CardsPlayedThisBattle = 0;
+            AttackCardsPlayedThisBattle = 0;
             ResetTemporary();
         }
     }

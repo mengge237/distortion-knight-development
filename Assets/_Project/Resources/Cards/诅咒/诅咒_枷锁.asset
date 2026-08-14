@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9acc8e158a2a46d8898b425d6810d5b7, type: 3}
+  m_Name: "\u8BC5\u5492_\u67B7\u9501"
+  m_EditorClassIdentifier: 
+  cardName: "\u8BC5\u5492_\u67B7\u9501"
+  cardType: 4
+  rarity: 5
+  faction: 0
+  cost: 0
+  damage: 0
+  block: 0
+  magicNumber: 0
+  exhaust: 0
+  tags:
+  - 8
+  bloodPerEnergy: 0
+  blockPerEnergy: 0
+  description: "\u6BCF\u56DE\u5408\u62BD\u724C-1"
+  effectIds:
+  - CurseChainsEffect
+  inherentEffectIds: []
+  isColorless: 0
+  isFactionLocked: 0
+  cardArtPath: "CardArt/\u8BC5\u5492_\u67B7\u9501"

@@ -54,18 +54,31 @@ namespace MutationChess.Battle
             }
 
             string folderPath = GetSpriteFolderPath();
-            string fullPath = $"{folderPath}/{data.spriteName}";
 
-            enemySprite = Resources.Load<Sprite>(fullPath);
+            // 1. 优先按类型文件夹 + spriteName 加载
+            enemySprite = Resources.Load<Sprite>($"{folderPath}/{data.spriteName}");
 
+            // 2. 回退：EnemySprites 根目录 + spriteName
             if (enemySprite == null)
             {
                 enemySprite = Resources.Load<Sprite>($"EnemySprites/{data.spriteName}");
             }
 
+            // 3. 回退：按类型文件夹 + enemyName 加载（覆盖 spriteName 与文件名不一致的情况）
+            if (enemySprite == null && !string.IsNullOrEmpty(enemyName))
+            {
+                enemySprite = Resources.Load<Sprite>($"{folderPath}/{enemyName}");
+            }
+
+            // 4. 回退：EnemySprites 根目录 + enemyName
+            if (enemySprite == null && !string.IsNullOrEmpty(enemyName))
+            {
+                enemySprite = Resources.Load<Sprite>($"EnemySprites/{enemyName}");
+            }
+
             if (enemySprite == null)
             {
-                // 精灵图缺失时静默处理，不刷屏
+                GameLogger.LogWarning($"[Enemy] 未找到精灵图：spriteName={data.spriteName}, enemyName={enemyName}, path={folderPath}");
             }
         }
 
@@ -361,7 +374,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("腐化士兵", 30, 7, EnemyType.Normal);
             data.aiPatternName = "CorruptedSoldier";
-            data.spriteName = "CorruptedSoldier";
+            data.spriteName = "腐化士兵";
             return new Enemy(data);
         }
 
@@ -369,7 +382,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("畸变猎犬", 25, 9, EnemyType.Normal);
             data.aiPatternName = "MutantHound";
-            data.spriteName = "MutantHound";
+            data.spriteName = "畸变猎犬";
             return new Enemy(data);
         }
 
@@ -377,7 +390,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("瘟疫信徒", 28, 6, EnemyType.Normal);
             data.aiPatternName = "PlagueAcolyte";
-            data.spriteName = "PlagueAcolyte";
+            data.spriteName = "瘟疫侍僧";
             return new Enemy(data);
         }
 
@@ -385,7 +398,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("深渊幼虫", 22, 8, EnemyType.Normal);
             data.aiPatternName = "AbyssGrub";
-            data.spriteName = "AbyssGrub";
+            data.spriteName = "深渊蛆虫";
             return new Enemy(data);
         }
 
@@ -393,7 +406,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("腐蚀骑士", 65, 14, EnemyType.Elite);
             data.aiPatternName = "CorruptedKnight";
-            data.spriteName = "CorruptedKnight";
+            data.spriteName = "腐蚀骑士";
             return new Enemy(data);
         }
 
@@ -401,7 +414,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("炼狱审判官", 60, 16, EnemyType.Elite);
             data.aiPatternName = "HellInquisitor";
-            data.spriteName = "HellInquisitor";
+            data.spriteName = "地狱审判官";
             return new Enemy(data);
         }
 
@@ -409,7 +422,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("虚空法师", 55, 12, EnemyType.Elite);
             data.aiPatternName = "VoidWizard";
-            data.spriteName = "VoidWizard";
+            data.spriteName = "虚空巫师";
             return new Enemy(data);
         }
 
@@ -417,7 +430,7 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("腐化魔像", 80, 13, EnemyType.Elite);
             data.aiPatternName = "CorruptedGolem";
-            data.spriteName = "CorruptedGolem";
+            data.spriteName = "腐化巨兽";
             return new Enemy(data);
         }
 
@@ -425,10 +438,10 @@ namespace MutationChess.Battle
         {
             var data = new EnemyData("腐化君王", 150, 22, EnemyType.Boss);
             data.aiPatternName = "AbyssLord";
-            data.spriteName = "AbyssLord";
+            data.spriteName = "腐化君王";
 
             var enemy = new Enemy(data);
-            enemy.secondFormSpriteName = "AbyssLord_2ndForm";
+            enemy.secondFormSpriteName = "深渊之主";
 
             return enemy;
         }

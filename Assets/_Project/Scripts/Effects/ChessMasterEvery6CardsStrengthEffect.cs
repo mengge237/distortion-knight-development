@@ -35,7 +35,7 @@ namespace MutationChess.Core
         {
             if (context == null || context.trigger != EffectTrigger.AfterCardsPlayed) return;
 
-            ConversionModifier.CardsPlayedThisBattle++;
+            // CardsPlayedThisBattle 已由 Card.ExecuteEffects 统一 +1，此处不再自增（否则每张牌计 2 次）
             if (ConversionModifier.CardsPlayedThisBattle % threshold != 0) return;
 
             PlayerData playerData = context.battleManager?.GetPlayerData();

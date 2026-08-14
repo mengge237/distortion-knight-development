@@ -24,8 +24,9 @@ namespace MutationChess.Core
 
         private void ApplyBoost()
         {
-            ConversionModifier.PhantomExtraReduction += extraReduction;
-            GameLogger.Log($"[PhantomBoost] 额外减伤 +{extraReduction}，当前累计：{ConversionModifier.PhantomExtraReduction}");
+            // 注意：用赋值而非 +=，避免每次出牌无限叠加（曾导致减伤值随出牌数膨胀）
+            ConversionModifier.PhantomExtraReduction = extraReduction;
+            GameLogger.Log($"[PhantomBoost] 额外减伤 +{extraReduction}");
         }
     }
 }

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9acc8e158a2a46d8898b425d6810d5b7, type: 3}
+  m_Name: "\u51DD\u795E"
+  m_EditorClassIdentifier: 
+  cardName: "\u51DD\u795E"
+  cardType: 2
+  rarity: 1
+  faction: 0
+  cost: 0
+  damage: 0
+  block: 0
+  magicNumber: 1
+  exhaust: 0
+  tags: []
+  bloodPerEnergy: 0
+  blockPerEnergy: 0
+  description: "\u4E0B\u56DE\u5408\u83B7\u5F971\u70B9\u80FD\u91CF\uFF0C\u62BD1\u5F20\u724C"
+  effectIds:
+  - GainEnergyNextTurnEffect
+  - DrawCardsEffect
+  inherentEffectIds: []
+  isColorless: 0
+  isFactionLocked: 0
+  cardArtPath: "CardArt/\u51DD\u795E"

@@ -12,13 +12,16 @@ namespace MutationChess.Core
         [Tooltip("每位获得的能量数")]
         public int energyGain = 1;
 
+        [Tooltip("下回合开始时获得（而非立即获得）")]
+        public bool nextTurn = false;
+
         [Header("弃牌配置")]
         [Tooltip("效果触发后随机弃牌的数量（0=不弃牌）")]
         public int discardRandomCount = 0;
 
         public override string GetDescription(Card card)
         {
-            string desc = $"获得 {energyGain} 点能量";
+            string desc = nextTurn ? $"下回合额外获得 {energyGain} 点能量" : $"获得 {energyGain} 点能量";
             if (discardRandomCount > 0)
                 desc += $"，随机弃 {discardRandomCount} 张手牌";
             return desc;
@@ -30,6 +33,14 @@ namespace MutationChess.Core
             if (handManager == null)
             {
                 GameLogger.LogWarning("[GainEnergyEffect] HandManager 为空");
+                return;
+            }
+
+            if (nextTurn)
+            {
+                handManager.AddPendingNextTurnEnergy(energyGain);
+                context?.battleManager?.AddLog($"效果生效，下回合开始时将获得 {energyGain} 点能量");
+                GameLogger.Log($"[GainEnergyEffect] 下回合能量+{energyGain}");
                 return;
             }
 

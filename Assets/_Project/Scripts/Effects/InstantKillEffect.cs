@@ -54,5 +54,10 @@ namespace MutationChess.Core
         {
             killsThisBattle = 0;
         }
+
+        public override void ResetForBattle()
+        {
+            ResetPerBattle();
+        }
     }
 }

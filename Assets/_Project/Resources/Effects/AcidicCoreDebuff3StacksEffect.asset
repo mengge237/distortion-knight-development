@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 070f1c26480a4c5091de5b647c1924bf, type: 3}
+  m_Name: AcidicCoreDebuff3StacksEffect
+  m_EditorClassIdentifier: 
+  effectDescription: 战斗开始对敌施加3虚弱/3脆弱/3易伤debuff(Boss各+1层)
+  weak: 3
+  frail: 3
+  vulnerable: 3
+  bossExtraStacks: 1
