@@ -36,6 +36,9 @@ namespace MutationChess.Core
 
         public PlayerData PlayerData => playerData;
 
+        /// <summary>调试无敌开关（由调试台控制）：开启后玩家生命不再因任何伤害而减少</summary>
+        public static bool DebugInvincible = false;
+
         void Awake()
         {
             if (_instance != null && _instance != this)
@@ -142,9 +145,9 @@ namespace MutationChess.Core
             return actual;
         }
 
-        public void TakeDamage(int damage)
+        public void TakeDamage(int damage, bool bypassInvincible = false)
         {
-            playerData.TakeDamage(damage);
+            playerData.TakeDamage(damage, bypassInvincible);
             OnDataChanged?.Invoke(playerData);
             UpdateUI();
         }

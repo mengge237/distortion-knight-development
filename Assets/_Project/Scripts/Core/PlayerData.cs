@@ -46,8 +46,14 @@ namespace MutationChess.Core
             return currentHealth - previous;
         }
 
-        public void TakeDamage(int damage)
+        public void TakeDamage(int damage, bool bypassInvincible = false)
         {
+            if (!bypassInvincible && PlayerDataManager.DebugInvincible)
+            {
+                GameLogger.Log($"[无敌] 已豁免 {damage} 点伤害");
+                return;
+            }
+
             int vulnerability = GetBuffAmount(BuffType.Vulnerability);
             if (vulnerability > 0)
             {

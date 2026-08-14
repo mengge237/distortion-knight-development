@@ -16,12 +16,58 @@ namespace MutationChess.Debug
         /// <summary>Called by GameManager.Start to ensure debug console exists</summary>
         public static void EnsureExists()
         {
+            if (!IsAllowedByFile())
+            {
+                UnityEngine.Debug.Log("[DebugConsole] 调试台未启用（正式包需 debug_enable 标记文件）");
+                return;
+            }
             if (FindObjectOfType<DebugConsole>() != null) return;
             var go = new GameObject("[DebugConsole]");
             DontDestroyOnLoad(go);
             go.AddComponent<DebugConsole>();
             UnityEngine.Debug.Log("[DebugConsole] Debug console created, press ~ or F1 to open");
         }
+
+        /// <summary>
+        /// 调试台开关文件化（像其他游戏一样通过文件控制）：
+        /// 开发构建/编辑器内始终可用；正式包仅当存在 debug_enable 标记文件时才可用。
+        /// 标记文件位置：exe 同级目录，或 StreamingAssets 下的 debug_enable / debug_enable.txt。
+        /// 结果缓存 2 秒，避免每帧磁盘 IO；运行中放入文件后最多 2 秒即可生效。
+        /// </summary>
+        public static bool IsAllowedByFile()
+        {
+            if (Debug.isDebugBuild || Application.isEditor) return true;
+
+            float now = Time.realtimeSinceStartup;
+            if (now - _allowedCheckTime < 2f) return _allowedCached;
+
+            _allowedCheckTime = now;
+            _allowedCached = false;
+
+            string[] candidates =
+            {
+                Application.dataPath + "/../debug_enable",
+                Application.dataPath + "/../debug_enable.txt",
+                Application.streamingAssetsPath + "/debug_enable",
+                Application.streamingAssetsPath + "/debug_enable.txt"
+            };
+            foreach (string path in candidates)
+            {
+                try
+                {
+                    if (System.IO.File.Exists(path))
+                    {
+                        _allowedCached = true;
+                        break;
+                    }
+                }
+                catch (System.Exception) { /* 路径不可访问时忽略，继续检查下一个 */ }
+            }
+            return _allowedCached;
+        }
+
+        private static bool _allowedCached;
+        private static float _allowedCheckTime = -99f;
 
         private void Awake()
         {
@@ -67,14 +113,17 @@ namespace MutationChess.Debug
             if (e != null && e.type == EventType.KeyDown &&
                 (e.keyCode == KeyCode.BackQuote || e.keyCode == KeyCode.F1))
             {
-                visible = !visible;
-                e.Use();
+                if (IsAllowedByFile())
+                {
+                    visible = !visible;
+                    e.Use();
+                }
             }
 
             if (!visible)
             {
-                // Small button in bottom-right when hidden
-                if (GUI.Button(new Rect(Screen.width - 110, Screen.height - 30, 110, 25), "调试 (F1/~)"))
+                // Small button in bottom-right when hidden（文件开关关闭时同样隐藏）
+                if (IsAllowedByFile() && GUI.Button(new Rect(Screen.width - 110, Screen.height - 30, 110, 25), "调试 (F1/~)"))
                     visible = true;
                 return;
             }
@@ -422,12 +471,25 @@ namespace MutationChess.Debug
 
             int currentBlock = bm.GetPlayerBlock();
 
-            // Player HP
+            // Player HP（调试台扣血按钮绕过无敌开关，便于测试）
             GUILayout.BeginHorizontal();
             GUILayout.Label($"HP: <color=green>{pd.currentHealth}</color>/{pd.maxHealth}", RichLabel, GUILayout.Width(180));
             if (GUILayout.Button($"+{healAmount}", GUILayout.Width(40))) pdm.Heal(healAmount);
-            if (GUILayout.Button($"-{healAmount}", GUILayout.Width(40))) pdm.TakeDamage(healAmount);
+            if (GUILayout.Button($"-{healAmount}", GUILayout.Width(40))) pdm.TakeDamage(healAmount, true);
             healAmount = ParseIntSafe(GUILayout.TextField(healAmount.ToString(), GUILayout.Width(35)));
+            GUILayout.EndHorizontal();
+
+            // 无敌开关
+            GUILayout.BeginHorizontal();
+            bool newInvincible = GUILayout.Toggle(PlayerDataManager.DebugInvincible, "无敌（敌人攻击不掉血）", GUILayout.Width(220));
+            if (newInvincible != PlayerDataManager.DebugInvincible)
+            {
+                PlayerDataManager.DebugInvincible = newInvincible;
+                GameLogger.Log(newInvincible ? "[调试台] 无敌已开启：敌人攻击不再扣除生命" : "[调试台] 无敌已关闭");
+            }
+            GUI.color = PlayerDataManager.DebugInvincible ? Color.green : Color.gray;
+            GUILayout.Label(PlayerDataManager.DebugInvincible ? "● ON" : "○ OFF", GUILayout.Width(50));
+            GUI.color = Color.white;
             GUILayout.EndHorizontal();
 
             // Max HP
@@ -545,11 +607,11 @@ namespace MutationChess.Debug
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Full", GUILayout.Width(50))) pdm.Heal(pd.maxHealth);
             if (GUILayout.Button("+50", GUILayout.Width(50))) pdm.Heal(50);
-            if (GUILayout.Button("-10", GUILayout.Width(50))) pdm.TakeDamage(10);
+            if (GUILayout.Button("-10", GUILayout.Width(50))) pdm.TakeDamage(10, true);
             if (GUILayout.Button("To 1", GUILayout.Width(50)))
             {
                 int d = pd.currentHealth - 1;
-                if (d > 0) pdm.TakeDamage(d);
+                if (d > 0) pdm.TakeDamage(d, true);
             }
             GUILayout.EndHorizontal();
 
