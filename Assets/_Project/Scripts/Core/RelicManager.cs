@@ -79,6 +79,7 @@ namespace MutationChess.Core
             RegisterRelicEffects(relic);
             GameLogger.Log($"[RelicManager] 获得遗物：{relic.relicName} ({relic.GetRarityName()})");
             OnRelicsChanged?.Invoke();
+            AudioManager.Instance?.PlayRelicAcquired();
 
 
             var mergeService = RelicMergeService.Instance;
@@ -102,6 +103,9 @@ namespace MutationChess.Core
 
                 TryActivateHiddenEffectsForRelic(relic);
             }
+
+            // 遗物增减后检查共鸣组合（Isaac 式"化学反应"）
+            RelicSynergyService.Instance?.RefreshCombos();
         }
 
         /// <summary>
@@ -133,6 +137,7 @@ namespace MutationChess.Core
 
             GameLogger.Log($"[RelicManager]  {relic.relicName}  {cfg.hiddenActivatorRelicId} ");
             activatedHiddenRelicIds.Add(relic.relicId);
+            AudioManager.Instance?.PlayHiddenAwaken();
 
             if (effectManager == null) effectManager = EffectManager.Instance;
             if (effectManager == null) return;
@@ -164,6 +169,7 @@ namespace MutationChess.Core
                         ctx.baseValue = currentValue;
                         ctx.finalValue = currentValue;
                         capturedEffect.Execute(ctx);
+                        AudioManager.Instance?.PlayRelicTick();
                         return ctx.finalValue;
                     };
                     effectManager.RegisterValueModifier(instance.trigger, instance.valueModifier);
@@ -174,6 +180,7 @@ namespace MutationChess.Core
                     {
                         if (!ownedRelics.Contains(capturedRelic)) return;
                         capturedEffect.Execute(ctx);
+                        AudioManager.Instance?.PlayRelicTick();
                     };
                     effectManager.Register(instance.trigger, instance.handler);
                 }
@@ -358,6 +365,7 @@ namespace MutationChess.Core
                         ctx.baseValue = currentValue;
                         ctx.finalValue = currentValue;
                         capturedEntry.effect.Execute(ctx);
+                        AudioManager.Instance?.PlayRelicTick();
                         return ctx.finalValue;
                     };
                     effectManager.RegisterValueModifier(capturedEntry.trigger, capturedEntry.valueModifier);
@@ -368,6 +376,7 @@ namespace MutationChess.Core
                     {
                         if (!ownedRelics.Contains(capturedRelic)) return;
                         capturedEntry.effect.Execute(ctx);
+                        AudioManager.Instance?.PlayRelicTick();
                     };
                     effectManager.Register(capturedEntry.trigger, capturedEntry.handler);
                 }

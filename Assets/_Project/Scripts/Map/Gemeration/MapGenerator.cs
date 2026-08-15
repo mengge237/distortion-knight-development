@@ -707,8 +707,11 @@ namespace MutationChess.Map
             quad.transform.SetParent(parent);
             // 前置到盘面之上（-Z 朝向相机），避免与盘体/连线同层穿插
             quad.transform.position = new Vector3(position.x, position.y, position.z - 0.3f);
-            // 本地旋转归零：继承内容根倾斜，图标平躺在倾斜盘面上
-            quad.transform.localRotation = Quaternion.identity;
+            // 立牌化：始终面向相机，图标不会被倾斜盘面透视压扁成"饼干"
+            if (Camera.main != null)
+                quad.transform.rotation = Camera.main.transform.rotation;
+            else
+                quad.transform.localRotation = Quaternion.identity;
 
             // 保留 Quad 自带碰撞体：图标即节点本体，点击命中后冒泡到 NodeClickHandler
 
@@ -1231,6 +1234,26 @@ namespace MutationChess.Map
         {
             if (node == null || node.isVisited) return false;
             return node.isReachable;
+        }
+
+        private Quaternion lastCameraRotation;
+
+        /// <summary>相机旋转时刷新立牌朝向，图标始终面向相机（成本极低，仅相机旋转变化时执行）。</summary>
+        void LateUpdate()
+        {
+            if (!enableMapDisplay || Camera.main == null || allLayers == null) return;
+            if (Camera.main.transform.rotation == lastCameraRotation) return;
+            lastCameraRotation = Camera.main.transform.rotation;
+
+            foreach (var layer in allLayers)
+            {
+                if (layer == null) continue;
+                foreach (var node in layer)
+                {
+                    if (node != null && node.mapDisplayObject != null)
+                        node.mapDisplayObject.transform.rotation = Camera.main.transform.rotation;
+                }
+            }
         }
 
         void DrawAllLines()

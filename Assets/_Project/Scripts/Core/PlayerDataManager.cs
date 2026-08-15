@@ -159,6 +159,14 @@ namespace MutationChess.Core
             UpdateUI();
         }
 
+        /// <summary>增加血上限（遗物共鸣等永久性奖励）。</summary>
+        public void AddMaxHealth(int amount)
+        {
+            playerData.maxHealth += amount;
+            OnDataChanged?.Invoke(playerData);
+            UpdateUI();
+        }
+
         public bool RemoveGold(int amount)
         {
             bool success = playerData.RemoveGold(amount);

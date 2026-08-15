@@ -1074,6 +1074,7 @@ namespace MutationChess.Battle
                 {
                     unlockService.UnlockFaction(relic.faction);
                     AddLog($"解锁阵营: {unlockService.GetFactionDisplayName(relic.faction)}");
+                    AudioManager.Instance?.PlayFactionUnlocked();
                 }
             }
         }
