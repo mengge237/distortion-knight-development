@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Slime_StickyGlove
   relicName: 粘液手套
   rarity: 1
-  faction: 4
+  faction: 1
   description: 打出粘液牌时施加1层虚弱（隐藏：虚弱+1）
   price: 150
   iconPath: RelicsArt/粘液手套

@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Frost_FrostGiant
   relicName: 霜巨人
   rarity: 3
-  faction: 2
+  faction: 4
   description: 战斗开始+1敏捷；打出寒霜牌时获得8点格挡
   price: 300
   iconPath: RelicsArt/霜巨人

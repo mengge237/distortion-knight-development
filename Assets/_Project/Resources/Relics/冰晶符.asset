@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Frost_IceCrystal
   relicName: 冰晶符
   rarity: 1
-  faction: 2
+  faction: 4
   description: 战斗开始+5格挡（隐藏：格挡卡牌费用-1）
   price: 150
   iconPath: RelicsArt/冰晶符

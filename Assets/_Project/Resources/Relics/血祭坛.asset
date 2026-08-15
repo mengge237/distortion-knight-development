@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Blood_CrimsonAltar
   relicName: 血祭坛
   rarity: 2
-  faction: 1
+  faction: 3
   description: 战斗开始失3血→获得2力量（隐藏：失血量-1）
   price: 285
   iconPath: RelicsArt/血祭坛

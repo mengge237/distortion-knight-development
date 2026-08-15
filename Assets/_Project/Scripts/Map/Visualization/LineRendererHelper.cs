@@ -16,7 +16,12 @@ namespace MutationChess.Map
             if (prefab != null)
                 lineObj = Object.Instantiate(prefab, parent);
             else
+            {
+                // 无预制体时也必须挂到 parent 下，否则换层时旧楼层连线无法随 linesParent 一起销毁
                 lineObj = new GameObject("Line", typeof(LineRenderer));
+                if (parent != null)
+                    lineObj.transform.SetParent(parent, false);
+            }
 
             LineRenderer lr = lineObj.GetComponent<LineRenderer>();
             if (lr == null) lr = lineObj.AddComponent<LineRenderer>();

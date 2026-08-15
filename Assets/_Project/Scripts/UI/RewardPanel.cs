@@ -559,15 +559,7 @@ namespace MutationChess.UI
             int finalGold = currentGoldReward;
             Card finalCard = selectedCard;
 
-            if (!goldClaimed)
-            {
-                var dataManager = PlayerDataManager.Instance;
-                if (dataManager != null && finalGold > 0)
-                {
-                    dataManager.AddGold(finalGold);
-                }
-            }
-
+            // 金币统一由 OnRewardsConfirmed 回调（BattleManager）发放，此处不再重复发放，避免双倍金币
             isPanelShowing = false;
             isCardSelectionActive = false;
             onRewardsConfirmed?.Invoke(finalGold, finalCard);

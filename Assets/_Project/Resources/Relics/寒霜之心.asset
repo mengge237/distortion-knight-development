@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Boss_FrostHeart
   relicName: 寒霜之心
   rarity: 4
-  faction: 2
+  faction: 4
   description: 战斗开始+1敏捷；寒霜牌额外+1格挡（Boss·激活寒霜隐藏）
   price: 350
   iconPath: RelicsArt/寒霜之心
@@ -31,4 +31,5 @@ MonoBehaviour:
   isBossRelic: true
   isStartingRelic: false
   isSynthesisTarget: 0
-  isFactionUnlocker: 0
+  isFactionUnlocker: 1
+  unlockedFaction: 4

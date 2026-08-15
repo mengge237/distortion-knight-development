@@ -31,4 +31,5 @@ MonoBehaviour:
   isBossRelic: true
   isStartingRelic: false
   isSynthesisTarget: 0
-  isFactionUnlocker: 0
+  isFactionUnlocker: 1
+  unlockedFaction: 6

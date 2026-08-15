@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Shadow_Cloak
   relicName: 暗影斗篷
   rarity: 1
-  faction: 3
+  faction: 5
   description: 战斗开始+10格挡（隐藏：战斗开始+1敏捷）
   price: 150
   iconPath: RelicsArt/暗影斗篷

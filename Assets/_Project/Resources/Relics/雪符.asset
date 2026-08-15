@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Frost_Snowflake
   relicName: 雪符
   rarity: 1
-  faction: 2
+  faction: 4
   description: 战斗开始获得10格挡（隐藏：战斗开始+1敏捷）
   price: 150
   iconPath: RelicsArt/雪符

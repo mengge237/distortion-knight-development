@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Boss_ReluctantChain
   relicName: 不舍锁链
   rarity: 4
-  faction: 5
+  faction: 2
   description: 打出不舍牌抽牌+1；消耗牌回1HP（Boss·激活不舍隐藏）
   price: 350
   iconPath: RelicsArt/不舍锁链
@@ -31,4 +31,5 @@ MonoBehaviour:
   isBossRelic: true
   isStartingRelic: false
   isSynthesisTarget: 0
-  isFactionUnlocker: 0
+  isFactionUnlocker: 1
+  unlockedFaction: 2

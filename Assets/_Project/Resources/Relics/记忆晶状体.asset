@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Boss_MemoryLens
   relicName: 记忆晶状体
   rarity: 4
-  faction: 3
+  faction: 5
   description: 战斗开始+15格挡；暗影牌+3伤害；每4回合结束-1敏捷（负面）
   price: 350
   iconPath: RelicsArt/记忆晶状体
@@ -39,4 +39,5 @@ MonoBehaviour:
   isBossRelic: true
   isStartingRelic: false
   isSynthesisTarget: 0
-  isFactionUnlocker: 0
+  isFactionUnlocker: 1
+  unlockedFaction: 5

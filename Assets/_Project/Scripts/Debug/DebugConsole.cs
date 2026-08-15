@@ -317,8 +317,14 @@ namespace MutationChess.Debug
             var assets = rm?.LoadAllRelicAssets();
             relicsScrollPos = GUILayout.BeginScrollView(relicsScrollPos, GUILayout.Height(Screen.height * 0.45f));
 
-            // ── 阵营遗物：按阵营单独分区（非稀有度查询），添加时自动附带 Boss 激活器 ──
-            GUILayout.Label("<b><color=#ffd24d>═══ 阵营遗物 ═══</color></b> <color=gray>（添加时自动附带对应 Boss 激活器，隐藏效果立即生效）</color>", RichLabel);
+            // ── 稀有度式双列布局 ──
+            // 左列「阵营遗物」：按阵营分区，隐藏效果遗物作为子集显示，Boss解锁器仅此列显示；
+            // 右列「常规遗物」：仅无阵营协同的遗物正常显示。
+            GUILayout.BeginHorizontal();
+
+            GUILayout.BeginVertical(GUILayout.Width(440));
+            GUILayout.Label("<b><color=#ffd24d>═══ 阵营遗物 ═══</color></b>", RichLabel);
+            GUILayout.Label("<color=gray>隐藏效果为子集；Boss解锁器仅此列显示（不作为常规显示）</color>", RichLabel);
             if (assets != null)
             {
                 foreach (var f in FactionOrder)
@@ -327,15 +333,46 @@ namespace MutationChess.Debug
                     if (factionAssets.Count == 0) continue;
                     GUILayout.Space(2);
                     GUILayout.Label($"<b><color={FactionColorHex(f)}>◆ {FactionDisplayName(f)}阵营 ◆</color></b>", RichLabel);
-                    foreach (var a in factionAssets)
+
+                    // ① 常规阵营遗物（无隐藏效果）
+                    foreach (var a in factionAssets.Where(a => !a.isFactionUnlocker && !HasHiddenEffect(a)))
                         DrawRelicAddRow(rm, assets, a, true);
+
+                    // ② 隐藏效果子集（需对应 Boss 激活器后生效）
+                    var hiddenOnes = factionAssets.Where(a => !a.isFactionUnlocker && HasHiddenEffect(a)).ToList();
+                    if (hiddenOnes.Count > 0)
+                    {
+                        GUILayout.Label("　└ <color=#ffa54d>隐藏效果子集（需Boss激活器）</color>", RichLabel);
+                        foreach (var a in hiddenOnes)
+                            DrawRelicAddRow(rm, assets, a, true, "　　", true);
+                    }
+
+                    // ③ Boss解锁器（仅Boss战后可选，不作为常规显示）
+                    var unlockers = factionAssets.Where(a => a.isFactionUnlocker).ToList();
+                    if (unlockers.Count > 0)
+                    {
+                        GUILayout.Label("　└ <color=#ff7b7b>Boss解锁器（仅Boss战后选择）</color>", RichLabel);
+                        foreach (var a in unlockers)
+                            DrawRelicAddRow(rm, assets, a, false, "　　");
+                    }
+                }
+
+                // 兜底：阵营为None的Boss解锁器也显示在左列
+                var orphanUnlockers = assets.Where(a => a.isFactionUnlocker && a.faction == CardFaction.None).ToList();
+                if (orphanUnlockers.Count > 0)
+                {
+                    GUILayout.Label("<b><color=#ff7b7b>◆ 通用Boss解锁器 ◆</color></b>", RichLabel);
+                    foreach (var a in orphanUnlockers)
+                        DrawRelicAddRow(rm, assets, a, false);
                 }
             }
+            GUILayout.EndVertical();
 
-            GUILayout.Space(6);
+            GUILayout.Space(10);
 
-            // ── 全部遗物：原有列表，含隐藏效果的遗物依旧在此直接添加，不过滤阵营 ──
-            GUILayout.Label("<b><color=#9adcff>═══ 全部遗物 ═══</color></b>", RichLabel);
+            GUILayout.BeginVertical(GUILayout.Width(440));
+            GUILayout.Label("<b><color=#9adcff>═══ 常规遗物 ═══</color></b>", RichLabel);
+            GUILayout.Label("<color=gray>无阵营协同的遗物正常显示；阵营遗物与Boss解锁器不在此列</color>", RichLabel);
             GUILayout.BeginHorizontal();
             GUILayout.Label("搜索:", GUILayout.Width(40));
             relicSearchFilter = GUILayout.TextField(relicSearchFilter, GUILayout.Width(180));
@@ -343,24 +380,41 @@ namespace MutationChess.Debug
                 relicSearchFilter = "";
             GUILayout.EndHorizontal();
 
-            // 调试台列出全部遗物（绕过阵营解锁过滤），否则未解锁阵营的遗物（如鲜血-吸血獠牙）无法添加
             if (assets != null)
             {
                 foreach (var a in assets)
                 {
+                    // 阵营遗物与Boss解锁器只显示在左列
+                    if (a.faction != CardFaction.None || a.isFactionUnlocker) continue;
                     if (!string.IsNullOrEmpty(relicSearchFilter) &&
                         a.relicName.IndexOf(relicSearchFilter, StringComparison.OrdinalIgnoreCase) < 0)
                         continue;
                     DrawRelicAddRow(rm, assets, a, false);
                 }
             }
+            GUILayout.EndVertical();
+
+            GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
+        }
+
+        /// <summary>判断遗物是否带隐藏效果（以 RelicBalanceConfig 为准，资产字段兜底）。</summary>
+        private static bool HasHiddenEffect(RelicDataAsset a)
+        {
+            if (a == null) return false;
+            var cfg = RelicBalanceConfig.CreateDefaultConfig().GetEntry(a.relicId);
+            if (cfg != null && (!string.IsNullOrEmpty(cfg.hiddenActivatorRelicId) ||
+                                (cfg.hiddenEffectIds != null && cfg.hiddenEffectIds.Count > 0)))
+                return true;
+            return !string.IsNullOrEmpty(a.hiddenActivatorRelicId) ||
+                   (a.hiddenEffectIds != null && a.hiddenEffectIds.Count > 0);
         }
 
         /// <summary>
         /// 遗物添加行：[+] 按钮 + 名称/稀有度；阵营行额外标出配套的 Boss 激活器遗物。
         /// </summary>
-        private void DrawRelicAddRow(RelicManager rm, List<RelicDataAsset> assets, RelicDataAsset a, bool isFactionRow)
+        private void DrawRelicAddRow(RelicManager rm, List<RelicDataAsset> assets, RelicDataAsset a,
+                                     bool isFactionRow, string indent = "", bool isHiddenRow = false)
         {
             GUILayout.BeginHorizontal();
             GUI.color = GetRelicRarityColor(a.rarity);
@@ -370,11 +424,23 @@ namespace MutationChess.Debug
                 else AddSingleRelic(rm, a);
             }
             GUI.color = Color.white;
-            string label = $"<color=white>{a.relicName}</color> <color=gray>[{RelicRarityText(a.rarity)}]</color>";
-            if (isFactionRow && !string.IsNullOrEmpty(a.hiddenActivatorRelicId))
+            string label = indent + $"<color=white>{a.relicName}</color> <color=gray>[{RelicRarityText(a.rarity)}]</color>";
+            if (isHiddenRow)
+                label += " <color=#ffa54d>[隐藏]</color>";
+            if (isFactionRow)
             {
-                var activator = assets.FirstOrDefault(x => x.relicId == a.hiddenActivatorRelicId);
-                label += $" <color=#ffa54d>↔ {(activator != null ? activator.relicName : a.hiddenActivatorRelicId)}</color>";
+                // 激活器以资产字段为准，缺失时回退到平衡配置（如老资产血护符）
+                string activatorId = a.hiddenActivatorRelicId;
+                if (string.IsNullOrEmpty(activatorId))
+                {
+                    var cfg = RelicBalanceConfig.CreateDefaultConfig().GetEntry(a.relicId);
+                    if (cfg != null) activatorId = cfg.hiddenActivatorRelicId;
+                }
+                if (!string.IsNullOrEmpty(activatorId))
+                {
+                    var activator = assets.FirstOrDefault(x => x.relicId == activatorId);
+                    label += $" <color=#ffa54d>↔ {(activator != null ? activator.relicName : activatorId)}</color>";
+                }
             }
             GUILayout.Label(label, RichLabel, GUILayout.Width(420));
             GUILayout.EndHorizontal();
@@ -403,18 +469,25 @@ namespace MutationChess.Debug
                 GameLogger.Log($"[调试台] 已添加阵营遗物「{asset.relicName}」");
             }
 
-            if (string.IsNullOrEmpty(asset.hiddenActivatorRelicId)) return;
+            // 激活器以资产字段为准，缺失时回退到平衡配置（老资产如血护符）
+            string activatorId = asset.hiddenActivatorRelicId;
+            if (string.IsNullOrEmpty(activatorId))
+            {
+                var cfg = RelicBalanceConfig.CreateDefaultConfig().GetEntry(asset.relicId);
+                if (cfg != null) activatorId = cfg.hiddenActivatorRelicId;
+            }
+            if (string.IsNullOrEmpty(activatorId)) return;
 
-            if (rm.HasRelic(asset.hiddenActivatorRelicId))
+            if (rm.HasRelic(activatorId))
             {
                 GameLogger.Log($"[调试台] 「{asset.relicName}」的激活器遗物已拥有，无需重复添加");
                 return;
             }
 
-            var activator = rm.LoadAllRelicAssets().FirstOrDefault(x => x.relicId == asset.hiddenActivatorRelicId);
+            var activator = rm.LoadAllRelicAssets().FirstOrDefault(x => x.relicId == activatorId);
             if (activator == null)
             {
-                GameLogger.LogWarning($"[调试台] 未找到激活器遗物「{asset.hiddenActivatorRelicId}」，请检查配置");
+                GameLogger.LogWarning($"[调试台] 未找到激活器遗物「{activatorId}」，请检查配置");
                 return;
             }
 

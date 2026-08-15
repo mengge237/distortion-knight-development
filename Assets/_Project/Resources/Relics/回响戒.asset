@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Reluctant_EchoRing
   relicName: 回响戒
   rarity: 2
-  faction: 5
+  faction: 2
   description: 打出不舍牌时抽1张牌（隐藏：抽牌+1）
   price: 285
   iconPath: RelicsArt/回响戒

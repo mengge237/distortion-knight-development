@@ -50,6 +50,7 @@ namespace MutationChess.Battle
 
         [Header("奖励面板")]
         [SerializeField] private RewardPanel rewardPanel;
+        [SerializeField] private BossRelicChoicePanel bossRelicChoicePanel;
 
         [Header("背景图片")]
         [SerializeField] private Image backgroundImage;
@@ -912,6 +913,9 @@ namespace MutationChess.Battle
                 .Where(a => a.faction == CardFaction.None || unlockService == null || unlockService.IsFactionUnlocked(a.faction))
                 .ToList();
 
+            // 同一批奖励中不允许出现相同的卡牌（按资产名去重）
+            HashSet<string> usedCardAssets = new HashSet<string>();
+
             for (int i = 0; i < cardCount; i++)
             {
                 float roll = UnityEngine.Random.value;
@@ -933,7 +937,10 @@ namespace MutationChess.Battle
 
                 if (pool.Count > 0)
                 {
-                    var asset = pool[UnityEngine.Random.Range(0, pool.Count)];
+                    var available = pool.Where(a => a != null && !usedCardAssets.Contains(a.name)).ToList();
+                    if (available.Count == 0) available = pool; // 该稀有度池已抽完时回退到全池
+                    var asset = available[UnityEngine.Random.Range(0, available.Count)];
+                    usedCardAssets.Add(asset.name);
                     CardName cardName;
                     if (System.Enum.TryParse(asset.name, out cardName))
                     {
@@ -977,7 +984,7 @@ namespace MutationChess.Battle
         private void HandleBossVictory()
         {
             BossRewardService bossService = BossRewardService.Instance;
-            if (bossService == null || bossService.Config == null)
+            if (bossService == null)
             {
                 GameLogger.LogWarning("[BattleManager] BossRewardService 未找到");
                 HandleNormalVictory(EnemyType.Boss);
@@ -994,7 +1001,6 @@ namespace MutationChess.Battle
             int finalBossGold = Mathf.RoundToInt(baseBossGold * goldMultiplier);
             GameLogger.Log($"[BattleManager] BOSS金币 - 基础:{baseBossGold} 倍率:{goldMultiplier:F2} 最终:{finalBossGold}");
 
-            pendingRelicReward = bossReward.factionUnlockRelic;
             pendingBonusRelic = bossReward.bonusRelic;
             pendingBossFactionCard = bossReward.factionCard;
             bossRewardGold = finalBossGold;
@@ -1014,17 +1020,88 @@ namespace MutationChess.Battle
 
             if (bossReward.factionCard != null)
             {
-                cardRewards.Add(bossReward.factionCard);
+                // 与主奖励卡牌同名去重
+                bool duplicated = cardRewards.Any(c => c != null && c.cardName == bossReward.factionCard.cardName);
+                if (!duplicated)
+                {
+                    cardRewards.Add(bossReward.factionCard);
+                }
+                else
+                {
+                    GameLogger.Log($"[BattleManager] Boss阵营卡牌与主奖励重复，已跳过: {bossReward.factionCard.cardName}");
+                }
             }
 
+            // 第一步：优先弹出 Boss 遗物三选一面板，选择后再进入金币/卡牌奖励页
+            List<Relic> relicChoices = bossService.GenerateBossRelicChoices(3);
+            if (relicChoices.Count > 0)
+            {
+                pendingRelicReward = null;
+                BossRelicChoicePanel choicePanel = GetBossRelicChoicePanel();
+                if (choicePanel != null)
+                {
+                    GameLogger.Log($"[BattleManager] 打开 Boss 遗物选择面板（{relicChoices.Count} 个选项）");
+                    choicePanel.Show(relicChoices, pickedRelic =>
+                    {
+                        GrantBossRelic(pickedRelic);
+                        ShowBossRewardPanel(finalBossGold, cardRewards);
+                    });
+                    if (choicePanel.IsVisible)
+                        return;
+                }
+            }
+
+            // 回退：无可选遗物或面板缺失时，沿用旧的随机解锁遗物流程
+            pendingRelicReward = bossReward.factionUnlockRelic;
+            ShowBossRewardPanel(finalBossGold, cardRewards);
+        }
+
+        /// <summary>Boss 遗物选择后立即发放（含阵营解锁）；金币/卡牌/额外遗物/药水仍在奖励页确认时发放。</summary>
+        private void GrantBossRelic(Relic relic)
+        {
+            if (relic == null) return;
+
+            var relicManager = RelicManager.Instance;
+            if (relicManager == null) return;
+
+            relicManager.AddRelic(relic);
+            AddLog($"获得 Boss 遗物: {relic.relicName}");
+
+            if (relic.faction != CardFaction.None)
+            {
+                var unlockService = FactionUnlockService.Instance;
+                if (unlockService != null)
+                {
+                    unlockService.UnlockFaction(relic.faction);
+                    AddLog($"解锁阵营: {unlockService.GetFactionDisplayName(relic.faction)}");
+                }
+            }
+        }
+
+        /// <summary>Boss 奖励页（金币+卡牌+额外遗物+药水）：在遗物选择完成后弹出。</summary>
+        private void ShowBossRewardPanel(int gold, List<Card> cards)
+        {
             rewardPanel.ShowRewards(
-                finalBossGold,
-                cardRewards,
-                bossReward.factionUnlockRelic,
+                gold,
+                cards,
+                pendingRelicReward,
                 pendingPotionReward,
                 OnRewardsConfirmed,
                 OnPanelClosed
             );
+        }
+
+        /// <summary>获取 Boss 遗物选择面板：场景接线优先，缺失时运行时自动构建。</summary>
+        private BossRelicChoicePanel GetBossRelicChoicePanel()
+        {
+            if (bossRelicChoicePanel == null)
+                bossRelicChoicePanel = BossRelicChoicePanel.Instance;
+            if (bossRelicChoicePanel == null)
+            {
+                GameObject panelGo = new GameObject("BossRelicChoicePanel");
+                bossRelicChoicePanel = panelGo.AddComponent<BossRelicChoicePanel>();
+            }
+            return bossRelicChoicePanel;
         }
 
         private void HandleNormalVictory(EnemyType enemyType)
@@ -1052,8 +1129,20 @@ namespace MutationChess.Battle
                 List<Card> extraCards = GetRewardCardsForEnemy(enemyType);
                 if (extraCards != null && extraCards.Count > 0)
                 {
-                    GameLogger.Log($"[BattleManager] 额外卡牌奖励 {extraCards.Count} 张");
-                    cardRewards.AddRange(extraCards);
+                    // 与主奖励做同名去重（宝箱额外奖励不追加重复卡牌）
+                    int added = 0;
+                    foreach (var extra in extraCards)
+                    {
+                        if (extra == null) continue;
+                        if (cardRewards.Any(c => c != null && c.cardName == extra.cardName))
+                        {
+                            GameLogger.Log($"[BattleManager] 宝箱额外卡牌与主奖励重复，已跳过: {extra.cardName}");
+                            continue;
+                        }
+                        cardRewards.Add(extra);
+                        added++;
+                    }
+                    GameLogger.Log($"[BattleManager] 额外卡牌奖励 {added} 张");
                 }
             }
 

@@ -42,7 +42,7 @@ namespace MutationChess.Battle
             {
                 config = Resources.Load<BossRewardConfig>(ResourcePaths.BossRewardConfig);
                 if (config == null && debugMode)
-                    GameLogger.LogWarning("[BossRewardService] BossRewardConfig not found, please create Resources/BossRewardConfig.asset");
+                    GameLogger.Log("[BossRewardService] 未找到 Resources/BossRewardConfig.asset，将使用内置回退奖励池（阵营解锁遗物自动从 Resources/Relics 加载）");
             }
         }
 
@@ -58,14 +58,10 @@ namespace MutationChess.Battle
         {
             BossRewardResult result = new BossRewardResult();
 
-            if (config == null)
-            {
-                result.goldAmount = 100;
-                return result;
-            }
-
-            result.goldAmount = Random.Range(config.minGold, config.maxGold + 1);
-
+            // 配置缺失时使用默认金币与内置回退池（不再直接空手而归）
+            result.goldAmount = config != null
+                ? Random.Range(config.minGold, config.maxGold + 1)
+                : 100;
 
             List<RelicDataAsset> allUnlockRelics = LoadAllFactionUnlockRelics();
 
@@ -94,9 +90,11 @@ namespace MutationChess.Battle
                 }
             }
 
-            if (config.bonusRelics != null && config.bonusRelics.Count > 0)
+            // 额外遗物：配置池优先，无配置时使用内置回退池（稀有/传说、无阵营协同）
+            List<RelicDataAsset> bonusPool = GetBonusRelicPool();
+            if (bonusPool.Count > 0)
             {
-                var available = config.bonusRelics
+                var available = bonusPool
                     .Where(r => r != null && !r.isFactionUnlocker)
                     .Where(r => !IsRelicAlreadyOwned(r.relicId))
                     .ToList();
@@ -114,7 +112,8 @@ namespace MutationChess.Battle
                 }
             }
 
-            if (config.factionCardRewards != null && config.factionCardRewards.Count > 0)
+            // 阵营卡牌仅由配置提供（无配置时跳过）
+            if (config != null && config.factionCardRewards != null && config.factionCardRewards.Count > 0)
             {
                 var unlockService = FactionUnlockService.Instance;
                 if (unlockService != null)
@@ -139,6 +138,73 @@ namespace MutationChess.Battle
             }
 
             return result;
+        }
+
+        /// <summary>额外Boss遗物池：配置优先；无配置时回退到 Resources 中的稀有/传说常规遗物。</summary>
+        private List<RelicDataAsset> GetBonusRelicPool()
+        {
+            if (config != null && config.bonusRelics != null && config.bonusRelics.Count > 0)
+                return config.bonusRelics.Where(r => r != null).ToList();
+
+            List<RelicDataAsset> fallback = new List<RelicDataAsset>();
+            RelicDataAsset[] allRelics = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
+            foreach (var relic in allRelics)
+            {
+                if (relic == null) continue;
+                if (relic.isBossRelic || relic.isStartingRelic || relic.isFactionUnlocker || relic.isShopRelic) continue;
+                if (relic.faction != CardFaction.None) continue;
+                if (relic.rarity != RelicRarity.Rare && relic.rarity != RelicRarity.Legendary) continue;
+                fallback.Add(relic);
+            }
+            return fallback;
+        }
+
+        /// <summary>
+        /// 生成 Boss 遗物选择面板的选项（不重复取样）：
+        /// 主池为「未拥有且阵营未解锁」的阵营解锁遗物，不足时用额外Boss遗物池补足。
+        /// 用于战胜 Boss 后优先弹出的三选一遗物面板。
+        /// </summary>
+        public List<Relic> GenerateBossRelicChoices(int count)
+        {
+            List<Relic> choices = new List<Relic>();
+            if (count <= 0) return choices;
+
+            var relicManager = RelicManager.Instance;
+            if (relicManager == null) return choices;
+
+            List<RelicDataAsset> pool = new List<RelicDataAsset>();
+
+            // 主池：阵营解锁遗物（未拥有、阵营未解锁）
+            foreach (var unlock in LoadAllFactionUnlockRelics())
+            {
+                if (unlock == null || !unlock.isFactionUnlocker) continue;
+                if (IsFactionAlreadyUnlocked(unlock.unlockedFaction)) continue;
+                if (IsRelicAlreadyOwned(unlock.relicId)) continue;
+                pool.Add(unlock);
+            }
+
+            // 补充池：额外 Boss 遗物（未拥有）
+            foreach (var bonus in GetBonusRelicPool())
+            {
+                if (bonus == null || bonus.isFactionUnlocker) continue;
+                if (IsRelicAlreadyOwned(bonus.relicId)) continue;
+                pool.Add(bonus);
+            }
+
+            // 随机取 count 个不重复
+            while (choices.Count < count && pool.Count > 0)
+            {
+                int idx = Random.Range(0, pool.Count);
+                Relic relic = relicManager.CreateRelicFromAsset(pool[idx]);
+                pool.RemoveAt(idx);
+                if (relic != null)
+                {
+                    if (debugMode)
+                        GameLogger.Log($"[BossRewardService] Boss遗物选项：{relic.relicName}");
+                    choices.Add(relic);
+                }
+            }
+            return choices;
         }
 
         private List<RelicDataAsset> LoadAllFactionUnlockRelics()

@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Boss_SlimeGland
   relicName: 粘液腺体
   rarity: 4
-  faction: 4
+  faction: 1
   description: 每回合粘液牌施加虚弱+1层；对敌人debuff回合+1
   price: 350
   iconPath: RelicsArt/粘液腺体
@@ -31,4 +31,5 @@ MonoBehaviour:
   isBossRelic: true
   isStartingRelic: false
   isSynthesisTarget: 0
-  isFactionUnlocker: 0
+  isFactionUnlocker: 1
+  unlockedFaction: 1

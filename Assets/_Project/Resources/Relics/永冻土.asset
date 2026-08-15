@@ -15,7 +15,7 @@ MonoBehaviour:
   relicId: Frost_Permafrost
   relicName: 永冻土
   rarity: 2
-  faction: 2
+  faction: 4
   description: 战斗开始获得15格挡（隐藏：额外+10格挡）
   price: 285
   iconPath: RelicsArt/永冻土
