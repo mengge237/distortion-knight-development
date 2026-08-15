@@ -490,8 +490,7 @@ namespace MutationChess.Core
         ///   ApplyBlockEffect.blockAmount / GainBuffEffect.amount /
         ///   MultiStatBuffEffect.energy / DrawCardsEffect.drawCount /
         ///   GainEnergyEffect.energyGain / HealPlayerEffect.healAmount /
-        ///   MaxHealthEffect.maxHealthGain / Gain12GoldOnVictoryEffect.gold /
-        ///   GoldBonusEffect.goldBonusMultiplier / VictoryGoldPercentEffect.goldPercent
+        ///   MaxHealthEffect.maxHealthGain / VictoryGoldEffect.*（按资产默认值推断目标字段）
         /// （此类效果没有 sourceCard，必须用配置值代替卡牌属性）
         /// </summary>
         private void ApplyConfigValue(CardEffect effect, RelicEffectEntry configEntry)
@@ -523,14 +522,17 @@ namespace MutationChess.Core
                 case MaxHealthEffect maxHealth:
                     maxHealth.maxHealthGain = v;
                     break;
-                case Gain12GoldOnVictoryEffect gainGold:
-                    gainGold.gold = v;
-                    break;
-                case GoldBonusEffect goldBonus:
-                    goldBonus.goldBonusMultiplier = configEntry.value1;
-                    break;
-                case VictoryGoldPercentEffect victoryPct:
-                    victoryPct.goldPercent = configEntry.value1;
+                case VictoryGoldEffect gold:
+                    // value1 目标字段由资产默认值推断（三类金币资产各只有一个非零模式字段）：
+                    // fixedGold>0 → 固定金币（原 Gain12GoldOnVictoryEffect 资产）
+                    // goldBonusMultiplier>0 → 倍率（原 GoldBonusEffect 资产）
+                    // 其余 → 百分比（原 VictoryGoldPercentEffect 资产）
+                    if (gold.fixedGold > 0)
+                        gold.fixedGold = v;
+                    else if (gold.goldBonusMultiplier > 0f)
+                        gold.goldBonusMultiplier = configEntry.value1;
+                    else
+                        gold.goldPercent = configEntry.value1;
                     break;
             }
         }

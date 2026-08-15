@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 187f05fcf3a44125941e24961c64c00d, type: 3}
+  m_Script: {fileID: 11500000, guid: 9e3f2a1b4c5d6e7f8a9b0c1d2e3f4a52, type: 3}
   m_Name: BloodAltarBoostedEffect
   m_EditorClassIdentifier: 
   effectDescription: 回复1生命并永久获得1点力量
-  healthCostReduction: 1
-  extraStrength: 1
+  hpChange: 1
+  strengthGain: 1

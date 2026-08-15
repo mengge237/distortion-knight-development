@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 070f1c26480a4c5091de5b647c1924bf, type: 3}
+  m_Script: {fileID: 11500000, guid: 9e3f2a1b4c5d6e7f8a9b0c1d2e3f4a53, type: 3}
   m_Name: AcidicCoreDebuff3StacksEffect
   m_EditorClassIdentifier: 
   effectDescription: 战斗开始对敌施加3虚弱/3脆弱/3易伤debuff(Boss各+1层)

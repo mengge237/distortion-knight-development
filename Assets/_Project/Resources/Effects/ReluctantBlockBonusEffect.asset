@@ -9,8 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 58786117dea745047aa76ad76dcabe4a, type: 3}
+  m_Script: {fileID: 11500000, guid: 9e3f2a1b4c5d6e7f8a9b0c1d2e3f4a54, type: 3}
   m_Name: ReluctantBlockBonusEffect
   m_EditorClassIdentifier: 
+  filterTag: 2
+  bossFlag: 2
   effectDescription: 打出不舍牌额外+2格挡(Boss激活翻倍为4)
   blockAmount: 2

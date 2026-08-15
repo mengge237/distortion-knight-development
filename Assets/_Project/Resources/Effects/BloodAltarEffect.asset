@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b0a98a89f31f96446ac57de7634ef2a0, type: 3}
+  m_Script: {fileID: 11500000, guid: 9e3f2a1b4c5d6e7f8a9b0c1d2e3f4a52, type: 3}
   m_Name: BloodAltarEffect
   m_EditorClassIdentifier: 
   effectDescription: 血祭坛
-  healthCost: 3
+  hpChange: -3
   strengthGain: 2

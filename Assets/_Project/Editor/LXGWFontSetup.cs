@@ -35,7 +35,7 @@ namespace MutationChess.EditorTools
         {
             if (!File.Exists(TtfPath))
             {
-                Debug.LogWarning($"[LXGWFontSetup] 未找到字体文件：{TtfPath}");
+                UnityEngine.Debug.LogWarning($"[LXGWFontSetup] 未找到字体文件：{TtfPath}");
                 return;
             }
 
@@ -46,7 +46,7 @@ namespace MutationChess.EditorTools
                 Font font = AssetDatabase.LoadAssetAtPath<Font>(TtfPath);
                 if (font == null)
                 {
-                    Debug.LogError($"[LXGWFontSetup] TTF 尚未导入或导入失败：{TtfPath}");
+                    UnityEngine.Debug.LogError($"[LXGWFontSetup] TTF 尚未导入或导入失败：{TtfPath}");
                     return;
                 }
 
@@ -55,7 +55,7 @@ namespace MutationChess.EditorTools
                     4096, 4096, AtlasPopulationMode.Dynamic, true);
                 if (fa == null)
                 {
-                    Debug.LogError("[LXGWFontSetup] 字体资产生成失败（FontEngine 加载字形失败，请检查 TTF 导入设置 Include Font Data）");
+                    UnityEngine.Debug.LogError("[LXGWFontSetup] 字体资产生成失败（FontEngine 加载字形失败，请检查 TTF 导入设置 Include Font Data）");
                     return;
                 }
 
@@ -64,18 +64,18 @@ namespace MutationChess.EditorTools
                     AssetDatabase.AddObjectToAsset(fa.atlasTextures[0], fa); // 图集纹理作为子资产随字体资产保存
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                Debug.Log("[LXGWFontSetup] 已生成霞鹜文楷 TMP 字体资产：" + FontAssetPath);
+                UnityEngine.Debug.Log("[LXGWFontSetup] 已生成霞鹜文楷 TMP 字体资产：" + FontAssetPath);
             }
 
             // 2. TMP 默认字体切换（未生成过或默认字体不是霞鹜文楷时执行）
             TMP_Settings settings = AssetDatabase.LoadAssetAtPath<TMP_Settings>(TmpSettingsPath);
             if (settings == null)
             {
-                Debug.LogWarning($"[LXGWFontSetup] 未找到 TMP Settings：{TmpSettingsPath}");
+                UnityEngine.Debug.LogWarning($"[LXGWFontSetup] 未找到 TMP Settings：{TmpSettingsPath}");
                 return;
             }
 
-            if (settings.defaultFontAsset != fa)
+            if (TMP_Settings.defaultFontAsset != fa) // 静态成员，用类型名访问
             {
                 SerializedObject so = new SerializedObject(settings);
                 so.FindProperty("m_defaultFontAsset").objectReferenceValue = fa;
@@ -83,7 +83,7 @@ namespace MutationChess.EditorTools
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(settings);
                 AssetDatabase.SaveAssets();
-                Debug.Log("[LXGWFontSetup] TMP 默认字体已切换为霞鹜文楷");
+                UnityEngine.Debug.Log("[LXGWFontSetup] TMP 默认字体已切换为霞鹜文楷");
             }
         }
     }

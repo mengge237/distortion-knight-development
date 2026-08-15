@@ -9,8 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a20484225c7377b46b85fa55793b8ac8, type: 3}
+  m_Script: {fileID: 11500000, guid: 9e3f2a1b4c5d6e7f8a9b0c1d2e3f4a51, type: 3}
   m_Name: BlockDiscountEffect
   m_EditorClassIdentifier: 
+  target: 0
   effectDescription: 本场战斗格挡兑换比率改为1:1
   overrideRate: 1

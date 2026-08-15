@@ -28,7 +28,7 @@ namespace MutationChess.EditorTools
         public static void EnsureHomeSceneAndBuildSettingsMenu()
         {
             EnsureHomeSceneAndBuildSettings();
-            Debug.Log("[HomeSceneSetup] 手动生成完成：HomeScene + BuildSettings");
+            UnityEngine.Debug.Log("[HomeSceneSetup] 手动生成完成：HomeScene + BuildSettings");
         }
 
         private static void EnsureHomeSceneAndBuildSettings()
@@ -58,7 +58,7 @@ namespace MutationChess.EditorTools
 
                 EditorSceneManager.SaveScene(scene, HomeScenePath);
                 EditorSceneManager.CloseScene(scene, true);
-                Debug.Log("[HomeSceneSetup] 已创建首页场景：" + HomeScenePath);
+                UnityEngine.Debug.Log("[HomeSceneSetup] 已创建首页场景：" + HomeScenePath);
             }
 
             // 2. BuildSettings：首页在前、主场景在后（保留用户已注册的其他场景，仅补缺失项）
@@ -76,7 +76,7 @@ namespace MutationChess.EditorTools
                 if (!hasHome) list.Insert(0, new EditorBuildSettingsScene(HomeScenePath, true));
                 if (!hasMain) list.Add(new EditorBuildSettingsScene(MainScenePath, true));
                 EditorBuildSettings.scenes = list.ToArray();
-                Debug.Log("[HomeSceneSetup] 已注册 BuildSettings：HomeScene → MainScene（保留原有场景）");
+                UnityEngine.Debug.Log("[HomeSceneSetup] 已注册 BuildSettings：HomeScene → MainScene（保留原有场景）");
             }
         }
     }

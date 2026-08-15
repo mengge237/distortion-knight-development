@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 393f09a41e339004eac85d3dbc298e36, type: 3}
+  m_Script: {fileID: 11500000, guid: 9e3f2a1b4c5d6e7f8a9b0c1d2e3f4a56, type: 3}
   m_Name: GoldBonusEffect
   m_EditorClassIdentifier: 
   effectDescription: 金币加成
