@@ -332,16 +332,15 @@ namespace MutationChess.UI
             var gridGo = new GameObject("CardGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
             gridGo.transform.SetParent(listContent, false);
             var grid = gridGo.GetComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(178f, 232f); // 卡面 150×200 居中放置，四周留出徽标空间
-            grid.spacing = new Vector2(12f, 14f);
-            grid.padding = new RectOffset(14, 14, 8, 14);
+            // GridLayoutGroup 会把子物体压成 cellSize，且没有 childControl/childForceExpand
+            // 开关（那是 Horizontal/VerticalLayoutGroup 的成员）——cellSize 直接取卡面原尺寸
+            // 150×200，行距留 32 供底部徽标骑跨
+            grid.cellSize = new Vector2(150f, 200f);
+            grid.spacing = new Vector2(20f, 32f);
+            grid.padding = new RectOffset(14, 14, 8, 18);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 4;
             grid.childAlignment = TextAnchor.MiddleCenter;
-            grid.childControlWidth = false;
-            grid.childControlHeight = false;
-            grid.childForceExpandWidth = false;
-            grid.childForceExpandHeight = false;
             var fitter = gridGo.GetComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -494,8 +493,8 @@ namespace MutationChess.UI
             badgeGo.transform.SetParent(tile.transform, false);
             var rt = badgeGo.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
-            rt.pivot = new Vector2(0.5f, 0f);
-            rt.anchoredPosition = new Vector2(0f, 4f); // 骑跨卡面底边：一半在卡上，一半在网格留白
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(0f, -16f); // 骑跨卡面底边：落在下方 32px 行距留白内，不遮描述
             rt.sizeDelta = new Vector2(150f, 22f);
             badgeGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
             badgeGo.GetComponent<Image>().raycastTarget = false;
