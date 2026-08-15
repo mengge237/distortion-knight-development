@@ -329,33 +329,53 @@ namespace MutationChess.Core
             label.color = new Color(0.9f, 0.88f, 0.8f);
             label.text = "Boss遗物主题音效（选取时播放）";
 
-            // 标准开关盒
-            GameObject toggleGo = new GameObject("Switch", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Toggle));
+            // 标准开关盒（防御式构建：逐组件判空，缺失时补建，避免运行时 NRE）
+            GameObject toggleGo = new GameObject("Switch", typeof(RectTransform), typeof(Image));
             toggleGo.transform.SetParent(rowGo.transform, false);
             RectTransform toggleRt = toggleGo.GetComponent<RectTransform>();
+            if (toggleRt == null) toggleRt = toggleGo.AddComponent<RectTransform>();
             toggleRt.anchorMin = new Vector2(0.72f, 0.5f);
             toggleRt.anchorMax = new Vector2(0.72f, 0.5f);
             toggleRt.pivot = new Vector2(0f, 0.5f);
             toggleRt.sizeDelta = new Vector2(64f, 30f);
             Image bg = toggleGo.GetComponent<Image>();
+            if (bg == null) bg = toggleGo.AddComponent<Image>();
             bg.color = new Color(0.24f, 0.22f, 0.18f, 1f);
 
             GameObject markGo = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
             markGo.transform.SetParent(toggleGo.transform, false);
             RectTransform markRt = markGo.GetComponent<RectTransform>();
+            if (markRt == null) markRt = markGo.AddComponent<RectTransform>();
             markRt.anchorMin = new Vector2(0.1f, 0.15f);
             markRt.anchorMax = new Vector2(0.9f, 0.85f);
             markRt.offsetMin = Vector2.zero;
             markRt.offsetMax = Vector2.zero;
             Image mark = markGo.GetComponent<Image>();
+            if (mark == null) mark = markGo.AddComponent<Image>();
             mark.color = new Color(0.85f, 0.72f, 0.35f, 1f);
 
+            // Toggle 单独补建（若 GameObject 构造未挂载则手动添加），并强制绑定 targetGraphic
             Toggle toggle = toggleGo.GetComponent<Toggle>();
+            if (toggle == null) toggle = toggleGo.AddComponent<Toggle>();
+            if (toggle == null)
+            {
+                GameLogger.LogError("[Settings] Boss遗物主题音效开关创建失败（Toggle 组件缺失），已跳过");
+                if (rowGo != null) Destroy(rowGo);
+                return;
+            }
+            toggle.transition = Selectable.Transition.ColorTint;
             toggle.targetGraphic = bg;
             toggle.graphic = mark;
             toggle.isOn = AudioManager.IsBossRelicPickSfxEnabled();
             toggle.onValueChanged.AddListener(OnBossRelicSfxChanged);
-            UiFeel.ApplyButton(toggleGo.GetComponent<Button>());
+
+            Button toggleBtn = toggleGo.GetComponent<Button>();
+            if (toggleBtn == null) toggleBtn = toggleGo.AddComponent<Button>();
+            if (toggleBtn != null)
+            {
+                toggleBtn.targetGraphic = bg;
+                UiFeel.ApplyButton(toggleBtn);
+            }
 
             bossRelicSfxToggle = toggle;
             GameLogger.Log("[Settings] Boss遗物主题音效开关已运行时构建");

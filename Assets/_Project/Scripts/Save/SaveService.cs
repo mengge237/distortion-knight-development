@@ -40,6 +40,9 @@ namespace MutationChess.Core
 
         private readonly List<ISaveable> savables = new List<ISaveable>();
 
+        /// <summary>待读档槽位（跨场景静态标记：首页"继续游戏"→ 进入主场景后由 GameManager 消费）。0 表示无。</summary>
+        private static int pendingLoadSlot = 0;
+
         public static string SaveDir => Path.Combine(Application.persistentDataPath, "saves");
         public static string SlotPath(int slot) => Path.Combine(SaveDir, $"slot{slot}.json");
 
@@ -51,6 +54,7 @@ namespace MutationChess.Core
                 return;
             }
             _instance = this;
+            DontDestroyOnLoad(gameObject); // 跨场景保留注册表（场景存档对象随场景重建后重新注册）
         }
 
         void OnDestroy()
@@ -80,6 +84,8 @@ namespace MutationChess.Core
         public bool SaveGame(int slot)
         {
             if (!IsValidSlot(slot)) return false;
+
+            PruneDeadSavables();
 
             SaveFileData data = new SaveFileData
             {
@@ -117,6 +123,8 @@ namespace MutationChess.Core
         public bool LoadGame(int slot)
         {
             if (!HasSave(slot)) return false;
+
+            PruneDeadSavables();
 
             try
             {
@@ -205,7 +213,32 @@ namespace MutationChess.Core
             SaveGame(slot);
         }
 
+        // ================= 待读档标记（首页"继续游戏" → 主场景消费） =================
+
+        /// <summary>标记待读档槽位（首页"继续游戏"点击后调用，随后加载主场景）。</summary>
+        public static void SetPendingLoad(int slot)
+        {
+            pendingLoadSlot = slot >= 1 && slot <= MaxSlots ? slot : 0;
+            GameLogger.Log($"[存档] 已标记待读档槽位 {pendingLoadSlot}");
+        }
+
+        public static bool HasPendingLoad() => pendingLoadSlot >= 1;
+
+        /// <summary>消费待读档标记（GameManager 读档流程开始时调用一次）。</summary>
+        public static int ConsumePendingLoad()
+        {
+            int slot = pendingLoadSlot;
+            pendingLoadSlot = 0;
+            return slot;
+        }
+
         // ================= 内部 =================
+
+        /// <summary>清理随场景销毁的存档对象引用（SaveService 跨场景常驻，场景对象重建后会重新注册）。</summary>
+        private void PruneDeadSavables()
+        {
+            savables.RemoveAll(s => s == null || (s is UnityEngine.Object uo && uo == null));
+        }
 
         private bool IsValidSlot(int slot)
         {

@@ -103,15 +103,66 @@ public class GameManager : MonoBehaviour, ISaveable
         if (mapView != null)
             mapView.RefreshAllNodes();
 
+        // 牌库档案：确保单例存在并监听 F2/ESC（懒加载单例若不创建，Update 不会执行导致快捷键失效）
+        CardArchivePanel.EnsureExists();
+
         // 困难度系统：本局尚未选择难度时弹出选择面板（每层按概率降临诅咒）
-        DifficultyManager.Instance.EnsureSelected();
+        DifficultyManager dm = DifficultyManager.Instance;
+        dm.ResetRunStartCurseFlag();
 
-        // 第一层诅咒抽签（选择难度后立即结算本层概率）
-        DifficultyManager.Instance.RollFloorCurses();
+        if (SaveService.HasPendingLoad())
+        {
+            // 读档流程：跳过开局难度/诅咒流程，首帧后恢复存档状态
+            SaveService.Instance.Register(this);
+            StartCoroutine(ApplyPendingLoad());
+        }
+        else
+        {
+            dm.EnsureSelected();
+            dm.RollFloorCurses();
+            // 首页已选定难度：开局诅咒在首页阶段无遗物管理器未发放，进入主场景补发
+            if (dm.HasChosen)
+                dm.ApplyRunStartCurses();
 
-        // 存档接口注册 + 新一局自动存档（槽位 1）
-        SaveService.Instance.Register(this);
-        SaveService.Instance.AutoSave();
+            // 存档接口注册 + 新一局自动存档（槽位 1）
+            SaveService.Instance.Register(this);
+            SaveService.Instance.AutoSave();
+        }
+    }
+
+    /// <summary>读档流程：等待所有 Start 完成（存档对象全部注册）后恢复存档，并按存档楼层重建地图。</summary>
+    private System.Collections.IEnumerator ApplyPendingLoad()
+    {
+        yield return null; // 等一帧：所有 Start 执行完毕，各系统完成存档注册
+
+        int slot = SaveService.ConsumePendingLoad();
+        bool ok = SaveService.Instance.LoadGame(slot);
+        DifficultyManager dm = DifficultyManager.Instance;
+
+        if (ok)
+        {
+            // 恢复到保存的楼层：重建地图与玩家位置（难度/玩家/遗物已由读档恢复）
+            if (mapGenerator != null)
+            {
+                mapGenerator.GenerateMap();
+                mapGenerator.UpdateFogOfWar();
+            }
+            SetupPlayer();
+            if (mapView != null)
+                mapView.RefreshAllNodes();
+
+            // 存档可能未选难度（开局即存）→ 弹出选择面板；已选则跳过
+            dm.EnsureSelected();
+            GameLogger.Log($"[GameManager] 读档完成：第 {currentFloor} 层，继续冒险");
+        }
+        else
+        {
+            GameLogger.LogError("[GameManager] 读档失败，回退为新一局流程");
+            dm.EnsureSelected();
+            dm.RollFloorCurses();
+            if (dm.HasChosen)
+                dm.ApplyRunStartCurses();
+        }
     }
 
     void SetupPlayer()

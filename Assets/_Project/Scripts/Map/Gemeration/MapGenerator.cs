@@ -45,7 +45,8 @@ namespace MutationChess.Map
         [SerializeField] private bool enablePseudo3DTilt = true;
         [SerializeField] private float mapTiltAngleX = 22f;
         [SerializeField] private bool enableFogOfWar = true;
-        [SerializeField] private bool hideNodeMeshOnMap = true;
+        [Tooltip("勾选时隐藏圆柱盘网格（站牌模式残留开关）；默认展示圆柱体节点本体")]
+        [SerializeField] private bool hideNodeMeshOnMap = false;
 
         [Header("特殊层设置")]
         [SerializeField] private bool bossLayerHasRestBefore = true;
@@ -732,12 +733,12 @@ namespace MutationChess.Map
         }
 
         /// <summary>
-
+        /// 地图图标：平贴于圆柱盘顶面（回归圆柱体节点表现）。图标为节点预制体的子物体，
+        /// 按父级非均匀缩放(0.8/0.1/0.8)反向补偿，避免被压扁；盘顶高度按渲染包围盒动态计算。
         /// </summary>
         void CreateMapDisplay(MapNode node, Vector3 nodePos, NodeType type)
         {
-            // 图标即节点本体：隐藏预制体自带网格(扁平圆柱盘)，避免盘体遮挡/穿插图标；
-            // 点击命中图标Quad的碰撞体后事件沿层级冒泡到节点根部的 NodeClickHandler
+            // 开关保留：勾选时才隐藏圆柱盘网格，默认展示圆柱体节点本体
             if (hideNodeMeshOnMap)
             {
                 MeshRenderer[] nodeRenderers = node.nodeObject.GetComponentsInChildren<MeshRenderer>(true);
@@ -745,19 +746,19 @@ namespace MutationChess.Map
                     nr.enabled = false;
             }
 
+            Transform parent = node.nodeObject.transform;
+            Vector3 worldPos = GetIconWorldPosition(parent);
+
             GameObject mapPrefab = GetMapPrefabFromBlueprint(type);
             if (mapPrefab != null)
             {
-                GameObject mapObj = Instantiate(mapPrefab, nodePos + mapDisplayOffset, Quaternion.identity, node.nodeObject.transform);
+                GameObject mapObj = Instantiate(mapPrefab, parent);
                 mapObj.name = $"MapDisplay_{type}";
-                mapObj.transform.localScale = Vector3.one * mapDisplayScale;
-                // 站牌式立起：以盘面法线为"上"，水平方向朝向相机
-                Vector3 prefabBoardUp = node.nodeObject.transform.up;
-                float prefabHalfHeight = 0.5f * mapDisplayScale + 0.06f;
-                mapObj.transform.position = nodePos + mapDisplayOffset + prefabBoardUp * prefabHalfHeight;
-                mapObj.transform.rotation = ComputeTokenRotation(nodePos + mapDisplayOffset, prefabBoardUp);
+                // 平贴：本地旋转归零与盘面平行，缩放反向补偿父级非均匀缩放
+                mapObj.transform.localPosition = parent.InverseTransformPoint(worldPos);
+                mapObj.transform.localRotation = Quaternion.identity;
+                mapObj.transform.localScale = GetIconLocalScale(parent);
                 node.mapDisplayObject = mapObj;
-                GameLogger.Log($"[MapGenerator]  {type}  (): {mapPrefab.name}");
                 return;
             }
 
@@ -765,12 +766,10 @@ namespace MutationChess.Map
             Texture2D bpTexture = GetMapTextureFromBlueprint(type);
             if (bpTexture != null)
             {
-                GameObject mapObj = CreateMapQuad(nodePos + mapDisplayOffset, bpTexture, node.nodeObject.transform, type);
+                GameObject mapObj = CreateMapQuad(worldPos, bpTexture, parent, type);
                 mapObj.name = $"MapDisplay_{type}";
-                mapObj.transform.localScale = Vector3.one * mapDisplayScale;
                 node.mapDisplayObject = mapObj;
                 nodeRealTextures[node] = bpTexture;
-                GameLogger.Log($"[MapGenerator]  {type}  (): {bpTexture.name}");
                 return;
             }
 
@@ -778,31 +777,48 @@ namespace MutationChess.Map
             Texture2D texture = GetRandomMapTexture(type);
             if (texture != null)
             {
-                GameObject mapObj = CreateMapQuad(nodePos + mapDisplayOffset, texture, node.nodeObject.transform, type);
+                GameObject mapObj = CreateMapQuad(worldPos, texture, parent, type);
                 mapObj.name = $"MapDisplay_{type}";
-                mapObj.transform.localScale = Vector3.one * mapDisplayScale;
                 node.mapDisplayObject = mapObj;
                 nodeRealTextures[node] = texture;
-                GameLogger.Log($"[MapGenerator]  {type}  (): {texture.name}");
                 return;
             }
 
 
         }
 
-        /// <summary>
+        /// <summary>图标世界位置：圆柱盘顶面上方 0.05（按渲染包围盒动态取半高，避免硬编码预制体尺寸）。</summary>
+        Vector3 GetIconWorldPosition(Transform parent)
+        {
+            float halfHeight = 0.1f;
+            Renderer nodeRenderer = parent != null ? parent.GetComponent<Renderer>() : null;
+            if (nodeRenderer != null && nodeRenderer.bounds.extents.y > 0.001f)
+                halfHeight = nodeRenderer.bounds.extents.y;
+            Vector3 worldPos = parent != null ? parent.position : Vector3.zero;
+            return worldPos + (parent != null ? parent.up : Vector3.up) * (halfHeight + 0.05f);
+        }
 
+        /// <summary>图标本地缩放：除以父级缩放抵消压扁（盘体 y 缩 0.1 会把图标压成薄片）。</summary>
+        Vector3 GetIconLocalScale(Transform parent)
+        {
+            Vector3 ps = parent != null ? parent.localScale : Vector3.one;
+            return new Vector3(
+                mapDisplayScale / Mathf.Max(0.001f, ps.x),
+                mapDisplayScale / Mathf.Max(0.001f, ps.y),
+                mapDisplayScale / Mathf.Max(0.001f, ps.z));
+        }
+
+        /// <summary>
+        /// 创建平贴式图标 Quad：平躺于圆柱盘顶面，随内容根 22° 倾斜呈伪 3D 俯视。
         /// </summary>
-        GameObject CreateMapQuad(Vector3 position, Texture2D texture, Transform parent, NodeType nodeType)
+        GameObject CreateMapQuad(Vector3 worldPosition, Texture2D texture, Transform parent, NodeType nodeType)
         {
             GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            quad.transform.SetParent(parent);
-            // 站牌式：图标垂直立在盘面上（以盘面法线为"上"），水平方向朝向相机，
-            // 不再是平贴地面的"贴图"，也不会被透视压扁
-            Vector3 boardUp = parent != null ? parent.up : Vector3.up;
-            float halfHeight = 0.5f * mapDisplayScale + 0.06f;
-            quad.transform.position = position + boardUp * halfHeight;
-            quad.transform.rotation = ComputeTokenRotation(position, boardUp);
+            quad.transform.SetParent(parent, false);
+            // 平贴：本地位置=盘顶上方（世界坐标反算），旋转归零与盘面平行，缩放反向补偿父级压扁
+            quad.transform.localPosition = parent != null ? parent.InverseTransformPoint(worldPosition) : worldPosition;
+            quad.transform.localRotation = Quaternion.identity;
+            quad.transform.localScale = GetIconLocalScale(parent);
 
             // 保留 Quad 自带碰撞体：图标即节点本体，点击命中后冒泡到 NodeClickHandler
 
@@ -1327,48 +1343,6 @@ namespace MutationChess.Map
             return node.isReachable;
         }
 
-        private Quaternion lastCameraRotation;
-        private Vector3 lastCameraPosition;
-        private bool cameraSnapshotInit;
-
-        /// <summary>站牌朝向：以盘面法线为"上"立起，水平方向面向相机（相机移动/旋转时刷新）。</summary>
-        Quaternion ComputeTokenRotation(Vector3 worldPos, Vector3 boardUp)
-        {
-            Vector3 camPos = Camera.main != null
-                ? Camera.main.transform.position
-                : worldPos + new Vector3(0f, 1.5f, -10f);
-            Vector3 toCam = Vector3.ProjectOnPlane(camPos - worldPos, boardUp);
-            if (toCam.sqrMagnitude < 0.001f)
-                toCam = Vector3.ProjectOnPlane(Vector3.forward, boardUp);
-            return Quaternion.LookRotation(toCam.normalized, boardUp);
-        }
-
-        /// <summary>相机移动/旋转时刷新站牌朝向（成本极低，仅相机变化时执行）。</summary>
-        void LateUpdate()
-        {
-            if (!enableMapDisplay || Camera.main == null || allLayers == null) return;
-            Vector3 camPos = Camera.main.transform.position;
-            Quaternion camRot = Camera.main.transform.rotation;
-            if (cameraSnapshotInit && camPos == lastCameraPosition && camRot == lastCameraRotation) return;
-            cameraSnapshotInit = true;
-            lastCameraPosition = camPos;
-            lastCameraRotation = camRot;
-
-            foreach (var layer in allLayers)
-            {
-                if (layer == null) continue;
-                foreach (var node in layer)
-                {
-                    if (node != null && node.mapDisplayObject != null)
-                    {
-                        Transform t = node.mapDisplayObject.transform;
-                        Vector3 boardUp = t.parent != null ? t.parent.up : Vector3.up;
-                        t.rotation = ComputeTokenRotation(t.position, boardUp);
-                    }
-                }
-            }
-        }
-
         void DrawAllLines()
         {
             ClearAllLines();
@@ -1389,13 +1363,13 @@ namespace MutationChess.Map
                         Vector3 start = node.nodeObject.transform.position;
                         Vector3 end = target.nodeObject.transform.position;
 
-                        // 连线在站牌底座边缘截止，接头干净衔接站牌底部，不再穿入图标中心
+                        // 连线在圆柱盘边缘截止（盘体半径 0.4 + 0.04 间隙），接头干净衔接盘缘，不再穿入盘体
                         Vector3 dir = end - start;
                         float lineLen = dir.magnitude;
                         if (lineLen > 0.001f)
                         {
                             Vector3 d = dir / lineLen;
-                            float trim = 0.55f * mapDisplayScale; // 站牌半宽 + 底座边距
+                            float trim = 0.44f; // 圆柱盘半径 + 盘缘间隙
                             start += d * trim;
                             end -= d * trim;
                         }
@@ -1405,7 +1379,7 @@ namespace MutationChess.Map
                             start: linesParent.InverseTransformPoint(start),
                             end: linesParent.InverseTransformPoint(end),
                             parent: linesParent,
-                            width: 0.18f,
+                            width: 0.5f,
                             color: new Color(1f, 1f, 1f, 0.9f)
                         );
 
@@ -1469,8 +1443,8 @@ namespace MutationChess.Map
                 }
                 else
                 {
-                    // 未探索：淡墨
-                    color = new Color(0.25f, 0.21f, 0.16f, 0.35f);
+                    // 未探索：淡墨（加粗后适当提亮，保证远处路径可读）
+                    color = new Color(0.3f, 0.26f, 0.2f, 0.5f);
                 }
 
                 LineRendererHelper.SetLineColor(conn.lineRenderer, color);

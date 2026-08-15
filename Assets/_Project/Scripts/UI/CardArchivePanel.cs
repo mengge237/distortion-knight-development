@@ -36,6 +36,12 @@ namespace MutationChess.UI
         /// <summary>面板当前是否可见（供 SettingsManager 判断 ESC 归属，不触发自动创建）。</summary>
         public static bool IsAnyVisible { get; private set; }
 
+        /// <summary>确保单例存在并开始监听 F2/ESC（懒加载单例若不创建，Update 永远不会执行导致快捷键失效）。</summary>
+        public static void EnsureExists()
+        {
+            _ = Instance;
+        }
+
         [Header("场景接线（可选，缺失时运行时自动构建）")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private Button openButton;
