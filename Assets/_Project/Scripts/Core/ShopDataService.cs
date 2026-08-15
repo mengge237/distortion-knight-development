@@ -485,10 +485,21 @@ namespace MutationChess.Core
         private int ApplyDiscount(int basePrice)
         {
             float mult = discountMultiplier;
-            // 寻宝针：识宝九折（常驻基础效果）
+            // 寻宝针：识宝九折（常驻基础效果）；黄金王国共鸣时提升至八五折
             RelicManager rm = RelicManager.Instance;
             if (rm != null && rm.HasRelic(RelicIds.Shop_TreasureNeedle))
-                mult *= 0.9f;
+            {
+                bool hasKingdom = rm.HasRelic(RelicIds.Gold_GoldenKingdom_Gold) || rm.HasRelic(RelicIds.Gold_GoldenKingdom_Silver);
+                if (hasKingdom)
+                {
+                    mult *= 0.85f;
+                    GameLogger.Log("[ShopDataService] 寻宝针·黄金王国共鸣：全场八五折");
+                }
+                else
+                {
+                    mult *= 0.9f;
+                }
+            }
             // 贪婪诅咒：商店价格 +25%（反咒之镜反转后全场八五折）
             CurseMode greedMode = CurseSystem.GetCurseMode(RelicIds.Curse_Greed);
             if (greedMode == CurseMode.Active)

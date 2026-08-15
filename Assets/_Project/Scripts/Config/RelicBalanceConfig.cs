@@ -669,11 +669,16 @@ namespace MutationChess.Core
                 relicName = "金杯",
                 rarity = RelicRarity.Rare,
                 faction = CardFaction.None,
-                designNotes = "战斗胜利获得12金币（原回血12→改为金币）",
+                designNotes = "战斗胜利获得12金币（原回血12→改为金币）；黄金王国·金觉醒后额外+18金币",
                 price = 285,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "Gain12GoldOnVictoryEffect", trigger = EffectTrigger.Victory, value1 = 12f }
+                },
+                hiddenActivatorRelicId = RelicIds.Gold_GoldenKingdom_Gold,
+                hiddenEffectIds = new List<RelicEffectEntry>
+                {
+                    new RelicEffectEntry { effectId = "Gain12GoldOnVictoryEffect", trigger = EffectTrigger.Victory, value1 = 18f }
                 }
             });
 
@@ -819,12 +824,17 @@ namespace MutationChess.Core
                 relicName = "金像",
                 rarity = RelicRarity.Legendary,
                 faction = CardFaction.None,
-                designNotes = "击杀敌人额外+20%金币",
+                designNotes = "击杀敌人额外+20%金币；黄金王国·银觉醒后倍率提升至+40%",
                 price = 350,
                 isShopRelic = true,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "GoldBonusEffect", trigger = EffectTrigger.EnemyDeath }
+                },
+                hiddenActivatorRelicId = RelicIds.Gold_GoldenKingdom_Silver,
+                hiddenEffectIds = new List<RelicEffectEntry>
+                {
+                    new RelicEffectEntry { effectId = "GoldBonusEffect", trigger = EffectTrigger.EnemyDeath, value1 = 0.4f }
                 }
             });
 
@@ -900,11 +910,16 @@ namespace MutationChess.Core
                 relicName = "储蓄罐",
                 rarity = RelicRarity.Common,
                 faction = CardFaction.None,
-                designNotes = "每次战斗胜利时获得当前金币的10%",
+                designNotes = "每次战斗胜利时获得当前金币的10%；黄金王国·金觉醒后提升至15%",
                 price = 150,
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "VictoryGoldPercentEffect", trigger = EffectTrigger.Victory }
+                },
+                hiddenActivatorRelicId = RelicIds.Gold_GoldenKingdom_Gold,
+                hiddenEffectIds = new List<RelicEffectEntry>
+                {
+                    new RelicEffectEntry { effectId = "VictoryGoldPercentEffect", trigger = EffectTrigger.Victory, value1 = 0.15f }
                 }
             });
 
@@ -919,6 +934,52 @@ namespace MutationChess.Core
                 baseEffectIds = new List<RelicEffectEntry>
                 {
                     new RelicEffectEntry { effectId = "InstantKillEffect", trigger = EffectTrigger.CalculateAttackDamage }
+                }
+            });
+
+            // ============================================================
+            // 十四、黄金王国系列（贪婪遗物：与 Boss 遗物同级的机制型遗物）
+            //   金·黄金王国：随时间获得（第3层起胜利概率降临，一局至多一次）
+            //   银·黄金王国：商店获得
+            //   金银互为隐藏效果激活者：双持后各自额外激活+25%当前金币/胜利（合计+50%），
+            //   并强化金杯/金像/储蓄罐/罗盘/星图/寻宝针等一切金币相关遗物
+            // ============================================================
+            config.entries.Add(new RelicBalanceEntry
+            {
+                relicId = RelicIds.Gold_GoldenKingdom_Gold,
+                relicName = "黄金王国·金",
+                rarity = RelicRarity.Legendary,
+                faction = CardFaction.None,
+                designNotes = "【贪婪遗物·时间获取】胜利时获得当前金币10%；与黄金王国·银双持后额外+25%",
+                price = 0,
+                baseEffectIds = new List<RelicEffectEntry>
+                {
+                    new RelicEffectEntry { effectId = "VictoryGoldPercentEffect", trigger = EffectTrigger.Victory, value1 = 0.10f }
+                },
+                hiddenActivatorRelicId = RelicIds.Gold_GoldenKingdom_Silver,
+                hiddenEffectIds = new List<RelicEffectEntry>
+                {
+                    new RelicEffectEntry { effectId = "VictoryGoldPercentEffect", trigger = EffectTrigger.Victory, value1 = 0.25f }
+                }
+            });
+
+            config.entries.Add(new RelicBalanceEntry
+            {
+                relicId = RelicIds.Gold_GoldenKingdom_Silver,
+                relicName = "黄金王国·银",
+                rarity = RelicRarity.Legendary,
+                faction = CardFaction.None,
+                designNotes = "【贪婪遗物·商店获取】胜利时获得15金币；与黄金王国·金双持后额外+25%当前金币",
+                price = 380,
+                isShopRelic = true,
+                baseEffectIds = new List<RelicEffectEntry>
+                {
+                    new RelicEffectEntry { effectId = "Gain12GoldOnVictoryEffect", trigger = EffectTrigger.Victory, value1 = 15f }
+                },
+                hiddenActivatorRelicId = RelicIds.Gold_GoldenKingdom_Gold,
+                hiddenEffectIds = new List<RelicEffectEntry>
+                {
+                    new RelicEffectEntry { effectId = "VictoryGoldPercentEffect", trigger = EffectTrigger.Victory, value1 = 0.25f }
                 }
             });
 

@@ -101,6 +101,10 @@ namespace MutationChess.Core
         public const string Synth_SwordShard = "Synth_SwordShard";
         public const string Synth_HiltShard = "Synth_HiltShard";
         public const string Synth_SwordCore = "Synth_SwordCore";
+
+        // 黄金王国系列（贪婪遗物：金·随时间获得 / 银·商店获得，金银互为激活者，双持触发隐藏组合效果）
+        public const string Gold_GoldenKingdom_Gold = "Gold_GoldenKingdom_Gold";
+        public const string Gold_GoldenKingdom_Silver = "Gold_GoldenKingdom_Silver";
     }
 
     /// <summary>

@@ -24,6 +24,21 @@ namespace MutationChess.Battle
         [Header("调试设置")]
         [SerializeField] private bool debugMode = true;
 
+        // ================= Boss遗物三选一 · 本局状态 =================
+        /// <summary>本局展示过的 Boss 遗物（无论最终是否被选择，都不再出现）。</summary>
+        private static readonly HashSet<string> OfferedBossRelicIds = new HashSet<string>();
+        /// <summary>本局已进行的 Boss 遗物三选一次数。</summary>
+        private static int bossRelicChoicesUsed = 0;
+        /// <summary>一局游戏最多可进行 Boss 遗物三选一的次数。</summary>
+        public const int MaxBossRelicChoicesPerRun = 2;
+
+        /// <summary>新一局开始：重置 Boss 遗物三选一的本局状态（GameManager.Start 调用）。</summary>
+        public static void ResetBossRelicRunState()
+        {
+            OfferedBossRelicIds.Clear();
+            bossRelicChoicesUsed = 0;
+        }
+
         public BossRewardConfig Config => config;
 
         void Awake()
@@ -163,6 +178,7 @@ namespace MutationChess.Battle
         /// <summary>
         /// 生成 Boss 遗物选择面板的选项（不重复取样）：
         /// 池子仅含「Boss 遗物」（isBossRelic），绝不混入常规/阵营解锁遗物；不足 count 时有多少出多少。
+        /// 一局至多进行 MaxBossRelicChoicesPerRun 次三选一；展示过的 Boss 遗物（无论是否被选择）本局不再出现。
         /// 用于战胜 Boss 后优先弹出的三选一遗物面板。
         /// </summary>
         public List<Relic> GenerateBossRelicChoices(int count)
@@ -170,16 +186,25 @@ namespace MutationChess.Battle
             List<Relic> choices = new List<Relic>();
             if (count <= 0) return choices;
 
+            // 本局 Boss 遗物三选一已达上限：不再发放（回退到常规 Boss 奖励流程）
+            if (bossRelicChoicesUsed >= MaxBossRelicChoicesPerRun)
+            {
+                if (debugMode)
+                    GameLogger.Log($"[BossRewardService] 本局 Boss 遗物三选一已达上限 {MaxBossRelicChoicesPerRun} 次，本次不再发放");
+                return choices;
+            }
+
             var relicManager = RelicManager.Instance;
             if (relicManager == null) return choices;
 
-            // 池：全部 Boss 遗物（未拥有）
+            // 池：全部 Boss 遗物（未拥有 + 本局未展示过）
             List<RelicDataAsset> pool = new List<RelicDataAsset>();
             RelicDataAsset[] allRelics = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
             foreach (var relic in allRelics)
             {
                 if (relic == null || !relic.isBossRelic) continue;
                 if (IsRelicAlreadyOwned(relic.relicId)) continue;
+                if (OfferedBossRelicIds.Contains(relic.relicId)) continue; // 展示过的不再出现
                 pool.Add(relic);
             }
 
@@ -199,6 +224,17 @@ namespace MutationChess.Battle
                     choices.Add(relic);
                 }
             }
+
+            // 展示即消耗：所有展示过的 Boss 遗物本局不再出现，且计入次数
+            if (choices.Count > 0)
+            {
+                foreach (var c in choices)
+                    OfferedBossRelicIds.Add(c.relicId);
+                bossRelicChoicesUsed++;
+                if (debugMode)
+                    GameLogger.Log($"[BossRewardService] 本局 Boss 三选一已用 {bossRelicChoicesUsed}/{MaxBossRelicChoicesPerRun} 次");
+            }
+
             return choices;
         }
 

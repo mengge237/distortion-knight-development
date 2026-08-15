@@ -51,6 +51,10 @@ public class GameManager : MonoBehaviour, ISaveable
         // 确保调试控制台存在
         MutationChess.Debug.DebugConsole.EnsureExists();
 
+        // 新一局：重置本局状态（Boss三选一展示池/次数、黄金王国掉落标记）
+        MutationChess.Battle.BossRewardService.ResetBossRelicRunState();
+        MutationChess.Battle.BattleManager.ResetRunGoldKingdomState();
+
         var dataManager = PlayerDataManager.Instance;
         if (dataManager == null)
         {

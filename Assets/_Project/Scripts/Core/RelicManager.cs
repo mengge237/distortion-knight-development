@@ -111,6 +111,12 @@ namespace MutationChess.Core
                 GameLogger.Log($"[RelicManager] Boss {relic.relicName} ...");
                 RefreshAllHiddenEffects();
             }
+            else if (IsGoldenKingdomRelic(relic.relicId))
+            {
+                // 黄金王国遗物与 Boss 遗物同级：获得即重算全部隐藏效果（金银互为激活者）
+                GameLogger.Log($"[RelicManager] 黄金王国遗物 {relic.relicName} 入库：王国共鸣重算");
+                RefreshAllHiddenEffects();
+            }
             else
             {
 
@@ -148,6 +154,22 @@ namespace MutationChess.Core
             }
         }
 
+        /// <summary>黄金王国遗物（金/银）判定：机制级贪婪遗物，获得即重算全部隐藏效果。</summary>
+        private static bool IsGoldenKingdomRelic(string relicId)
+        {
+            return relicId == RelicIds.Gold_GoldenKingdom_Gold || relicId == RelicIds.Gold_GoldenKingdom_Silver;
+        }
+
+        /// <summary>隐藏效果激活者判定：金银互为激活者（持有任一即视为持有对方）。</summary>
+        private bool HasActivatorFor(string activatorId)
+        {
+            if (string.IsNullOrEmpty(activatorId)) return false;
+            if (HasRelic(activatorId)) return true;
+            if (activatorId == RelicIds.Gold_GoldenKingdom_Gold) return HasRelic(RelicIds.Gold_GoldenKingdom_Silver);
+            if (activatorId == RelicIds.Gold_GoldenKingdom_Silver) return HasRelic(RelicIds.Gold_GoldenKingdom_Gold);
+            return false;
+        }
+
         /// <summary>
 
         /// </summary>
@@ -161,7 +183,7 @@ namespace MutationChess.Core
             if (cfg == null || string.IsNullOrEmpty(cfg.hiddenActivatorRelicId)) return;
 
 
-            if (!HasRelic(cfg.hiddenActivatorRelicId)) return;
+            if (!HasActivatorFor(cfg.hiddenActivatorRelicId)) return;
 
 
             GameLogger.Log($"[RelicManager]  {relic.relicName}  {cfg.hiddenActivatorRelicId} ");
@@ -468,7 +490,8 @@ namespace MutationChess.Core
         ///   ApplyBlockEffect.blockAmount / GainBuffEffect.amount /
         ///   MultiStatBuffEffect.energy / DrawCardsEffect.drawCount /
         ///   GainEnergyEffect.energyGain / HealPlayerEffect.healAmount /
-        ///   MaxHealthEffect.maxHealthGain
+        ///   MaxHealthEffect.maxHealthGain / Gain12GoldOnVictoryEffect.gold /
+        ///   GoldBonusEffect.goldBonusMultiplier / VictoryGoldPercentEffect.goldPercent
         /// （此类效果没有 sourceCard，必须用配置值代替卡牌属性）
         /// </summary>
         private void ApplyConfigValue(CardEffect effect, RelicEffectEntry configEntry)
@@ -499,6 +522,15 @@ namespace MutationChess.Core
                     break;
                 case MaxHealthEffect maxHealth:
                     maxHealth.maxHealthGain = v;
+                    break;
+                case Gain12GoldOnVictoryEffect gainGold:
+                    gainGold.gold = v;
+                    break;
+                case GoldBonusEffect goldBonus:
+                    goldBonus.goldBonusMultiplier = configEntry.value1;
+                    break;
+                case VictoryGoldPercentEffect victoryPct:
+                    victoryPct.goldPercent = configEntry.value1;
                     break;
             }
         }
@@ -595,6 +627,8 @@ namespace MutationChess.Core
 
                 if (asset.rarity == RelicRarity.Starting || asset.isBossRelic || asset.isFactionUnlocker || asset.isCurse)
                     continue;
+                if (IsGoldenKingdomRelic(asset.relicId))
+                    continue; // 黄金王国·金/银有专属获取途径（时间/商店），不进常规掉落池
                 if (!IsFactionUnlocked(asset.faction))
                     continue;
                 result.Add(asset);
@@ -629,6 +663,8 @@ namespace MutationChess.Core
             {
                 if (asset.rarity == RelicRarity.Starting || asset.isShopRelic || asset.isBossRelic || asset.isCurse)
                     continue;
+                if (IsGoldenKingdomRelic(asset.relicId))
+                    continue; // 黄金王国·金仅随时间获得，不进商店货架
                 if (asset.powerTier == PowerTier.Mechanic)
                     continue; // 机制级强力遗物不进商店货架（仅极低概率掉落）
                 if (!IsFactionUnlocked(asset.faction))
@@ -652,7 +688,7 @@ namespace MutationChess.Core
             );
 
 
-            bool hasActivator = !string.IsNullOrEmpty(asset.hiddenActivatorRelicId) && HasRelic(asset.hiddenActivatorRelicId);
+            bool hasActivator = !string.IsNullOrEmpty(asset.hiddenActivatorRelicId) && HasActivatorFor(asset.hiddenActivatorRelicId);
             var activeEffects = asset.GetActiveEffects(hasActivator);
 
             foreach (var entry in activeEffects)

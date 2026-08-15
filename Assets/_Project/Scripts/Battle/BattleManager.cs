@@ -1160,6 +1160,69 @@ namespace MutationChess.Battle
             return bossRelicChoicePanel;
         }
 
+        // ================= 黄金王国 · 本局状态 =================
+        /// <summary>黄金王国·金是否已在本局掉落过（一局至多一件，随时间获得）。</summary>
+        private static bool goldenKingdomGoldDropped = false;
+
+        /// <summary>新一局开始：重置黄金王国掉落标记（GameManager.Start 调用）。</summary>
+        public static void ResetRunGoldKingdomState()
+        {
+            goldenKingdomGoldDropped = false;
+        }
+
+        /// <summary>是否持有任一黄金王国遗物（金或银）。</summary>
+        private static bool HasGoldenKingdomRelic(RelicManager rm)
+        {
+            if (rm == null) return false;
+            return rm.HasRelic(RelicIds.Gold_GoldenKingdom_Gold) || rm.HasRelic(RelicIds.Gold_GoldenKingdom_Silver);
+        }
+
+        /// <summary>
+        /// 黄金王国·金掉落：随时间获得（胜利时按概率降临，一局至多一次）。
+        /// 第 3 层起概率 8% + 每层 4%（封顶 35%），降临后顶替本场常规遗物掉落。
+        /// </summary>
+        private void TryDropGoldenKingdomGold()
+        {
+            if (goldenKingdomGoldDropped) return;
+
+            if (gameManager == null)
+                gameManager = FindObjectOfType<GameManager>();
+            if (gameManager == null) return;
+
+            int floor = gameManager.GetCurrentFloor();
+            if (floor < 3) return;
+
+            var rm = RelicManager.Instance;
+            if (rm == null || rm.HasRelic(RelicIds.Gold_GoldenKingdom_Gold)) return;
+
+            float chance = Mathf.Min(0.35f, 0.08f + (floor - 3) * 0.04f);
+            if (UnityEngine.Random.value > chance)
+            {
+                GameLogger.Log($"[BattleManager] 黄金王国·金 未降临（本层概率 {Mathf.RoundToInt(chance * 100f)}%）");
+                return;
+            }
+
+            RelicDataAsset goldAsset = null;
+            RelicDataAsset[] allRelics = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
+            foreach (var a in allRelics)
+            {
+                if (a != null && a.relicId == RelicIds.Gold_GoldenKingdom_Gold) { goldAsset = a; break; }
+            }
+            if (goldAsset == null)
+            {
+                GameLogger.LogWarning("[BattleManager] 未找到黄金王国·金遗物资产，无法降临");
+                return;
+            }
+
+            Relic relic = rm.CreateRelicFromAsset(goldAsset);
+            if (relic != null)
+            {
+                goldenKingdomGoldDropped = true;
+                pendingRelicReward = relic; // 降临即顶替本场常规遗物掉落
+                GameLogger.Log("[BattleManager] 黄金王国·金 降临！贪婪遗物加入本场奖励");
+            }
+        }
+
         private void HandleNormalVictory(EnemyType enemyType)
         {
             int goldReward = 0;
@@ -1181,15 +1244,18 @@ namespace MutationChess.Battle
             RelicManager rmGold = RelicManager.Instance;
             if (rmGold != null)
             {
+                bool hasKingdom = HasGoldenKingdomRelic(rmGold);
                 if (rmGold.HasRelic(RelicIds.Shop_Compass))
                 {
-                    goldReward += 5;
-                    GameLogger.Log("[BattleManager] 罗盘·司南引路：胜利金币 +5");
+                    int bonus = hasKingdom ? 12 : 5;
+                    goldReward += bonus;
+                    GameLogger.Log($"[BattleManager] 罗盘·司南引路：胜利金币 +{bonus}{(hasKingdom ? "（黄金王国共鸣强化）" : "")}");
                 }
                 if (rmGold.HasRelic(RelicIds.Shop_StarChart))
                 {
-                    goldReward += 15;
-                    GameLogger.Log("[BattleManager] 星图·星河巡礼：胜利金币 +15");
+                    int bonus = hasKingdom ? 30 : 15;
+                    goldReward += bonus;
+                    GameLogger.Log($"[BattleManager] 星图·星河巡礼：胜利金币 +{bonus}{(hasKingdom ? "（黄金王国共鸣强化）" : "")}");
                 }
                 CurseMode rustMode = CurseSystem.GetCurseMode(RelicIds.Curse_Rust);
                 if (rustMode == CurseMode.Active)
@@ -1246,6 +1312,9 @@ namespace MutationChess.Battle
                         break;
                 }
             }
+
+            // 黄金王国·金：随时间获得（胜利概率降临，降临后顶替常规遗物掉落）
+            TryDropGoldenKingdomGold();
 
             // 尝试掉落药水
             pendingPotionReward = TryDropPotion(enemyType);
