@@ -37,14 +37,15 @@ namespace MutationChess.Map
         [Header("地图显示设置")]
         [SerializeField] private bool enableMapDisplay = true;
         [SerializeField] private List<MapTextureListEntry> mapTextureLists = new List<MapTextureListEntry>();
-        [SerializeField] private Vector3 mapDisplayOffset = new Vector3(0, -0.4f, 0);
-        [SerializeField] private float mapDisplayScale = 0.6f;
+        [SerializeField] private Vector3 mapDisplayOffset = new Vector3(0, -0.35f, 0);
+        [SerializeField] private float mapDisplayScale = 0.9f;
         [SerializeField] private Color mapTintColor = new Color(1, 1, 1, 0.8f);
 
         [Header("地图风格化设置")]
         [SerializeField] private bool enablePseudo3DTilt = true;
         [SerializeField] private float mapTiltAngleX = 22f;
         [SerializeField] private bool enableFogOfWar = true;
+        [SerializeField] private bool hideNodeMeshOnMap = true;
 
         [Header("特殊层设置")]
         [SerializeField] private bool bossLayerHasRestBefore = true;
@@ -319,6 +320,8 @@ namespace MutationChess.Map
             Material mat = new Material(shader);
             mat.mainTexture = inkTex;
             mat.color = new Color(1f, 1f, 1f, 0.9f);
+            // 每条连线平铺 2 个纹理周期，横向笔刷连续不断裂
+            mat.mainTextureScale = new Vector2(2f, 1f);
             return mat;
         }
 
@@ -353,7 +356,8 @@ namespace MutationChess.Map
             if (shader == null) return;
 
             float boardWidth = (maxNodesPerRow - 1) * horizontalSpacing + 7f;
-            float boardHeight = boardWidth * 2f; // 纹理 512x1024，宽高比 1:2
+            // 高度按实际内容行跨度计算（上下各留 3 单位边距），避免空边过大
+            float boardHeight = (rows - 1) * verticalSpacing + 6f;
             float centerY = (rows - 1) * verticalSpacing / 2f + nodeYOffset;
 
             boardObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -647,6 +651,14 @@ namespace MutationChess.Map
         /// </summary>
         void CreateMapDisplay(MapNode node, Vector3 nodePos, NodeType type)
         {
+            // 图标即节点本体：隐藏预制体自带网格(扁平圆柱盘)，避免盘体遮挡/穿插图标；
+            // 点击命中图标Quad的碰撞体后事件沿层级冒泡到节点根部的 NodeClickHandler
+            if (hideNodeMeshOnMap)
+            {
+                MeshRenderer[] nodeRenderers = node.nodeObject.GetComponentsInChildren<MeshRenderer>(true);
+                foreach (MeshRenderer nr in nodeRenderers)
+                    nr.enabled = false;
+            }
 
             GameObject mapPrefab = GetMapPrefabFromBlueprint(type);
             if (mapPrefab != null)
@@ -693,11 +705,12 @@ namespace MutationChess.Map
         {
             GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             quad.transform.SetParent(parent);
-            quad.transform.position = position;
-            quad.transform.rotation = Quaternion.Euler(0, 0, 0);
+            // 前置到盘面之上（-Z 朝向相机），避免与盘体/连线同层穿插
+            quad.transform.position = new Vector3(position.x, position.y, position.z - 0.3f);
+            // 本地旋转归零：继承内容根倾斜，图标平躺在倾斜盘面上
+            quad.transform.localRotation = Quaternion.identity;
 
-            Collider col = quad.GetComponent<Collider>();
-            if (col != null) Destroy(col);
+            // 保留 Quad 自带碰撞体：图标即节点本体，点击命中后冒泡到 NodeClickHandler
 
             Renderer renderer = quad.GetComponent<Renderer>();
             if (renderer != null)
@@ -1244,7 +1257,7 @@ namespace MutationChess.Map
                             start: start,
                             end: end,
                             parent: linesParent,
-                            width: 0.15f,
+                            width: 0.18f,
                             color: new Color(1f, 1f, 1f, 0.9f)
                         );
 

@@ -157,8 +157,8 @@ MonoBehaviour:
   nodeBlueprints: []
   enableMapDisplay: 1
   mapTextureLists: []
-  mapDisplayOffset: {x: 0, y: -0.4, z: 0}
-  mapDisplayScale: 0.6
+  mapDisplayOffset: {x: 0, y: -0.35, z: 0}
+  mapDisplayScale: 0.9
   mapTintColor: {r: 1, g: 1, b: 1, a: 0.8}
   bossLayerHasRestBefore: 1
   treasureLayerIndex: 6
