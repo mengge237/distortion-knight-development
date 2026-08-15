@@ -437,7 +437,13 @@ namespace MutationChess.Map
             bool revealTreasure = false;
 
             RelicManager rm = RelicManager.Instance;
-            bool fogCurse = rm != null && rm.HasRelic(RelicIds.Curse_FogOfWar);
+            // 迷雾诅咒：Active=类型隐匿 / Inverted=反咒之镜反转后全图透视 / 黑烛免疫则失效
+            CurseMode fogMode = CurseSystem.GetCurseMode(RelicIds.Curse_FogOfWar);
+            bool fogCurse = fogMode == CurseMode.Active;
+            if (fogMode == CurseMode.Inverted)
+            {
+                revealAll = true; // 迷雾反转：大雾散尽，山川一览无余
+            }
             if (rm != null && fogCurse)
             {
                 if (rm.HasRelic(RelicIds.Shop_StarChart))

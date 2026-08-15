@@ -5,7 +5,7 @@ using MutationChess.Core;
 using MutationChess.UI;
 using System.Collections.Generic;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, ISaveable
 {
     [Header("Core References")]
     [SerializeField] private MapGenerator mapGenerator;
@@ -99,8 +99,15 @@ public class GameManager : MonoBehaviour
         if (mapView != null)
             mapView.RefreshAllNodes();
 
-        // 困难度系统：本局尚未选择难度时弹出选择面板（困难/噩梦伴随随机诅咒）
+        // 困难度系统：本局尚未选择难度时弹出选择面板（每层按概率降临诅咒）
         DifficultyManager.Instance.EnsureSelected();
+
+        // 第一层诅咒抽签（选择难度后立即结算本层概率）
+        DifficultyManager.Instance.RollFloorCurses();
+
+        // 存档接口注册 + 新一局自动存档（槽位 1）
+        SaveService.Instance.Register(this);
+        SaveService.Instance.AutoSave();
     }
 
     void SetupPlayer()
@@ -423,6 +430,10 @@ public class GameManager : MonoBehaviour
             mapGenerator.GenerateMap();
             GameLogger.Log("[GameManager] New floor map regenerated.");
 
+            // 楼层诅咒抽签：新图生成后按概率降临（迷雾诅咒随即生效并刷新迷雾）
+            DifficultyManager.Instance.RollFloorCurses();
+            mapGenerator.UpdateFogOfWar();
+
             SetupPlayer();
 
             if (mapView != null)
@@ -432,12 +443,47 @@ public class GameManager : MonoBehaviour
         {
             GameLogger.LogWarning("[GameManager] MapGenerator is null, cannot regenerate next floor map.");
         }
+
+        // 存档接口：楼层推进自动存档（槽位 1）
+        SaveService.Instance.AutoSave();
     }
 
     public int GetCurrentFloor() => currentFloor;
     public int GetMaxFloor() => maxFloor;
     public float GetFloorProgress() => Mathf.Clamp01((float)(currentFloor - 1) / Mathf.Max(1, maxFloor - 1));
     public float GetGoldBonusPerFloor() => goldBonusPerFloor;
+
+    // ================= 存档接口 =================
+    // （地图节点进度/卡组等复杂状态后续版本接入，当前仅保存楼层）
+
+    [System.Serializable]
+    public class RunSaveData
+    {
+        public int floor;
+    }
+
+    public string SaveKey => "run";
+
+    public string SerializeState()
+    {
+        return JsonUtility.ToJson(new RunSaveData { floor = currentFloor });
+    }
+
+    public void DeserializeState(string json)
+    {
+        if (string.IsNullOrEmpty(json)) return;
+        try
+        {
+            RunSaveData d = JsonUtility.FromJson<RunSaveData>(json);
+            if (d == null) return;
+            currentFloor = Mathf.Clamp(d.floor, 1, Mathf.Max(1, maxFloor));
+            GameLogger.Log($"[存档] 恢复楼层：{currentFloor}（节点进度恢复待后续版本）");
+        }
+        catch (System.Exception e)
+        {
+            GameLogger.LogError($"[存档] run 反序列化失败：{e.Message}");
+        }
+    }
 
     public float GetGoldMultiplier()
     {

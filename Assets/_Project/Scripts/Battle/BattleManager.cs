@@ -571,11 +571,12 @@ namespace MutationChess.Battle
             {
                 relicManager.OnBattleStart();
 
-                // 嗜血诅咒：每场战斗开始损失 2 点生命（绕过无敌，至少保留 1 点）
-                if (relicManager.HasRelic(RelicIds.Curse_Bloodthirst))
+                // 嗜血/幻痛诅咒：每场战斗开始结算（反咒之镜反转后变为回血）
+                PlayerDataManager pdm = PlayerDataManager.Instance;
+                if (pdm != null)
                 {
-                    PlayerDataManager pdm = PlayerDataManager.Instance;
-                    if (pdm != null)
+                    CurseMode bloodMode = CurseSystem.GetCurseMode(RelicIds.Curse_Bloodthirst);
+                    if (bloodMode == CurseMode.Active)
                     {
                         int hpLoss = Mathf.Min(2, Mathf.Max(0, pdm.GetHealth() - 1));
                         if (hpLoss > 0)
@@ -583,6 +584,27 @@ namespace MutationChess.Battle
                             pdm.TakeDamage(hpLoss, true);
                             GameLogger.Log($"[BattleManager] 嗜血诅咒：战斗开始损失 {hpLoss} 点生命");
                         }
+                    }
+                    else if (bloodMode == CurseMode.Inverted)
+                    {
+                        pdm.Heal(2);
+                        GameLogger.Log("[BattleManager] 嗜血诅咒反转：战斗开始恢复 2 点生命");
+                    }
+
+                    CurseMode painMode = CurseSystem.GetCurseMode(RelicIds.Curse_PhantomPain);
+                    if (painMode == CurseMode.Active)
+                    {
+                        int hpLoss = Mathf.Min(3, Mathf.Max(0, pdm.GetHealth() - 1));
+                        if (hpLoss > 0)
+                        {
+                            pdm.TakeDamage(hpLoss, true);
+                            GameLogger.Log($"[BattleManager] 幻痛诅咒：战斗开始受到 {hpLoss} 点伤害");
+                        }
+                    }
+                    else if (painMode == CurseMode.Inverted)
+                    {
+                        pdm.Heal(3);
+                        GameLogger.Log("[BattleManager] 幻痛诅咒反转：战斗开始恢复 3 点生命");
                     }
                 }
             }
@@ -1151,11 +1173,18 @@ namespace MutationChess.Battle
                     goldReward += 15;
                     GameLogger.Log("[BattleManager] 星图·星河巡礼：胜利金币 +15");
                 }
-                if (rmGold.HasRelic(RelicIds.Curse_Rust))
+                CurseMode rustMode = CurseSystem.GetCurseMode(RelicIds.Curse_Rust);
+                if (rustMode == CurseMode.Active)
                 {
                     int before = goldReward;
                     goldReward = Mathf.RoundToInt(goldReward * 0.8f);
                     GameLogger.Log($"[BattleManager] 锈蚀诅咒：胜利金币 {before} → {goldReward}");
+                }
+                else if (rustMode == CurseMode.Inverted)
+                {
+                    int before = goldReward;
+                    goldReward = Mathf.RoundToInt(goldReward * 1.2f);
+                    GameLogger.Log($"[BattleManager] 锈蚀诅咒反转：胜利金币 {before} → {goldReward}");
                 }
             }
 

@@ -7,7 +7,13 @@ using MutationChess.Battle;
 
 namespace MutationChess.Core
 {
-    public class RelicManager : MonoBehaviour
+    [Serializable]
+    public class RelicsSaveData
+    {
+        public List<string> relicIds = new List<string>();
+    }
+
+    public class RelicManager : MonoBehaviour, ISaveable
     {
         private static RelicManager _instance;
         public static RelicManager Instance
@@ -28,6 +34,9 @@ namespace MutationChess.Core
         private HashSet<string> registeredRelicIds = new HashSet<string>();
 
         private HashSet<string> activatedHiddenRelicIds = new HashSet<string>();
+
+        /// <summary>承咒之鼎已发放的最大生命加成（诅咒增减时重算差额，防止重复叠加）。</summary>
+        private int curseVesselBonusApplied = 0;
 
         private EffectManager effectManager;
 
@@ -61,6 +70,10 @@ namespace MutationChess.Core
             EnsureHandlersRegistered();
 
             RefreshAllHiddenEffects();
+
+            // 存档接口注册 + 承咒之鼎加成结算（读档恢复后重算）
+            SaveService.Instance.Register(this);
+            RecalculateCurseVesselBonus();
         }
 
         void OnValidate()
@@ -106,6 +119,22 @@ namespace MutationChess.Core
 
             // 遗物增减后检查共鸣组合（Isaac 式"化学反应"）
             RelicSynergyService.Instance?.RefreshCombos();
+
+            // 黑烛拾取：立即驱散身上所有诅咒（烛火驱邪）
+            if (relic.relicId == RelicIds.Shop_BlackCandle)
+            {
+                List<Relic> curses = ownedRelics
+                    .Where(r => CurseSystem.IsCurseId(r.relicId))
+                    .ToList();
+                foreach (var c in curses)
+                {
+                    GameLogger.Log($"[RelicManager] 黑烛驱邪：诅咒「{c.relicName}」已消散");
+                    RemoveRelic(c.relicId);
+                }
+            }
+
+            // 承咒之鼎/诅咒增减：重算最大生命加成
+            RecalculateCurseVesselBonus();
         }
 
         /// <summary>
@@ -273,6 +302,7 @@ namespace MutationChess.Core
                 ownedRelics.Remove(relic);
                 GameLogger.Log($"[RelicManager] 移除遗物：{relic.relicName}");
                 OnRelicsChanged?.Invoke();
+                RecalculateCurseVesselBonus();
             }
         }
 
@@ -754,6 +784,82 @@ namespace MutationChess.Core
         {
             var pool = LoadAllObtainableRelicAssets();
             return GenerateRandomRelics(pool, count);
+        }
+
+        /// <summary>
+        /// 承咒之鼎：每持有 1 个诅咒最大生命 +6。
+        /// 诅咒/鼎增减时重算差额（desired - applied），防止重复叠加；
+        /// 血上限下降时同步压低当前生命。
+        /// </summary>
+        private void RecalculateCurseVesselBonus()
+        {
+            PlayerDataManager pdm = PlayerDataManager.Instance;
+            if (pdm == null)
+            {
+                curseVesselBonusApplied = 0; // 下次结算重试
+                return;
+            }
+
+            int desired = HasRelic(RelicIds.Shop_CurseVessel)
+                ? CurseSystem.HeldCurseCount(this) * 6
+                : 0;
+            int delta = desired - curseVesselBonusApplied;
+            if (delta == 0) return;
+
+            curseVesselBonusApplied = desired;
+            pdm.AddMaxHealth(delta);
+
+            if (delta < 0)
+            {
+                PlayerData data = pdm.GetPlayerData();
+                if (data != null && data.currentHealth > data.maxHealth)
+                    pdm.TakeDamage(data.currentHealth - data.maxHealth, true);
+            }
+            GameLogger.Log($"[RelicManager] 承咒之鼎结算：最大生命 {delta:+0;-0}");
+        }
+
+        // ================= 存档接口 =================
+
+        public string SaveKey => "relics";
+
+        public string SerializeState()
+        {
+            return JsonUtility.ToJson(new RelicsSaveData
+            {
+                relicIds = ownedRelics.Select(r => r.relicId).ToList()
+            });
+        }
+
+        public void DeserializeState(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+            try
+            {
+                RelicsSaveData d = JsonUtility.FromJson<RelicsSaveData>(json);
+                if (d == null || d.relicIds == null) return;
+
+                // 清空现有遗物后按存档重建
+                foreach (var r in new List<Relic>(ownedRelics))
+                    RemoveRelic(r.relicId);
+
+                RelicDataAsset[] allAssets = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
+                foreach (var id in d.relicIds)
+                {
+                    RelicDataAsset asset = allAssets.FirstOrDefault(a => a != null && a.relicId == id);
+                    if (asset == null)
+                    {
+                        GameLogger.LogWarning($"[存档] 遗物资产不存在，跳过：{id}");
+                        continue;
+                    }
+                    Relic relic = CreateRelicFromAsset(asset);
+                    if (relic != null) AddRelic(relic);
+                }
+                GameLogger.Log($"[存档] 恢复遗物 {ownedRelics.Count} 件");
+            }
+            catch (System.Exception e)
+            {
+                GameLogger.LogError($"[存档] relics 反序列化失败：{e.Message}");
+            }
         }
 
         void OnDestroy()

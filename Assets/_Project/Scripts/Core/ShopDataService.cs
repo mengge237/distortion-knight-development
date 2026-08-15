@@ -489,9 +489,12 @@ namespace MutationChess.Core
             RelicManager rm = RelicManager.Instance;
             if (rm != null && rm.HasRelic(RelicIds.Shop_TreasureNeedle))
                 mult *= 0.9f;
-            // 贪婪诅咒：商店价格 +25%
-            if (rm != null && rm.HasRelic(RelicIds.Curse_Greed))
+            // 贪婪诅咒：商店价格 +25%（反咒之镜反转后全场八五折）
+            CurseMode greedMode = CurseSystem.GetCurseMode(RelicIds.Curse_Greed);
+            if (greedMode == CurseMode.Active)
                 mult *= 1.25f;
+            else if (greedMode == CurseMode.Inverted)
+                mult *= 0.85f;
             return Mathf.RoundToInt(basePrice * mult);
         }
 

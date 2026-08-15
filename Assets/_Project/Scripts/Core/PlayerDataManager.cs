@@ -5,7 +5,15 @@ using TMPro;
 
 namespace MutationChess.Core
 {
-    public class PlayerDataManager : MonoBehaviour
+    [System.Serializable]
+    public class PlayerSaveData
+    {
+        public int maxHealth;
+        public int currentHealth;
+        public int gold;
+    }
+
+    public class PlayerDataManager : MonoBehaviour, ISaveable
     {
         private static PlayerDataManager _instance;
         public static PlayerDataManager Instance
@@ -48,6 +56,7 @@ namespace MutationChess.Core
             }
 
             _instance = this;
+            SaveService.Instance.Register(this);
 
             if (playerData == null)
             {
@@ -221,6 +230,40 @@ namespace MutationChess.Core
             ResetDeck();
             OnDataChanged?.Invoke(playerData);
             UpdateUI();
+        }
+
+        // ================= 存档接口 =================
+
+        public string SaveKey => "player";
+
+        public string SerializeState()
+        {
+            return JsonUtility.ToJson(new PlayerSaveData
+            {
+                maxHealth = playerData.maxHealth,
+                currentHealth = playerData.currentHealth,
+                gold = playerData.gold
+            });
+        }
+
+        public void DeserializeState(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+            try
+            {
+                PlayerSaveData d = JsonUtility.FromJson<PlayerSaveData>(json);
+                if (d == null) return;
+                playerData.maxHealth = Mathf.Max(1, d.maxHealth);
+                playerData.currentHealth = Mathf.Clamp(d.currentHealth, 0, playerData.maxHealth);
+                playerData.gold = Mathf.Max(0, d.gold);
+                OnDataChanged?.Invoke(playerData);
+                UpdateUI();
+                GameLogger.Log($"[存档] 恢复玩家状态：HP {playerData.currentHealth}/{playerData.maxHealth} · 金币 {playerData.gold}");
+            }
+            catch (System.Exception e)
+            {
+                GameLogger.LogError($"[存档] player 反序列化失败：{e.Message}");
+            }
         }
 
         void OnDestroy()

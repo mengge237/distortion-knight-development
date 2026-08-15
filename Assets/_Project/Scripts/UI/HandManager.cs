@@ -118,15 +118,33 @@ namespace MutationChess.UI
 
             ShuffleDrawPile();
 
-            StartCoroutine(DrawCardsRoutine(startingHandSize, GetDrawPilePosition()));
+            // 困倦诅咒：每场战斗初始少抽 1 张（反咒之镜反转后多抽 1 张）
+            int startingDraw = startingHandSize;
+            CurseMode drowsyMode = CurseSystem.GetCurseMode(RelicIds.Curse_Drowsy);
+            if (drowsyMode == CurseMode.Active)
+            {
+                startingDraw = Mathf.Max(1, startingDraw - 1);
+                GameLogger.Log("[HandManager] 困倦诅咒：本场战斗初始少抽 1 张牌");
+            }
+            else if (drowsyMode == CurseMode.Inverted)
+            {
+                startingDraw += 1;
+                GameLogger.Log("[HandManager] 困倦诅咒反转：本场战斗初始多抽 1 张牌");
+            }
+            StartCoroutine(DrawCardsRoutine(startingDraw, GetDrawPilePosition()));
 
             currentEnergy = maxEnergy;
-            // 虚弱诅咒：每场战斗开始能量-1
-            RelicManager rm = RelicManager.Instance;
-            if (rm != null && rm.HasRelic(RelicIds.Curse_Weakness))
+            // 虚弱诅咒：每场战斗开始能量-1（反咒之镜反转后 +1）
+            CurseMode weakMode = CurseSystem.GetCurseMode(RelicIds.Curse_Weakness);
+            if (weakMode == CurseMode.Active)
             {
                 currentEnergy = Mathf.Max(0, currentEnergy - 1);
                 GameLogger.Log("[HandManager] 虚弱诅咒：本场战斗初始能量 -1");
+            }
+            else if (weakMode == CurseMode.Inverted)
+            {
+                currentEnergy += 1;
+                GameLogger.Log("[HandManager] 虚弱诅咒反转：本场战斗初始能量 +1");
             }
             // 能量变化统一由 UpdateEnergyUI 广播
             UpdateEnergyUI();
