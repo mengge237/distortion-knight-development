@@ -41,6 +41,11 @@ namespace MutationChess.Map
         [SerializeField] private float mapDisplayScale = 0.6f;
         [SerializeField] private Color mapTintColor = new Color(1, 1, 1, 0.8f);
 
+        [Header("地图风格化设置")]
+        [SerializeField] private bool enablePseudo3DTilt = true;
+        [SerializeField] private float mapTiltAngleX = 22f;
+        [SerializeField] private bool enableFogOfWar = true;
+
         [Header("特殊层设置")]
         [SerializeField] private bool bossLayerHasRestBefore = true;
         [SerializeField] private int treasureLayerIndex = 6;
@@ -59,6 +64,10 @@ namespace MutationChess.Map
         public System.Action<MapNode> OnNodeClickedAction;
 
         private Material defaultLineMaterial;
+        private Material stylizedLineMaterial;
+        private Transform contentRoot;
+        private GameObject boardObject;
+        private List<Renderer> fogRowObjects = new List<Renderer>();
         private Transform linesParent;
         private Dictionary<NodeType, NodeBlueprint> blueprintCache;
         private Dictionary<NodeType, List<Texture2D>> textureCache;
@@ -71,6 +80,8 @@ namespace MutationChess.Map
                 Camera.main.gameObject.AddComponent<PhysicsRaycaster>();
 
             defaultLineMaterial = CreateDefaultLineMaterial();
+            stylizedLineMaterial = CreateStylizedLineMaterial();
+            EnsureContentRoot();
 
 
             BuildBlueprintCache();
@@ -288,6 +299,152 @@ namespace MutationChess.Map
             return mat;
         }
 
+        /// <summary>
+        /// 创建手绘墨迹连线材质（邪恶冥刻风）。纹理缺失或 Shader 缺失时返回 null，走原版单色线回退。
+        /// </summary>
+        private Material CreateStylizedLineMaterial()
+        {
+            Shader shader = Shader.Find("Sprites/Default");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) shader = defaultLineMaterial != null ? defaultLineMaterial.shader : null;
+            if (shader == null) return null;
+
+            Texture2D inkTex = Resources.Load<Texture2D>("MapTextures/Lines/墨迹连线");
+            if (inkTex == null)
+            {
+                GameLogger.Log("[MapGenerator] 未找到墨迹连线纹理，使用单色连线");
+                return null;
+            }
+
+            Material mat = new Material(shader);
+            mat.mainTexture = inkTex;
+            mat.color = new Color(1f, 1f, 1f, 0.9f);
+            return mat;
+        }
+
+        /// <summary>
+        /// 伪 3D 内容根：整张地图（节点+连线+底板+迷雾）绕 X 轴倾斜，形成邪恶冥刻式透视。
+        /// </summary>
+        private void EnsureContentRoot()
+        {
+            if (!enablePseudo3DTilt) return;
+            if (contentRoot == null)
+            {
+                contentRoot = new GameObject("MapContent").transform;
+                contentRoot.SetParent(transform, false);
+            }
+            contentRoot.localRotation = Quaternion.Euler(mapTiltAngleX, 0f, 0f);
+        }
+
+        /// <summary>
+        /// 羊皮纸底板：整幅大地图的背景画布，位于所有节点之后（renderQueue 1000）。
+        /// </summary>
+        private void CreateBoardVisual()
+        {
+            Texture2D boardTex = Resources.Load<Texture2D>("MapTextures/Board/羊皮纸底板");
+            if (boardTex == null)
+            {
+                GameLogger.Log("[MapGenerator] 未找到羊皮纸底板纹理，跳过底板显示");
+                return;
+            }
+
+            Shader shader = Shader.Find("Sprites/Default");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) return;
+
+            float boardWidth = (maxNodesPerRow - 1) * horizontalSpacing + 7f;
+            float boardHeight = boardWidth * 2f; // 纹理 512x1024，宽高比 1:2
+            float centerY = (rows - 1) * verticalSpacing / 2f + nodeYOffset;
+
+            boardObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            boardObject.name = "Board_Parchment";
+            Collider col = boardObject.GetComponent<Collider>();
+            if (col != null) Destroy(col);
+            boardObject.transform.SetParent(contentRoot != null ? contentRoot : transform, false);
+            boardObject.transform.localPosition = new Vector3(0f, centerY, 0.5f);
+            boardObject.transform.localRotation = Quaternion.identity;
+            boardObject.transform.localScale = new Vector3(boardWidth, boardHeight, 1f);
+
+            Material mat = new Material(shader);
+            mat.mainTexture = boardTex;
+            mat.color = new Color(1f, 1f, 1f, 0.85f);
+            mat.renderQueue = 1000;
+            Renderer renderer = boardObject.GetComponent<Renderer>();
+            renderer.material = mat;
+            renderer.enabled = true;
+            GameLogger.Log("[MapGenerator] 羊皮纸底板已创建");
+        }
+
+        /// <summary>
+        /// 迷雾遮罩：每行一张深色 Quad 覆盖未探索行（renderQueue 3060，压过节点图标）。
+        /// 已到达行及下一行揭开（alpha 0），其余行保持 alpha 0.85。
+        /// </summary>
+        private void CreateFogOfWar()
+        {
+            ClearFogOfWar();
+
+            Shader shader = Shader.Find("Sprites/Default");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) return;
+
+            float fogWidth = (maxNodesPerRow - 1) * horizontalSpacing + 9f;
+            float fogHeight = verticalSpacing * 0.95f;
+
+            for (int row = 0; row < rows; row++)
+            {
+                float rowY = row * verticalSpacing + nodeYOffset;
+
+                GameObject fog = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                fog.name = $"FogRow_{row}";
+                Collider col = fog.GetComponent<Collider>();
+                if (col != null) Destroy(col);
+                fog.transform.SetParent(contentRoot != null ? contentRoot : transform, false);
+                fog.transform.localPosition = new Vector3(0f, rowY, -0.35f);
+                fog.transform.localRotation = Quaternion.identity;
+                fog.transform.localScale = new Vector3(fogWidth, fogHeight, 1f);
+
+                Material mat = new Material(shader);
+                mat.color = new Color(0.04f, 0.03f, 0.05f, 0.85f);
+                mat.renderQueue = 3060;
+                Renderer r = fog.GetComponent<Renderer>();
+                r.material = mat;
+                fogRowObjects.Add(r);
+            }
+
+            UpdateFogOfWar();
+        }
+
+        /// <summary>按当前节点所在行揭开迷雾：到达行及下一行透明，其余保持遮罩。</summary>
+        private void UpdateFogOfWar()
+        {
+            if (!enableFogOfWar || fogRowObjects == null) return;
+
+            int revealedRow = 0;
+            if (currentNode != null)
+                revealedRow = currentNode.point.y + 1;
+
+            for (int i = 0; i < fogRowObjects.Count; i++)
+            {
+                Renderer r = fogRowObjects[i];
+                if (r == null) continue;
+                Color c = r.material.color;
+                c.a = i <= revealedRow ? 0f : 0.85f;
+                r.material.color = c;
+            }
+        }
+
+        /// <summary>销毁全部迷雾行（重新生成地图时调用）。</summary>
+        private void ClearFogOfWar()
+        {
+            if (fogRowObjects == null) return;
+            foreach (var r in fogRowObjects)
+            {
+                if (r != null)
+                    Destroy(r.gameObject);
+            }
+            fogRowObjects.Clear();
+        }
+
         public void ClearMap()
         {
             GameLogger.Log("[MapGenerator] ClearMap() 清空地图");
@@ -318,9 +475,16 @@ namespace MutationChess.Map
             allLayers.Clear();
             lineConnections.Clear();
 
+            if (boardObject != null)
+            {
+                Destroy(boardObject);
+                boardObject = null;
+            }
+            ClearFogOfWar();
+
             if (linesParent != null) Destroy(linesParent.gameObject);
             linesParent = new GameObject("Lines").transform;
-            linesParent.SetParent(transform);
+            linesParent.SetParent(contentRoot != null ? contentRoot : transform, false);
 
             List<int> layerCounts = new List<int>();
             int maxCount = maxNodesPerRow;
@@ -363,6 +527,11 @@ namespace MutationChess.Map
             UpdateStartAndBossVisuals();
             InitializeStartNodes();
             DrawAllLines();
+            UpdateLineColors();
+
+            CreateBoardVisual();
+            if (enableFogOfWar)
+                CreateFogOfWar();
 
             if (enableMapDisplay)
             {
@@ -420,7 +589,8 @@ namespace MutationChess.Map
                 prefab = fallback;
             }
 
-            GameObject obj = Instantiate(prefab, pos, Quaternion.identity, transform);
+            Transform nodeParent = contentRoot != null ? contentRoot : transform;
+            GameObject obj = Instantiate(prefab, pos, Quaternion.identity, nodeParent);
             obj.name = $"Node_{type}_{row}_{col}";
             MapNode node = new MapNode(new Vector2Int(col, row), type);
             node.nodeObject = obj;
@@ -532,18 +702,21 @@ namespace MutationChess.Map
             Renderer renderer = quad.GetComponent<Renderer>();
             if (renderer != null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+                // 图标 PNG 带透明通道，优先 Sprites/Default 透明渲染
+                Shader shader = Shader.Find("Sprites/Default");
+                if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
                 if (shader == null) shader = Shader.Find("Unlit/Texture");
                 if (shader == null) shader = Shader.Find("Standard");
                 if (shader == null)
                 {
                     GameLogger.LogError($"[MapGenerator] MapQuad 的 Shader 未找到，贴图将不可见！");
-                    shader = Shader.Find("Sprites/Default");
+                    return quad;
                 }
 
                 Material mat = new Material(shader);
                 mat.mainTexture = texture;
                 mat.color = mapTintColor;
+                mat.renderQueue = 3010;
                 renderer.material = mat;
                 renderer.enabled = true;
             }
@@ -1037,6 +1210,7 @@ namespace MutationChess.Map
             UpdateLineColors();
             if (enableMapDisplay)
                 UpdateAllMapDisplays();
+            UpdateFogOfWar();
             OnNodeReached?.Invoke(node);
         }
 
@@ -1071,10 +1245,16 @@ namespace MutationChess.Map
                             end: end,
                             parent: linesParent,
                             width: 0.15f,
-                            color: new Color(0.4f, 0.4f, 0.4f, 0.6f)
+                            color: new Color(1f, 1f, 1f, 0.9f)
                         );
 
-                        if (lineMaterial != null)
+                        if (stylizedLineMaterial != null)
+                        {
+                            // 手绘墨迹纹理 + 平铺模式，营造邪恶冥刻风连线
+                            lr.material = stylizedLineMaterial;
+                            lr.textureMode = LineTextureMode.Tile;
+                        }
+                        else if (lineMaterial != null)
                             lr.material = lineMaterial;
                         else
                             lr.material = defaultLineMaterial;
