@@ -363,19 +363,14 @@ namespace MutationChess.Core
                 if (rowGo != null) Destroy(rowGo);
                 return;
             }
+            // Toggle 本身即 Selectable（自带点击/色变反馈），不可再挂 Button——
+            // Button 与 Toggle 同属 Selectable，同一 GameObject 挂第二个会抛
+            // "A GameObject can only contain one 'Selectable' component"
             toggle.transition = Selectable.Transition.ColorTint;
             toggle.targetGraphic = bg;
             toggle.graphic = mark;
             toggle.isOn = AudioManager.IsBossRelicPickSfxEnabled();
             toggle.onValueChanged.AddListener(OnBossRelicSfxChanged);
-
-            Button toggleBtn = toggleGo.GetComponent<Button>();
-            if (toggleBtn == null) toggleBtn = toggleGo.AddComponent<Button>();
-            if (toggleBtn != null)
-            {
-                toggleBtn.targetGraphic = bg;
-                UiFeel.ApplyButton(toggleBtn);
-            }
 
             bossRelicSfxToggle = toggle;
             GameLogger.Log("[Settings] Boss遗物主题音效开关已运行时构建");

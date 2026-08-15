@@ -116,7 +116,9 @@ namespace MutationChess.UI
             });
 
             // 继续游戏（有存档才可进入，副标签实时显示存档摘要）
-            HomeButtonRef continueRef = CreateHomeButton("继续游戏", "", -540f, () =>
+            // 先声明后赋值：lambda 体内引用 continueRef，声明与赋值同语句会被编译器判为未赋值（CS0165）
+            HomeButtonRef continueRef = null;
+            continueRef = CreateHomeButton("继续游戏", "", -540f, () =>
             {
                 if (!SaveService.Instance.HasSave(1))
                 {
@@ -291,7 +293,7 @@ namespace MutationChess.UI
                 });
 
             // 全屏
-            CreateToggleRow(settingsSubPanel.transform, "全屏显示", Screen.fullScreen, v =>
+            CreateToggleRow(settingsSubPanel.transform, "全屏显示", -430f, Screen.fullScreen, v =>
             {
                 Screen.fullScreen = v;
                 PlayerPrefs.SetInt("Fullscreen", v ? 1 : 0);
@@ -458,6 +460,9 @@ namespace MutationChess.UI
             if (mark == null) mark = markGo.AddComponent<Image>();
             mark.color = new Color(0.85f, 0.72f, 0.35f, 1f);
 
+            // Toggle 本身即 Selectable（自带点击/色变反馈），不可再挂 Button——
+            // Button 与 Toggle 同属 Selectable，同一 GameObject 挂第二个会抛
+            // "A GameObject can only contain one 'Selectable' component"
             var toggle = toggleGo.GetComponent<Toggle>();
             if (toggle == null) toggle = toggleGo.AddComponent<Toggle>();
             toggle.transition = Selectable.Transition.ColorTint;
@@ -465,11 +470,6 @@ namespace MutationChess.UI
             toggle.graphic = mark;
             toggle.isOn = value;
             toggle.onValueChanged.AddListener(onChanged);
-
-            var toggleBtn = toggleGo.GetComponent<Button>();
-            if (toggleBtn == null) toggleBtn = toggleGo.AddComponent<Button>();
-            toggleBtn.targetGraphic = bg;
-            UiFeel.ApplyButton(toggleBtn);
         }
 
         // ================= 工具 =================

@@ -23,6 +23,14 @@ namespace MutationChess.EditorTools
             EditorApplication.delayCall += EnsureHomeSceneAndBuildSettings;
         }
 
+        /// <summary>手动入口：域重载自动执行失败（如彼时存在编译错误）时可用菜单补生成。</summary>
+        [MenuItem("工具/生成首页场景并注册 BuildSettings")]
+        public static void EnsureHomeSceneAndBuildSettingsMenu()
+        {
+            EnsureHomeSceneAndBuildSettings();
+            Debug.Log("[HomeSceneSetup] 手动生成完成：HomeScene + BuildSettings");
+        }
+
         private static void EnsureHomeSceneAndBuildSettings()
         {
             // 1. 场景文件（不存在才创建，避免覆盖人工调整）
@@ -53,7 +61,7 @@ namespace MutationChess.EditorTools
                 Debug.Log("[HomeSceneSetup] 已创建首页场景：" + HomeScenePath);
             }
 
-            // 2. BuildSettings：首页在前、主场景在后
+            // 2. BuildSettings：首页在前、主场景在后（保留用户已注册的其他场景，仅补缺失项）
             var scenes = EditorBuildSettings.scenes;
             bool hasHome = false, hasMain = false;
             foreach (var s in scenes)
@@ -64,11 +72,11 @@ namespace MutationChess.EditorTools
 
             if (!hasHome || !hasMain)
             {
-                var list = new System.Collections.Generic.List<EditorBuildSettingsScene>();
-                if (!hasHome) list.Add(new EditorBuildSettingsScene(HomeScenePath, true));
+                var list = new System.Collections.Generic.List<EditorBuildSettingsScene>(scenes);
+                if (!hasHome) list.Insert(0, new EditorBuildSettingsScene(HomeScenePath, true));
                 if (!hasMain) list.Add(new EditorBuildSettingsScene(MainScenePath, true));
                 EditorBuildSettings.scenes = list.ToArray();
-                Debug.Log("[HomeSceneSetup] 已注册 BuildSettings：HomeScene → MainScene");
+                Debug.Log("[HomeSceneSetup] 已注册 BuildSettings：HomeScene → MainScene（保留原有场景）");
             }
         }
     }
