@@ -10,21 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b8888e08f2d9274abb9bc2eaf6ee423, type: 3}
-  m_Name: 罗盘
+  m_Name: 贪婪诅咒
   m_EditorClassIdentifier:
-  relicId: Shop_Compass
-  relicName: 罗盘
+  relicId: Curse_Greed
+  relicName: 贪婪诅咒
   rarity: 1
   faction: 0
-  description: 司南引路：每场战斗胜利额外+5金币。迷雾诅咒时：地图迷雾视野+1行
-  price: 120
-  iconPath: RelicsArt/罗盘
+  description: 贪婪缠身：商店全部商品价格+25%
+  price: 0
+  iconPath: RelicsArt/贪婪诅咒
   baseEffectIds: []
   hiddenActivatorRelicId:
   hiddenEffectIds: []
   relicEffects: []
-  isShopRelic: 1
+  isShopRelic: 0
   isBossRelic: 0
   isStartingRelic: 0
   isSynthesisTarget: 0
+  isCurse: 1
   isFactionUnlocker: 0

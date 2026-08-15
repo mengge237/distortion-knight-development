@@ -422,21 +422,23 @@ namespace MutationChess.Map
         }
 
         /// <summary>
-        /// 战争迷雾：按当前节点所在行揭开迷雾——到达行全透明；"下一行"换"命运问号"隐匿类型
-        /// （只知有节点、不知其性质）；更远的行保持浓雾遮罩。
-        /// 情报遗物干预：罗盘+1行视野 / 观星镜透视精英与Boss / 寻宝针透视宝箱 / 星图全图揭示。
+        /// 战争迷雾：按当前节点所在行揭开迷雾——到达行全透明；更远的行保持浓雾遮罩。
+        /// 类型隐匿是"迷雾诅咒"的效果：无诅咒时下一行直接显示真实类型；
+        /// 持有迷雾诅咒时，下一行换"命运问号"（只知有节点、不知其性质），仅情报遗物可以看穿。
+        /// 情报遗物穿雾效果仅在诅咒下凸显：罗盘+1行视野 / 观星镜透视精英 / 寻宝针透视宝箱 / 星图全图揭示。
         /// </summary>
-        private void UpdateFogOfWar()
+        public void UpdateFogOfWar()
         {
             if (!enableFogOfWar || fogRowObjects == null) return;
 
             int revealedRow = 0;
             bool revealAll = false;
-            bool revealEliteBoss = false;
+            bool revealElite = false;
             bool revealTreasure = false;
 
             RelicManager rm = RelicManager.Instance;
-            if (rm != null)
+            bool fogCurse = rm != null && rm.HasRelic(RelicIds.Curse_FogOfWar);
+            if (rm != null && fogCurse)
             {
                 if (rm.HasRelic(RelicIds.Shop_StarChart))
                 {
@@ -445,14 +447,14 @@ namespace MutationChess.Map
                 else
                 {
                     if (rm.HasRelic(RelicIds.Shop_Compass)) revealedRow += 1; // 罗盘：多探一行
-                    revealEliteBoss = rm.HasRelic(RelicIds.Shop_Astrolabe);    // 观星镜：凶星隐现
+                    revealElite = rm.HasRelic(RelicIds.Shop_Astrolabe);        // 观星镜：凶星隐现（Boss 位置固定无需揭示）
                     revealTreasure = rm.HasRelic(RelicIds.Shop_TreasureNeedle); // 寻宝针：宝光透雾
                 }
             }
             if (currentNode != null)
                 revealedRow += currentNode.point.y + 1;
 
-            // 迷雾行透明度：已揭示 0 / 问号行 0.35 薄雾 / 其余 0.85 浓雾
+            // 迷雾行透明度：已揭示 0 / 下一行 0.35 薄雾 / 其余 0.85 浓雾
             for (int i = 0; i < fogRowObjects.Count; i++)
             {
                 Renderer r = fogRowObjects[i];
@@ -474,18 +476,19 @@ namespace MutationChess.Map
                     if (node == null || node.mapDisplayObject == null) continue;
                     int y = node.point.y;
 
-                    // 情报洞察：被对应遗物看穿的节点即使藏在雾中，也显示真实图标
+                    // 情报洞察（仅迷雾诅咒下生效）：被对应遗物看穿的节点即使藏在雾中，也显示真实图标
                     bool scouted = false;
-                    if (!revealAll && y > revealedRow)
+                    if (fogCurse && !revealAll && y > revealedRow)
                     {
-                        if (revealEliteBoss && (node.nodeType == NodeType.EliteMonster || node.nodeType == NodeType.Boss))
+                        if (revealElite && node.nodeType == NodeType.EliteMonster)
                             scouted = true;
                         if (revealTreasure && node.nodeType == NodeType.Treasure)
                             scouted = true;
                     }
 
-                    bool visible = revealAll || y <= revealedRow || y == revealedRow + 1 || scouted;
-                    bool showReal = revealAll || y <= revealedRow || scouted;
+                    bool visible = revealAll || y <= revealedRow + 1 || scouted;
+                    // 无诅咒时下一行也显示真实类型；有诅咒时下一行换成问号
+                    bool showReal = revealAll || !fogCurse || y <= revealedRow || scouted;
 
                     Renderer nr = node.mapDisplayObject.GetComponent<Renderer>();
                     if (nr == null) continue;

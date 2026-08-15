@@ -22,6 +22,7 @@ namespace MutationChess.UI
         [SerializeField] private TMP_Text energyText;
         [SerializeField] private TMP_Text drawPileCountText;
         [SerializeField] private TMP_Text discardPileCountText;
+        private TMP_Text nextDrawPeekText; // 观星镜：抽牌堆下一张预览（运行时自建）
 
         [Header("Fan Layout")]
         [SerializeField] private float fanRadius = 2000f;
@@ -94,8 +95,8 @@ namespace MutationChess.UI
             UpdateEnergyUI();
             UpdatePileCountUI();
 
-            // 花瓣能量 UI：运行时自建，替代数字能量显示
-            PetalEnergyUI.EnsureExists(this);
+            // 阵营主题能量 UI：持有阵营 Boss 遗物时才替换数字能量显示
+            FactionEnergyUI.EnsureExists(this);
         }
 
         public void StartBattle()
@@ -120,6 +121,13 @@ namespace MutationChess.UI
             StartCoroutine(DrawCardsRoutine(startingHandSize, GetDrawPilePosition()));
 
             currentEnergy = maxEnergy;
+            // 虚弱诅咒：每场战斗开始能量-1
+            RelicManager rm = RelicManager.Instance;
+            if (rm != null && rm.HasRelic(RelicIds.Curse_Weakness))
+            {
+                currentEnergy = Mathf.Max(0, currentEnergy - 1);
+                GameLogger.Log("[HandManager] 虚弱诅咒：本场战斗初始能量 -1");
+            }
             // 能量变化统一由 UpdateEnergyUI 广播
             UpdateEnergyUI();
             UpdatePileCountUI();
@@ -894,8 +902,8 @@ namespace MutationChess.UI
         {
             if (energyText != null)
                 energyText.text = $"能量: {currentEnergy}/{maxEnergy}";
-            // 统一从此处广播能量变化（花瓣能量 UI 等监听者）
-            // 能量变化统一由 UpdateEnergyUI 广播
+            // 统一从此处广播能量变化（阵营主题能量 UI 等监听者）
+            OnEnergyChanged?.Invoke(currentEnergy);
         }
 
         public void UpdatePileCountUI()
@@ -904,6 +912,52 @@ namespace MutationChess.UI
                 drawPileCountText.text = $"抽牌: {drawPile.Count}";
             if (discardPileCountText != null)
                 discardPileCountText.text = $"弃牌: {discardPile.Count}";
+            UpdateNextDrawPeek();
+        }
+
+        /// <summary>观星镜基础效果：显示抽牌堆下一张卡牌预览（持有才显示）。</summary>
+        void UpdateNextDrawPeek()
+        {
+            RelicManager rm = RelicManager.Instance;
+            bool hasPeek = rm != null && rm.HasRelic(RelicIds.Shop_Astrolabe);
+
+            if (!hasPeek)
+            {
+                if (nextDrawPeekText != null)
+                    nextDrawPeekText.gameObject.SetActive(false);
+                return;
+            }
+
+            if (nextDrawPeekText == null)
+                CreateNextDrawPeekUI();
+
+            if (nextDrawPeekText != null)
+            {
+                nextDrawPeekText.gameObject.SetActive(true);
+                nextDrawPeekText.text = drawPile.Count > 0
+                    ? $"观星: 下一抽「{drawPile[0].cardName}」"
+                    : "观星: 抽牌堆已空";
+            }
+        }
+
+        void CreateNextDrawPeekUI()
+        {
+            TMP_Text anchor = drawPileCountText != null ? drawPileCountText : energyText;
+            if (anchor == null) return;
+
+            GameObject go = new GameObject("NextDrawPeek", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            go.transform.SetParent(anchor.transform.parent, false);
+            nextDrawPeekText = go.GetComponent<TextMeshProUGUI>();
+
+            RectTransform rt = nextDrawPeekText.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = anchor.rectTransform.anchoredPosition + new Vector2(0f, -34f);
+            rt.sizeDelta = new Vector2(420f, 32f);
+
+            nextDrawPeekText.font = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+            nextDrawPeekText.fontSize = 20f;
+            nextDrawPeekText.alignment = TextAlignmentOptions.Center;
+            nextDrawPeekText.color = new Color(0.86f, 0.72f, 0.35f, 0.95f);
         }
 
         void OnCardUIClicked(Card card)

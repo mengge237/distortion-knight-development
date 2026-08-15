@@ -151,7 +151,7 @@ namespace MutationChess.Battle
             foreach (var relic in allRelics)
             {
                 if (relic == null) continue;
-                if (relic.isBossRelic || relic.isStartingRelic || relic.isFactionUnlocker || relic.isShopRelic) continue;
+                if (relic.isBossRelic || relic.isStartingRelic || relic.isFactionUnlocker || relic.isShopRelic || relic.isCurse) continue;
                 if (relic.faction != CardFaction.None) continue;
                 if (relic.rarity != RelicRarity.Rare && relic.rarity != RelicRarity.Legendary) continue;
                 fallback.Add(relic);

@@ -563,7 +563,7 @@ namespace MutationChess.Core
             foreach (var asset in allAssets)
             {
 
-                if (asset.rarity == RelicRarity.Starting || asset.isBossRelic || asset.isFactionUnlocker)
+                if (asset.rarity == RelicRarity.Starting || asset.isBossRelic || asset.isFactionUnlocker || asset.isCurse)
                     continue;
                 if (!IsFactionUnlocked(asset.faction))
                     continue;
@@ -579,7 +579,7 @@ namespace MutationChess.Core
 
             foreach (var asset in allAssets)
             {
-                if (!asset.isShopRelic)
+                if (!asset.isShopRelic || asset.isCurse)
                     continue;
                 if (!IsFactionUnlocked(asset.faction))
                     continue;
@@ -595,7 +595,7 @@ namespace MutationChess.Core
 
             foreach (var asset in allAssets)
             {
-                if (asset.rarity == RelicRarity.Starting || asset.isShopRelic || asset.isBossRelic)
+                if (asset.rarity == RelicRarity.Starting || asset.isShopRelic || asset.isBossRelic || asset.isCurse)
                     continue;
                 if (!IsFactionUnlocked(asset.faction))
                     continue;

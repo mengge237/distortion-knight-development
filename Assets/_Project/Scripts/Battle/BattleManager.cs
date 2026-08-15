@@ -570,6 +570,21 @@ namespace MutationChess.Battle
             if (relicManager != null)
             {
                 relicManager.OnBattleStart();
+
+                // 嗜血诅咒：每场战斗开始损失 2 点生命（绕过无敌，至少保留 1 点）
+                if (relicManager.HasRelic(RelicIds.Curse_Bloodthirst))
+                {
+                    PlayerDataManager pdm = PlayerDataManager.Instance;
+                    if (pdm != null)
+                    {
+                        int hpLoss = Mathf.Min(2, Mathf.Max(0, pdm.GetHealth() - 1));
+                        if (hpLoss > 0)
+                        {
+                            pdm.TakeDamage(hpLoss, true);
+                            GameLogger.Log($"[BattleManager] 嗜血诅咒：战斗开始损失 {hpLoss} 点生命");
+                        }
+                    }
+                }
             }
 
             if (effectManager != null)
@@ -1120,6 +1135,28 @@ namespace MutationChess.Battle
             else
             {
                 goldReward = UnityEngine.Random.Range(10, 30);
+            }
+
+            // 情报遗物基础效果 + 诅咒结算（常驻效果，与迷雾诅咒无关）
+            RelicManager rmGold = RelicManager.Instance;
+            if (rmGold != null)
+            {
+                if (rmGold.HasRelic(RelicIds.Shop_Compass))
+                {
+                    goldReward += 5;
+                    GameLogger.Log("[BattleManager] 罗盘·司南引路：胜利金币 +5");
+                }
+                if (rmGold.HasRelic(RelicIds.Shop_StarChart))
+                {
+                    goldReward += 15;
+                    GameLogger.Log("[BattleManager] 星图·星河巡礼：胜利金币 +15");
+                }
+                if (rmGold.HasRelic(RelicIds.Curse_Rust))
+                {
+                    int before = goldReward;
+                    goldReward = Mathf.RoundToInt(goldReward * 0.8f);
+                    GameLogger.Log($"[BattleManager] 锈蚀诅咒：胜利金币 {before} → {goldReward}");
+                }
             }
 
             List<Card> cardRewards = GetRewardCardsForEnemy(enemyType);

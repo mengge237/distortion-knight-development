@@ -56,6 +56,10 @@ namespace MutationChess.Core
         public bool isStartingRelic = false;
         public bool isSynthesisTarget = false;
 
+        [Header("诅咒")]
+        [Tooltip("诅咒遗物（困难度系统发放，负面效果，不进商店/掉落池）")]
+        public bool isCurse = false;
+
         [Header("阵营解锁")]
         [Tooltip("是否为Boss阵营解锁遗物")]
         public bool isFactionUnlocker = false;

@@ -98,6 +98,9 @@ public class GameManager : MonoBehaviour
 
         if (mapView != null)
             mapView.RefreshAllNodes();
+
+        // 困难度系统：本局尚未选择难度时弹出选择面板（困难/噩梦伴随随机诅咒）
+        DifficultyManager.Instance.EnsureSelected();
     }
 
     void SetupPlayer()

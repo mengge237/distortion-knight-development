@@ -484,7 +484,15 @@ namespace MutationChess.Core
 
         private int ApplyDiscount(int basePrice)
         {
-            return Mathf.RoundToInt(basePrice * discountMultiplier);
+            float mult = discountMultiplier;
+            // 寻宝针：识宝九折（常驻基础效果）
+            RelicManager rm = RelicManager.Instance;
+            if (rm != null && rm.HasRelic(RelicIds.Shop_TreasureNeedle))
+                mult *= 0.9f;
+            // 贪婪诅咒：商店价格 +25%
+            if (rm != null && rm.HasRelic(RelicIds.Curse_Greed))
+                mult *= 1.25f;
+            return Mathf.RoundToInt(basePrice * mult);
         }
 
         public void OnRemovalPurchased()

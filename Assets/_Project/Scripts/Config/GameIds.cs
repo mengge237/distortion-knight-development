@@ -82,6 +82,13 @@ namespace MutationChess.Core
         public const string Shop_StarChart = "Shop_StarChart";
         public const string Shop_TreasureNeedle = "Shop_TreasureNeedle";
 
+        // 诅咒（困难度系统：上调难度伴随随机诅咒）
+        public const string Curse_FogOfWar = "Curse_FogOfWar";
+        public const string Curse_Greed = "Curse_Greed";
+        public const string Curse_Weakness = "Curse_Weakness";
+        public const string Curse_Bloodthirst = "Curse_Bloodthirst";
+        public const string Curse_Rust = "Curse_Rust";
+
         // 合成
         public const string Synth_SwordShard = "Synth_SwordShard";
         public const string Synth_HiltShard = "Synth_HiltShard";

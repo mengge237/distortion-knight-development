@@ -16,7 +16,7 @@ MonoBehaviour:
   relicName: 寻宝针
   rarity: 1
   faction: 0
-  description: 针尖自有灵光：迷雾中可直接看穿宝箱节点
+  description: 识宝：商店全部商品九折。迷雾诅咒时：看穿迷雾中的宝箱节点
   price: 100
   iconPath: RelicsArt/寻宝针
   baseEffectIds: []
