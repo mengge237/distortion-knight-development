@@ -154,6 +154,7 @@ namespace MutationChess.Battle
                 if (relic.isBossRelic || relic.isStartingRelic || relic.isFactionUnlocker || relic.isShopRelic || relic.isCurse) continue;
                 if (relic.faction != CardFaction.None) continue;
                 if (relic.rarity != RelicRarity.Rare && relic.rarity != RelicRarity.Legendary) continue;
+                if (relic.powerTier == PowerTier.Mechanic) continue; // 机制级不进 Boss 三选一稳定来源
                 fallback.Add(relic);
             }
             return fallback;

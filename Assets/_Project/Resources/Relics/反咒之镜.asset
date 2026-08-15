@@ -16,14 +16,15 @@ MonoBehaviour:
   relicName: 反咒之镜
   rarity: 3
   faction: 0
+  powerTier: 1
   description: 咒镜倒映：持有的诅咒全部反转，祸患化为祝福（贪婪减价·锈蚀增金·嗜血回血·虚弱加能·困倦多抽·迷雾尽散）
-  price: 320
+  price: 500
   iconPath: RelicsArt/反咒之镜
   baseEffectIds: []
   hiddenActivatorRelicId:
   hiddenEffectIds: []
   relicEffects: []
-  isShopRelic: 1
+  isShopRelic: 0
   isBossRelic: 0
   isStartingRelic: 0
   isSynthesisTarget: 0

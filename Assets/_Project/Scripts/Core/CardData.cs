@@ -240,5 +240,15 @@ namespace MutationChess.Core
         {
             return new List<CardName>((CardName[])Enum.GetValues(typeof(CardName)));
         }
+
+        /// <summary>
+        /// 卡牌奖励掉落权重：机制级强力卡牌（牌库操纵/能量引擎/转换机制等）
+        /// 在稀有度体系之上再度降权（0.1）。
+        /// </summary>
+        public static float GetCardDropWeight(CardDataAsset asset)
+        {
+            if (asset == null) return 0f;
+            return asset.powerTier == PowerTier.Mechanic ? PowerTierWeights.Mechanic : PowerTierWeights.Normal;
+        }
     }
 }

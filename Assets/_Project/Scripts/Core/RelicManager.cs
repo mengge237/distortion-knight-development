@@ -611,6 +611,8 @@ namespace MutationChess.Core
             {
                 if (!asset.isShopRelic || asset.isCurse)
                     continue;
+                if (asset.powerTier == PowerTier.Mechanic)
+                    continue; // 机制级强力遗物不入商店（如反咒之镜）
                 if (!IsFactionUnlocked(asset.faction))
                     continue;
                 result.Add(asset);
@@ -627,6 +629,8 @@ namespace MutationChess.Core
             {
                 if (asset.rarity == RelicRarity.Starting || asset.isShopRelic || asset.isBossRelic || asset.isCurse)
                     continue;
+                if (asset.powerTier == PowerTier.Mechanic)
+                    continue; // 机制级强力遗物不进商店货架（仅极低概率掉落）
                 if (!IsFactionUnlocked(asset.faction))
                     continue;
                 result.Add(asset);
@@ -737,7 +741,7 @@ namespace MutationChess.Core
 
             if (available.Count == 0) return null;
 
-            RelicDataAsset chosen = available[UnityEngine.Random.Range(0, available.Count)];
+            RelicDataAsset chosen = WeightedPickRelic(available);
             return CreateRelicFromAsset(chosen);
         }
 
@@ -750,12 +754,36 @@ namespace MutationChess.Core
 
             for (int i = 0; i < count && available.Count > 0; i++)
             {
-                int index = UnityEngine.Random.Range(0, available.Count);
-                result.Add(CreateRelicFromAsset(available[index]));
-                available.RemoveAt(index);
+                RelicDataAsset chosen = WeightedPickRelic(available);
+                available.Remove(chosen);
+                result.Add(CreateRelicFromAsset(chosen));
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 按强度分级加权抽取遗物：机制级强力效果（改变游戏机制）在稀有度体系之上再度降权。
+        /// </summary>
+        private static RelicDataAsset WeightedPickRelic(List<RelicDataAsset> available)
+        {
+            float total = 0f;
+            foreach (var a in available) total += GetRelicDropWeight(a);
+
+            float roll = UnityEngine.Random.Range(0f, total);
+            foreach (var a in available)
+            {
+                roll -= GetRelicDropWeight(a);
+                if (roll <= 0f) return a;
+            }
+            return available[available.Count - 1];
+        }
+
+        /// <summary>遗物掉落权重：机制级 = 0.1（大幅降权），数值级 = 1.0。</summary>
+        public static float GetRelicDropWeight(RelicDataAsset a)
+        {
+            if (a == null) return 0f;
+            return a.powerTier == PowerTier.Mechanic ? PowerTierWeights.Mechanic : PowerTierWeights.Normal;
         }
 
         public Relic TryNormalMonsterRelicDrop()
@@ -782,7 +810,10 @@ namespace MutationChess.Core
 
         public List<Relic> GenerateShopRelics(int count = 5)
         {
-            var pool = LoadAllObtainableRelicAssets();
+            // 商店货架不进机制级强力遗物（仅极低概率掉落）
+            var pool = LoadAllObtainableRelicAssets()
+                .Where(a => a.powerTier != PowerTier.Mechanic)
+                .ToList();
             return GenerateRandomRelics(pool, count);
         }
 

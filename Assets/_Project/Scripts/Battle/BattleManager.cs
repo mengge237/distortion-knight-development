@@ -976,7 +976,7 @@ namespace MutationChess.Battle
                 {
                     var available = pool.Where(a => a != null && !usedCardAssets.Contains(a.name)).ToList();
                     if (available.Count == 0) available = pool; // 该稀有度池已抽完时回退到全池
-                    var asset = available[UnityEngine.Random.Range(0, available.Count)];
+                    var asset = WeightedPickCard(available);
                     usedCardAssets.Add(asset.name);
                     CardName cardName;
                     if (System.Enum.TryParse(asset.name, out cardName))
@@ -988,6 +988,24 @@ namespace MutationChess.Battle
             }
 
             return cards;
+        }
+
+        /// <summary>
+        /// 按强度分级加权抽取奖励卡牌：机制级强力卡牌（牌库操纵/能量引擎/转换机制）
+        /// 获得概率大幅降低。
+        /// </summary>
+        private static CardDataAsset WeightedPickCard(List<CardDataAsset> available)
+        {
+            float total = 0f;
+            foreach (var a in available) total += CardData.GetCardDropWeight(a);
+
+            float roll = UnityEngine.Random.Range(0f, total);
+            foreach (var a in available)
+            {
+                roll -= CardData.GetCardDropWeight(a);
+                if (roll <= 0f) return a;
+            }
+            return available[available.Count - 1];
         }
 
         private float GetFloorProgress()

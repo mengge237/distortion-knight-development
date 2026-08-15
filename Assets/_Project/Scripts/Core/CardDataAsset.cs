@@ -12,6 +12,10 @@ namespace MutationChess.Core
         public CardRarity rarity;
         public CardFaction faction;
 
+        [Header("强度分级")]
+        [Tooltip("机制级强力卡牌（牌库操纵/能量引擎/转换机制等）：奖励掉落概率大幅降低")]
+        public PowerTier powerTier = PowerTier.Normal;
+
         [Header("卡牌数值")]
         public int cost = 1;
         public int damage;

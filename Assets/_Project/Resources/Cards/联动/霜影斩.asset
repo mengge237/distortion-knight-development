@@ -16,6 +16,7 @@ MonoBehaviour:
   cardType: 0
   rarity: 2
   faction: 0
+  powerTier: 1
   cost: 2
   damage: 0
   block: 0

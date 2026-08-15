@@ -17,6 +17,25 @@ namespace MutationChess.Core
         public float value2 = 0f;
     }
 
+    /// <summary>
+    /// 强度分级：在稀有度体系之上再度划分获得概率。
+    /// Normal = 数值型效果（伤害/回复/金币等数值增益），按稀有度正常获得；
+    /// Mechanic = 机制级强力效果（改变游戏机制，如诅咒免疫/反转、牌库操纵、能量引擎），
+    /// 掉落概率大幅降低且不进商店出售。
+    /// </summary>
+    public enum PowerTier
+    {
+        Normal = 0,   // 数值级
+        Mechanic = 1  // 机制级
+    }
+
+    /// <summary>强度分级掉落权重（机制级大幅降权）。</summary>
+    public static class PowerTierWeights
+    {
+        public const float Normal = 1f;
+        public const float Mechanic = 0.1f;
+    }
+
     [CreateAssetMenu(fileName = "RelicDataAsset", menuName = "MutationChess/Relic Data Asset")]
     public class RelicDataAsset : ScriptableObject
     {
@@ -25,6 +44,10 @@ namespace MutationChess.Core
         public string relicName;
         public RelicRarity rarity;
         public CardFaction faction;
+
+        [Header("强度分级")]
+        [Tooltip("机制级强力效果（改变机制而非数值）：掉落概率大幅降低且不进商店")]
+        public PowerTier powerTier = PowerTier.Normal;
 
         [Header("基础效果")]
         [Tooltip("基础效果列表，遗物持有时始终激活")]
