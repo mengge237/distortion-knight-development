@@ -69,6 +69,13 @@ namespace MutationChess.Core
                 GameLogger.LogError($"[CardData] 无法创建卡牌: {cardName}");
                 return null;
             }
+            return CreateCardFromAsset(asset);
+        }
+
+        /// <summary>从卡牌资产创建卡牌实例（图鉴/档案等直接遍历资产时使用）。</summary>
+        public static Card CreateCardFromAsset(CardDataAsset asset)
+        {
+            if (asset == null) return null;
 
             Card card = new Card(
                 asset.cardName,
@@ -239,6 +246,36 @@ namespace MutationChess.Core
         public static List<CardName> GetAllCardNames()
         {
             return new List<CardName>((CardName[])Enum.GetValues(typeof(CardName)));
+        }
+
+        /// <summary>
+        /// 返回 Resources/Cards 下全部卡牌资产（图鉴/档案遍历用），
+        /// 排序：阵营 → 稀有度 → 费用 → 名称。
+        /// </summary>
+        public static List<CardDataAsset> GetAllCardAssets()
+        {
+            LoadAllCards();
+            var list = new List<CardDataAsset>(assetCache.Values);
+            list.Sort((a, b) =>
+            {
+                int cmp = a.faction.CompareTo(b.faction);
+                if (cmp != 0) return cmp;
+                cmp = b.rarity.CompareTo(a.rarity);
+                if (cmp != 0) return cmp;
+                cmp = a.cost.CompareTo(b.cost);
+                if (cmp != 0) return cmp;
+                return string.Compare(a.cardName, b.cardName, StringComparison.Ordinal);
+            });
+            return list;
+        }
+
+        /// <summary>按名称字符串获取卡牌资产（档案预览用；找不到返回 null）。</summary>
+        public static CardDataAsset GetAssetByName(string cardName)
+        {
+            if (string.IsNullOrEmpty(cardName)) return null;
+            LoadAllCards();
+            assetCache.TryGetValue(cardName, out CardDataAsset asset);
+            return asset;
         }
 
         /// <summary>

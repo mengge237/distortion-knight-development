@@ -236,12 +236,13 @@ namespace MutationChess.UI
                 descTmp.color = new Color(0.85f, 0.85f, 0.88f);
                 descTmp.enableWordWrapping = true;
 
-                // 点击：隐藏并回调
+                // 点击：隐藏并回调（选取瞬间播放遗物主题音效，可在设置中关闭）
                 var button = btnGo.GetComponent<Button>();
                 UiFeel.ApplyButton(button);
                 var captured = relic;
                 button.onClick.AddListener(() =>
                 {
+                    AudioManager.Instance?.PlayBossRelicPick(captured.relicId);
                     Hide();
                     onPicked?.Invoke(captured);
                 });

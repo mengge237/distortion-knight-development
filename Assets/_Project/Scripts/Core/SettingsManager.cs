@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using MutationChess.UI;
 
 namespace MutationChess.Core
 {
@@ -34,6 +35,10 @@ namespace MutationChess.Core
         [Header("FPS显示")]
         [SerializeField] private Toggle showFpsToggle;
         [SerializeField] private TMP_Text fpsText;
+
+        [Header("Boss遗物音效")]
+        [Tooltip("Boss遗物选取主题音效开关（缺失时运行时在设置面板内自动构建）")]
+        [SerializeField] private Toggle bossRelicSfxToggle;
 
         private Resolution[] resolutions;
         private float fpsTimer = 0f;
@@ -83,6 +88,13 @@ namespace MutationChess.Core
                 if (fpsText != null)
                     fpsText.gameObject.SetActive(showFps);
             }
+
+            // Boss遗物主题音效开关（场景缺失时运行时自动构建）
+            EnsureBossRelicSfxToggle();
+
+            // 设置面板统一手感（按压回弹/悬停/点击音效）
+            if (settingsPanel != null)
+                UiFeel.ApplyToAllButtons(settingsPanel);
         }
 
         void Update()
@@ -90,7 +102,12 @@ namespace MutationChess.Core
             if (Instance != this) return;
 
             if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                // 牌库档案打开时，ESC 由档案面板接管（避免与设置面板同时开关）
+                if (CardArchivePanel.IsAnyVisible)
+                    return;
                 ToggleSettings();
+            }
 
             if (showFpsToggle != null && showFpsToggle.isOn)
             {
@@ -178,6 +195,8 @@ namespace MutationChess.Core
             if (settingsPanel == null) return;
             settingsOpen = !settingsOpen;
             settingsPanel.SetActive(settingsOpen);
+            if (settingsOpen)
+                UiFeel.AnimatePanelIn(settingsPanel); // 打开时面板弹入
             Time.timeScale = settingsOpen ? 0f : 1f;
         }
 
@@ -186,6 +205,7 @@ namespace MutationChess.Core
             if (settingsPanel == null) return;
             settingsPanel.SetActive(true);
             settingsOpen = true;
+            UiFeel.AnimatePanelIn(settingsPanel); // 打开时面板弹入
             Time.timeScale = 0f;
         }
 
@@ -237,8 +257,17 @@ namespace MutationChess.Core
         void OnSFXVolumeChanged(float value)
         {
             UpdateVolumeText(sfxVolumeSlider, sfxVolumeText);
+            AudioManager.SetSFXVolume(value); // 同步到音效管理器（实际生效）
             PlayerPrefs.SetFloat("SFXVolume", value);
             PlayerPrefs.Save();
+        }
+
+        void OnBossRelicSfxChanged(bool enabled)
+        {
+            AudioManager.SetBossRelicPickSfxEnabled(enabled);
+            // 反馈：切换后播放一次轻响（开）以确认手感
+            if (enabled)
+                AudioManager.Instance?.PlayUIClick(0.3f);
         }
 
         void OnShowFpsChanged(bool show)
@@ -247,6 +276,89 @@ namespace MutationChess.Core
             PlayerPrefs.Save();
             if (fpsText != null)
                 fpsText.gameObject.SetActive(show);
+        }
+
+        /// <summary>
+        /// Boss遗物主题音效开关：场景已接线则直接使用；否则运行时在设置面板内
+        /// 以 SFX 滑条为锚点自动构建一个标准 Toggle 行（含中文字体标签）。
+        /// </summary>
+        private void EnsureBossRelicSfxToggle()
+        {
+            if (bossRelicSfxToggle != null)
+            {
+                bossRelicSfxToggle.isOn = AudioManager.IsBossRelicPickSfxEnabled();
+                bossRelicSfxToggle.onValueChanged.RemoveListener(OnBossRelicSfxChanged);
+                bossRelicSfxToggle.onValueChanged.AddListener(OnBossRelicSfxChanged);
+                return;
+            }
+            if (settingsPanel == null || sfxVolumeSlider == null) return;
+
+            RectTransform sliderRt = sfxVolumeSlider.GetComponent<RectTransform>();
+            if (sliderRt == null) return;
+            Transform anchorParent = sliderRt.parent;
+
+            TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+
+            // 行容器：开关盒 + 中文标签
+            GameObject rowGo = new GameObject("BossRelicSfxToggle", typeof(RectTransform));
+            rowGo.transform.SetParent(anchorParent, false);
+            RectTransform rowRt = rowGo.GetComponent<RectTransform>();
+            rowRt.sizeDelta = new Vector2(sliderRt.sizeDelta.x, 34f);
+            if (anchorParent.GetComponent<VerticalLayoutGroup>() == null &&
+                anchorParent.GetComponent<HorizontalLayoutGroup>() == null &&
+                anchorParent.GetComponent<GridLayoutGroup>() == null)
+            {
+                // 无自动布局：手动放在 SFX 滑条下方
+                rowRt.anchorMin = rowRt.anchorMax = sliderRt.anchorMin;
+                rowRt.pivot = sliderRt.pivot;
+                rowRt.anchoredPosition = sliderRt.anchoredPosition + new Vector2(0f, -42f);
+            }
+
+            // 标签
+            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            labelGo.transform.SetParent(rowGo.transform, false);
+            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
+            labelRt.anchorMin = new Vector2(0f, 0f);
+            labelRt.anchorMax = new Vector2(0.68f, 1f);
+            labelRt.offsetMin = Vector2.zero;
+            labelRt.offsetMax = Vector2.zero;
+            TMP_Text label = labelGo.GetComponent<TextMeshProUGUI>();
+            if (font != null) label.font = font;
+            label.fontSize = 22f;
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.color = new Color(0.9f, 0.88f, 0.8f);
+            label.text = "Boss遗物主题音效（选取时播放）";
+
+            // 标准开关盒
+            GameObject toggleGo = new GameObject("Switch", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Toggle));
+            toggleGo.transform.SetParent(rowGo.transform, false);
+            RectTransform toggleRt = toggleGo.GetComponent<RectTransform>();
+            toggleRt.anchorMin = new Vector2(0.72f, 0.5f);
+            toggleRt.anchorMax = new Vector2(0.72f, 0.5f);
+            toggleRt.pivot = new Vector2(0f, 0.5f);
+            toggleRt.sizeDelta = new Vector2(64f, 30f);
+            Image bg = toggleGo.GetComponent<Image>();
+            bg.color = new Color(0.24f, 0.22f, 0.18f, 1f);
+
+            GameObject markGo = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+            markGo.transform.SetParent(toggleGo.transform, false);
+            RectTransform markRt = markGo.GetComponent<RectTransform>();
+            markRt.anchorMin = new Vector2(0.1f, 0.15f);
+            markRt.anchorMax = new Vector2(0.9f, 0.85f);
+            markRt.offsetMin = Vector2.zero;
+            markRt.offsetMax = Vector2.zero;
+            Image mark = markGo.GetComponent<Image>();
+            mark.color = new Color(0.85f, 0.72f, 0.35f, 1f);
+
+            Toggle toggle = toggleGo.GetComponent<Toggle>();
+            toggle.targetGraphic = bg;
+            toggle.graphic = mark;
+            toggle.isOn = AudioManager.IsBossRelicPickSfxEnabled();
+            toggle.onValueChanged.AddListener(OnBossRelicSfxChanged);
+            UiFeel.ApplyButton(toggleGo.GetComponent<Button>());
+
+            bossRelicSfxToggle = toggle;
+            GameLogger.Log("[Settings] Boss遗物主题音效开关已运行时构建");
         }
 
         void SaveSettings()
@@ -302,6 +414,7 @@ namespace MutationChess.Core
             {
                 sfxVolumeSlider.value = PlayerPrefs.GetFloat("SFXVolume");
                 UpdateVolumeText(sfxVolumeSlider, sfxVolumeText);
+                AudioManager.SetSFXVolume(sfxVolumeSlider.value); // 同步到音效管理器
             }
 
             if (showFpsToggle != null && PlayerPrefs.HasKey("ShowFPS"))
@@ -351,8 +464,15 @@ namespace MutationChess.Core
                 uiStyleDropdown.RefreshShownValue();
             }
 
+            if (bossRelicSfxToggle != null)
+                bossRelicSfxToggle.isOn = true;
+
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
+
+            // 恢复默认值后重新落盘（DeleteAll 已清空旧值）
+            AudioManager.SetSFXVolume(0.8f);
+            AudioManager.SetBossRelicPickSfxEnabled(true);
 
             if (resolutions != null && resolutions.Length > 0)
             {

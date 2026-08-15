@@ -97,6 +97,39 @@ namespace MutationChess.UI
 
             // 阵营主题能量 UI：持有阵营 Boss 遗物时才替换数字能量显示
             FactionEnergyUI.EnsureExists(this);
+
+            // 抽牌/弃牌计数点击 → 打开牌库档案（卡组/弃牌堆标签页）
+            EnsurePileClickHandlers();
+        }
+
+        /// <summary>
+        /// 为"抽牌/弃牌"计数文本挂接透明点击层，打开牌库档案对应标签页（幂等）。
+        /// </summary>
+        private void EnsurePileClickHandlers()
+        {
+            AttachPileButton(drawPileCountText, () => CardArchivePanel.OpenTab(CardArchivePanel.ArchiveTab.Deck));
+            AttachPileButton(discardPileCountText, () => CardArchivePanel.OpenTab(CardArchivePanel.ArchiveTab.Discard));
+        }
+
+        private void AttachPileButton(TMP_Text text, System.Action onClick)
+        {
+            if (text == null || onClick == null) return;
+            string overlayName = "ArchiveButton_" + text.name;
+            if (text.rectTransform.Find(overlayName) != null) return; // 幂等
+
+            var overlayGo = new GameObject(overlayName, typeof(RectTransform), typeof(Image), typeof(Button));
+            overlayGo.transform.SetParent(text.rectTransform, false);
+            var rt = overlayGo.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(-14f, -10f);
+            rt.offsetMax = new Vector2(14f, 10f);
+            overlayGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
+
+            var btn = overlayGo.GetComponent<Button>();
+            btn.targetGraphic = overlayGo.GetComponent<Image>();
+            btn.onClick.AddListener(() => onClick());
+            UiFeel.ApplyButton(btn);
         }
 
         public void StartBattle()
