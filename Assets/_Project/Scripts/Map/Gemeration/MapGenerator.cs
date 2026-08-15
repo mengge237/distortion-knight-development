@@ -72,6 +72,9 @@ namespace MutationChess.Map
         private Transform linesParent;
         private Dictionary<NodeType, NodeBlueprint> blueprintCache;
         private Dictionary<NodeType, List<Texture2D>> textureCache;
+        // 战争迷雾·类型隐匿：记录每个节点的真实类型贴图，迷雾中的"下一行"换成命运问号
+        private readonly Dictionary<MapNode, Texture2D> nodeRealTextures = new Dictionary<MapNode, Texture2D>();
+        private Texture2D mysteryTexture;
 
         void Start()
         {
@@ -418,23 +421,92 @@ namespace MutationChess.Map
             UpdateFogOfWar();
         }
 
-        /// <summary>按当前节点所在行揭开迷雾：到达行及下一行透明，其余保持遮罩。</summary>
+        /// <summary>
+        /// 战争迷雾：按当前节点所在行揭开迷雾——到达行全透明；"下一行"换"命运问号"隐匿类型
+        /// （只知有节点、不知其性质）；更远的行保持浓雾遮罩。
+        /// 情报遗物干预：罗盘+1行视野 / 观星镜透视精英与Boss / 寻宝针透视宝箱 / 星图全图揭示。
+        /// </summary>
         private void UpdateFogOfWar()
         {
             if (!enableFogOfWar || fogRowObjects == null) return;
 
             int revealedRow = 0;
-            if (currentNode != null)
-                revealedRow = currentNode.point.y + 1;
+            bool revealAll = false;
+            bool revealEliteBoss = false;
+            bool revealTreasure = false;
 
+            RelicManager rm = RelicManager.Instance;
+            if (rm != null)
+            {
+                if (rm.HasRelic(RelicIds.Shop_StarChart))
+                {
+                    revealAll = true; // 星图：山川节点一览无余
+                }
+                else
+                {
+                    if (rm.HasRelic(RelicIds.Shop_Compass)) revealedRow += 1; // 罗盘：多探一行
+                    revealEliteBoss = rm.HasRelic(RelicIds.Shop_Astrolabe);    // 观星镜：凶星隐现
+                    revealTreasure = rm.HasRelic(RelicIds.Shop_TreasureNeedle); // 寻宝针：宝光透雾
+                }
+            }
+            if (currentNode != null)
+                revealedRow += currentNode.point.y + 1;
+
+            // 迷雾行透明度：已揭示 0 / 问号行 0.35 薄雾 / 其余 0.85 浓雾
             for (int i = 0; i < fogRowObjects.Count; i++)
             {
                 Renderer r = fogRowObjects[i];
                 if (r == null) continue;
                 Color c = r.material.color;
-                c.a = i <= revealedRow ? 0f : 0.85f;
+                if (revealAll || i <= revealedRow) c.a = 0f;
+                else if (i == revealedRow + 1) c.a = 0.35f;
+                else c.a = 0.85f;
                 r.material.color = c;
             }
+
+            // 站牌立起后会穿过迷雾平面：未揭示行的节点整体隐藏，避免"雾中露出上半截"
+            if (allLayers == null) return;
+            foreach (var layer in allLayers)
+            {
+                if (layer == null) continue;
+                foreach (var node in layer)
+                {
+                    if (node == null || node.mapDisplayObject == null) continue;
+                    int y = node.point.y;
+
+                    // 情报洞察：被对应遗物看穿的节点即使藏在雾中，也显示真实图标
+                    bool scouted = false;
+                    if (!revealAll && y > revealedRow)
+                    {
+                        if (revealEliteBoss && (node.nodeType == NodeType.EliteMonster || node.nodeType == NodeType.Boss))
+                            scouted = true;
+                        if (revealTreasure && node.nodeType == NodeType.Treasure)
+                            scouted = true;
+                    }
+
+                    bool visible = revealAll || y <= revealedRow || y == revealedRow + 1 || scouted;
+                    bool showReal = revealAll || y <= revealedRow || scouted;
+
+                    Renderer nr = node.mapDisplayObject.GetComponent<Renderer>();
+                    if (nr == null) continue;
+                    nr.enabled = visible;
+
+                    // 类型隐匿：只有记录过真实贴图的图标节点才做"问号"替换（预制体节点不动）
+                    if (visible && nodeRealTextures.TryGetValue(node, out Texture2D realTex))
+                    {
+                        Texture2D tex = showReal ? realTex : GetMysteryTexture();
+                        if (tex != null) nr.material.mainTexture = tex;
+                    }
+                }
+            }
+        }
+
+        /// <summary>迷雾中的"命运问号"贴图（首次使用时加载）。</summary>
+        private Texture2D GetMysteryTexture()
+        {
+            if (mysteryTexture == null)
+                mysteryTexture = Resources.Load<Texture2D>("MapTextures/MysteryEvent/命运问号");
+            return mysteryTexture;
         }
 
         /// <summary>销毁全部迷雾行（重新生成地图时调用）。</summary>
@@ -467,6 +539,7 @@ namespace MutationChess.Map
             }
             allLayers.Clear();
             lineConnections.Clear();
+            nodeRealTextures.Clear();
             currentNode = null;
         }
 
@@ -542,6 +615,9 @@ namespace MutationChess.Map
                 UpdateAllMapDisplays();
                 GameLogger.Log($"[MapGenerator] 地图生成完成，共 {CountAllNodes()} 个节点");
             }
+
+            // 生成完成后统一应用迷雾（站牌节点需按行隐藏，UpdateAllMapDisplays 会重新开启渲染器）
+            UpdateFogOfWar();
         }
 
         Vector3 CalculatePosition(int row, int col, int count)
@@ -666,6 +742,11 @@ namespace MutationChess.Map
                 GameObject mapObj = Instantiate(mapPrefab, nodePos + mapDisplayOffset, Quaternion.identity, node.nodeObject.transform);
                 mapObj.name = $"MapDisplay_{type}";
                 mapObj.transform.localScale = Vector3.one * mapDisplayScale;
+                // 站牌式立起：以盘面法线为"上"，水平方向朝向相机
+                Vector3 prefabBoardUp = node.nodeObject.transform.up;
+                float prefabHalfHeight = 0.5f * mapDisplayScale + 0.06f;
+                mapObj.transform.position = nodePos + mapDisplayOffset + prefabBoardUp * prefabHalfHeight;
+                mapObj.transform.rotation = ComputeTokenRotation(nodePos + mapDisplayOffset, prefabBoardUp);
                 node.mapDisplayObject = mapObj;
                 GameLogger.Log($"[MapGenerator]  {type}  (): {mapPrefab.name}");
                 return;
@@ -679,6 +760,7 @@ namespace MutationChess.Map
                 mapObj.name = $"MapDisplay_{type}";
                 mapObj.transform.localScale = Vector3.one * mapDisplayScale;
                 node.mapDisplayObject = mapObj;
+                nodeRealTextures[node] = bpTexture;
                 GameLogger.Log($"[MapGenerator]  {type}  (): {bpTexture.name}");
                 return;
             }
@@ -691,6 +773,7 @@ namespace MutationChess.Map
                 mapObj.name = $"MapDisplay_{type}";
                 mapObj.transform.localScale = Vector3.one * mapDisplayScale;
                 node.mapDisplayObject = mapObj;
+                nodeRealTextures[node] = texture;
                 GameLogger.Log($"[MapGenerator]  {type}  (): {texture.name}");
                 return;
             }
@@ -705,13 +788,12 @@ namespace MutationChess.Map
         {
             GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             quad.transform.SetParent(parent);
-            // 前置到盘面之上（-Z 朝向相机），避免与盘体/连线同层穿插
-            quad.transform.position = new Vector3(position.x, position.y, position.z - 0.3f);
-            // 立牌化：始终面向相机，图标不会被倾斜盘面透视压扁成"饼干"
-            if (Camera.main != null)
-                quad.transform.rotation = Camera.main.transform.rotation;
-            else
-                quad.transform.localRotation = Quaternion.identity;
+            // 站牌式：图标垂直立在盘面上（以盘面法线为"上"），水平方向朝向相机，
+            // 不再是平贴地面的"贴图"，也不会被透视压扁
+            Vector3 boardUp = parent != null ? parent.up : Vector3.up;
+            float halfHeight = 0.5f * mapDisplayScale + 0.06f;
+            quad.transform.position = position + boardUp * halfHeight;
+            quad.transform.rotation = ComputeTokenRotation(position, boardUp);
 
             // 保留 Quad 自带碰撞体：图标即节点本体，点击命中后冒泡到 NodeClickHandler
 
@@ -1237,13 +1319,31 @@ namespace MutationChess.Map
         }
 
         private Quaternion lastCameraRotation;
+        private Vector3 lastCameraPosition;
+        private bool cameraSnapshotInit;
 
-        /// <summary>相机旋转时刷新立牌朝向，图标始终面向相机（成本极低，仅相机旋转变化时执行）。</summary>
+        /// <summary>站牌朝向：以盘面法线为"上"立起，水平方向面向相机（相机移动/旋转时刷新）。</summary>
+        Quaternion ComputeTokenRotation(Vector3 worldPos, Vector3 boardUp)
+        {
+            Vector3 camPos = Camera.main != null
+                ? Camera.main.transform.position
+                : worldPos + new Vector3(0f, 1.5f, -10f);
+            Vector3 toCam = Vector3.ProjectOnPlane(camPos - worldPos, boardUp);
+            if (toCam.sqrMagnitude < 0.001f)
+                toCam = Vector3.ProjectOnPlane(Vector3.forward, boardUp);
+            return Quaternion.LookRotation(toCam.normalized, boardUp);
+        }
+
+        /// <summary>相机移动/旋转时刷新站牌朝向（成本极低，仅相机变化时执行）。</summary>
         void LateUpdate()
         {
             if (!enableMapDisplay || Camera.main == null || allLayers == null) return;
-            if (Camera.main.transform.rotation == lastCameraRotation) return;
-            lastCameraRotation = Camera.main.transform.rotation;
+            Vector3 camPos = Camera.main.transform.position;
+            Quaternion camRot = Camera.main.transform.rotation;
+            if (cameraSnapshotInit && camPos == lastCameraPosition && camRot == lastCameraRotation) return;
+            cameraSnapshotInit = true;
+            lastCameraPosition = camPos;
+            lastCameraRotation = camRot;
 
             foreach (var layer in allLayers)
             {
@@ -1251,7 +1351,11 @@ namespace MutationChess.Map
                 foreach (var node in layer)
                 {
                     if (node != null && node.mapDisplayObject != null)
-                        node.mapDisplayObject.transform.rotation = Camera.main.transform.rotation;
+                    {
+                        Transform t = node.mapDisplayObject.transform;
+                        Vector3 boardUp = t.parent != null ? t.parent.up : Vector3.up;
+                        t.rotation = ComputeTokenRotation(t.position, boardUp);
+                    }
                 }
             }
         }
@@ -1276,9 +1380,21 @@ namespace MutationChess.Map
                         Vector3 start = node.nodeObject.transform.position;
                         Vector3 end = target.nodeObject.transform.position;
 
+                        // 连线在站牌底座边缘截止，接头干净衔接站牌底部，不再穿入图标中心
+                        Vector3 dir = end - start;
+                        float lineLen = dir.magnitude;
+                        if (lineLen > 0.001f)
+                        {
+                            Vector3 d = dir / lineLen;
+                            float trim = 0.55f * mapDisplayScale; // 站牌半宽 + 底座边距
+                            start += d * trim;
+                            end -= d * trim;
+                        }
+
+                        // linesParent 挂在 22° 倾斜的 MapContent 下，LineRenderer 坐标为局部坐标，需做世界→局部转换
                         LineRenderer lr = LineRendererHelper.CreateLine(
-                            start: start,
-                            end: end,
+                            start: linesParent.InverseTransformPoint(start),
+                            end: linesParent.InverseTransformPoint(end),
                             parent: linesParent,
                             width: 0.18f,
                             color: new Color(1f, 1f, 1f, 0.9f)
@@ -1332,17 +1448,20 @@ namespace MutationChess.Map
                 if (conn.lineRenderer == null) continue;
 
                 Color color;
-                if (conn.fromNode == currentNode && conn.toNode.isReachable)
+                if (conn.fromNode.isReachable && conn.toNode.isReachable)
                 {
-                    color = new Color(0.2f, 1f, 0.2f, 0.8f);
+                    // 可选路径：金色墨迹高亮——羊皮纸上的"可行之路"
+                    color = new Color(0.95f, 0.75f, 0.35f, 0.9f);
                 }
                 else if (conn.fromNode.isVisited && conn.toNode.isVisited)
                 {
-                    color = new Color(0.4f, 0.4f, 0.5f, 0.6f);
+                    // 已走过的路：干涸深墨
+                    color = new Color(0.42f, 0.35f, 0.27f, 0.75f);
                 }
                 else
                 {
-                    color = new Color(0.3f, 0.3f, 0.3f, 0.3f);
+                    // 未探索：淡墨
+                    color = new Color(0.25f, 0.21f, 0.16f, 0.35f);
                 }
 
                 LineRendererHelper.SetLineColor(conn.lineRenderer, color);

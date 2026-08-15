@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b8888e08f2d9274abb9bc2eaf6ee423, type: 3}
+  m_Name: 星图
+  m_EditorClassIdentifier:
+  relicId: Shop_StarChart
+  relicName: 星图
+  rarity: 2
+  faction: 0
+  description: 山河社稷尽在卷中：大地图迷雾全部散尽
+  price: 220
+  iconPath: RelicsArt/星图
+  baseEffectIds: []
+  hiddenActivatorRelicId:
+  hiddenEffectIds: []
+  relicEffects: []
+  isShopRelic: 1
+  isBossRelic: 0
+  isStartingRelic: 0
+  isSynthesisTarget: 0
+  isFactionUnlocker: 0

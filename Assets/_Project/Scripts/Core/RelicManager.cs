@@ -293,6 +293,23 @@ namespace MutationChess.Core
 
         public int Count => ownedRelics.Count;
 
+        /// <summary>
+        /// 已装备的阵营组件（按获得顺序）：角色最多携带两个阵营（Boss 遗物/阵营遗物），
+        /// 双阵营互相协同，并决定花瓣能量 UI 的主题花色。
+        /// </summary>
+        public List<CardFaction> GetEquippedFactions(int maxCount = 2)
+        {
+            List<CardFaction> result = new List<CardFaction>();
+            foreach (var relic in ownedRelics)
+            {
+                if (relic == null || relic.faction == CardFaction.None) continue;
+                if (result.Contains(relic.faction)) continue;
+                result.Add(relic.faction);
+                if (result.Count >= maxCount) break;
+            }
+            return result;
+        }
+
         public void OnBattleStart()
         {
             relicsUsedThisBattle.Clear();

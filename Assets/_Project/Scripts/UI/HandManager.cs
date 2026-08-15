@@ -93,6 +93,9 @@ namespace MutationChess.UI
             currentEnergy = maxEnergy;
             UpdateEnergyUI();
             UpdatePileCountUI();
+
+            // 花瓣能量 UI：运行时自建，替代数字能量显示
+            PetalEnergyUI.EnsureExists(this);
         }
 
         public void StartBattle()
@@ -117,7 +120,7 @@ namespace MutationChess.UI
             StartCoroutine(DrawCardsRoutine(startingHandSize, GetDrawPilePosition()));
 
             currentEnergy = maxEnergy;
-            OnEnergyChanged?.Invoke(currentEnergy);
+            // 能量变化统一由 UpdateEnergyUI 广播
             UpdateEnergyUI();
             UpdatePileCountUI();
         }
@@ -152,7 +155,7 @@ namespace MutationChess.UI
                 isFirstTurn = false;
                 currentEnergy = maxEnergy + pendingNextTurnEnergy;
                 pendingNextTurnEnergy = 0;
-                OnEnergyChanged?.Invoke(currentEnergy);
+                // 能量变化统一由 UpdateEnergyUI 广播
                 UpdateEnergyUI();
 
                 // 回合开始时检查馈赠
@@ -162,7 +165,7 @@ namespace MutationChess.UI
 
             currentEnergy = maxEnergy + pendingNextTurnEnergy;
             pendingNextTurnEnergy = 0;
-            OnEnergyChanged?.Invoke(currentEnergy);
+            // 能量变化统一由 UpdateEnergyUI 广播
             UpdateEnergyUI();
 
             if (drawPile.Count == 0 && discardPile.Count > 0)
@@ -606,7 +609,7 @@ namespace MutationChess.UI
             if (energyToPay > 0)
             {
                 currentEnergy -= energyToPay;
-                OnEnergyChanged?.Invoke(currentEnergy);
+                // 能量变化统一由 UpdateEnergyUI 广播
                 UpdateEnergyUI();
             }
 
@@ -891,6 +894,8 @@ namespace MutationChess.UI
         {
             if (energyText != null)
                 energyText.text = $"能量: {currentEnergy}/{maxEnergy}";
+            // 统一从此处广播能量变化（花瓣能量 UI 等监听者）
+            // 能量变化统一由 UpdateEnergyUI 广播
         }
 
         public void UpdatePileCountUI()
@@ -985,10 +990,21 @@ namespace MutationChess.UI
         public int GetCurrentEnergy() => currentEnergy;
         public int GetMaxEnergy() => maxEnergy;
 
+        /// <summary>花瓣能量 UI 使用的只读属性。</summary>
+        public int CurrentEnergy => currentEnergy;
+        public int MaxEnergy => maxEnergy;
+        public TMP_Text EnergyText => energyText;
+
+        /// <summary>永久提升能量上限（遗物奖励等）——花瓣数量随之增加。</summary>
+        public void AddMaxEnergy(int amount)
+        {
+            maxEnergy += amount;
+            UpdateEnergyUI();
+        }
+
         public void ResetEnergy()
         {
             currentEnergy = maxEnergy;
-            OnEnergyChanged?.Invoke(currentEnergy);
             UpdateEnergyUI();
             UpdateHandUI();
         }
@@ -996,7 +1012,6 @@ namespace MutationChess.UI
         public void RestoreEnergy(int amount)
         {
             currentEnergy = Mathf.Min(currentEnergy + amount, maxEnergy);
-            OnEnergyChanged?.Invoke(currentEnergy);
             UpdateEnergyUI();
             UpdateHandUI();
         }

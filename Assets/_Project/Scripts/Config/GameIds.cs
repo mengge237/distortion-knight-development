@@ -76,6 +76,12 @@ namespace MutationChess.Core
         public const string Shop_GoldenIdol = "Shop_GoldenIdol";
         public const string Shop_RestockTalisman = "Shop_RestockTalisman";
 
+        // 商店·情报遗物（战争迷雾体系：罗盘/观星镜/星图/寻宝针）
+        public const string Shop_Compass = "Shop_Compass";
+        public const string Shop_Astrolabe = "Shop_Astrolabe";
+        public const string Shop_StarChart = "Shop_StarChart";
+        public const string Shop_TreasureNeedle = "Shop_TreasureNeedle";
+
         // 合成
         public const string Synth_SwordShard = "Synth_SwordShard";
         public const string Synth_HiltShard = "Synth_HiltShard";

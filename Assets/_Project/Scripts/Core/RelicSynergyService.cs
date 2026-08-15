@@ -145,6 +145,143 @@ namespace MutationChess.Core
                     goldGain = 40,
                     description = "往昔在暗影中回响：血上限 +10，金币 +40"
                 },
+
+                // ============ 双阵营融合（两个 Boss 遗物·六阵营两两配对，共 15 组）============
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_BloodFrost",
+                    name = "血染霜华",
+                    requiredIds = new[] { RelicIds.Boss_BloodVein, RelicIds.Boss_FrostHeart },
+                    maxHpGain = 12,
+                    goldGain = 0,
+                    description = "热血与寒霜交融：血上限 +12"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_BloodCorrupt",
+                    name = "腐血契约",
+                    requiredIds = new[] { RelicIds.Boss_BloodVein, RelicIds.Boss_CorruptLiver },
+                    maxHpGain = 8,
+                    goldGain = 40,
+                    description = "以腐为薪燃血：血上限 +8，金币 +40"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_BloodSlime",
+                    name = "血之黏液",
+                    requiredIds = new[] { RelicIds.Boss_BloodVein, RelicIds.Boss_SlimeGland },
+                    maxHpGain = 10,
+                    goldGain = 0,
+                    description = "鲜血在黏液中不凝：血上限 +10"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_BloodReluctant",
+                    name = "血誓回响",
+                    requiredIds = new[] { RelicIds.Boss_BloodVein, RelicIds.Boss_ReluctantChain },
+                    maxHpGain = 0,
+                    goldGain = 70,
+                    description = "旧誓以血为证：金币 +70"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_BloodShadow",
+                    name = "血影双生",
+                    requiredIds = new[] { RelicIds.Boss_BloodVein, RelicIds.Boss_MemoryLens },
+                    maxHpGain = 10,
+                    goldGain = 30,
+                    description = "影随血行：血上限 +10，金币 +30"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_FrostCorrupt",
+                    name = "寒冰腐土",
+                    requiredIds = new[] { RelicIds.Boss_FrostHeart, RelicIds.Boss_CorruptLiver },
+                    maxHpGain = 10,
+                    goldGain = 0,
+                    description = "冻土之下腐物蛰伏：血上限 +10"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_FrostSlime",
+                    name = "冰封黏核",
+                    requiredIds = new[] { RelicIds.Boss_FrostHeart, RelicIds.Boss_SlimeGland },
+                    maxHpGain = 8,
+                    goldGain = 40,
+                    description = "黏液冻成晶核：血上限 +8，金币 +40"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_FrostReluctant",
+                    name = "冰忆长廊",
+                    requiredIds = new[] { RelicIds.Boss_FrostHeart, RelicIds.Boss_ReluctantChain },
+                    maxHpGain = 0,
+                    goldGain = 70,
+                    description = "冰封的记忆长廊：金币 +70"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_FrostShadow",
+                    name = "寒夜之影",
+                    requiredIds = new[] { RelicIds.Boss_FrostHeart, RelicIds.Boss_MemoryLens },
+                    maxHpGain = 12,
+                    goldGain = 0,
+                    description = "寒夜为影披霜：血上限 +12"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_CorruptSlime",
+                    name = "腐沼之源",
+                    requiredIds = new[] { RelicIds.Boss_CorruptLiver, RelicIds.Boss_SlimeGland },
+                    maxHpGain = 10,
+                    goldGain = 30,
+                    description = "腐沼中孕育新群：血上限 +10，金币 +30"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_CorruptReluctant",
+                    name = "腐朽之忆",
+                    requiredIds = new[] { RelicIds.Boss_CorruptLiver, RelicIds.Boss_ReluctantChain },
+                    maxHpGain = 0,
+                    goldGain = 80,
+                    description = "腐朽的往昔无价：金币 +80"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_CorruptShadow",
+                    name = "腐影密谋",
+                    requiredIds = new[] { RelicIds.Boss_CorruptLiver, RelicIds.Boss_MemoryLens },
+                    maxHpGain = 8,
+                    goldGain = 50,
+                    description = "影与腐共谋：血上限 +8，金币 +50"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_SlimeReluctant",
+                    name = "黏忆纠缠",
+                    requiredIds = new[] { RelicIds.Boss_SlimeGland, RelicIds.Boss_ReluctantChain },
+                    maxHpGain = 10,
+                    goldGain = 0,
+                    description = "回忆黏稠不散：血上限 +10"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_SlimeShadow",
+                    name = "黏液暗影",
+                    requiredIds = new[] { RelicIds.Boss_SlimeGland, RelicIds.Boss_MemoryLens },
+                    maxHpGain = 0,
+                    goldGain = 60,
+                    description = "影中黏液生财：金币 +60"
+                },
+                new RelicSynergyCombo
+                {
+                    id = "Fusion_ReluctantShadow",
+                    name = "影忆之隙",
+                    requiredIds = new[] { RelicIds.Boss_ReluctantChain, RelicIds.Boss_MemoryLens },
+                    maxHpGain = 8,
+                    goldGain = 40,
+                    description = "影与忆之间的缝隙：血上限 +8，金币 +40"
+                },
             };
         }
 
