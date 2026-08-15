@@ -33,14 +33,27 @@ namespace MutationChess.EditorTools
 
         static LXGWFontSetup()
         {
-            EditorApplication.delayCall += RepairAndMigrate;
+            EditorTaskGuard.RunWhenSafe(EnsureReady);
+        }
+
+        private static bool s_RanOnce;
+
+        /// <summary>
+        /// 供其他装配脚本（如首页场景构建）前置调用：先修字体再建场景，文字引用健康资产。
+        /// 同一域重载内只执行一次完整迁移。
+        /// </summary>
+        public static void EnsureReady()
+        {
+            if (s_RanOnce) return;
+            RepairAndMigrate();
         }
 
         /// <summary>手动入口：自动执行失败（如彼时存在编译错误）时可用菜单补执行。</summary>
         [MenuItem("工具/修复霞鹜文楷字体资产并迁移全项目字体")]
         public static void RepairAndMigrateMenu()
         {
-            RepairAndMigrate();
+            EditorTaskGuard.RunWhenSafe(RepairAndMigrate);
+            UnityEngine.Debug.Log("[LXGWFontSetup] 已提交修复任务（若正在 Play 模式，退出后自动执行）");
         }
 
         private static void RepairAndMigrate()
@@ -71,6 +84,7 @@ namespace MutationChess.EditorTools
 
             UpdateTmpSettings(fa);
             MigratePrefabFonts(fa);
+            s_RanOnce = true;
         }
 
         /// <summary>从 TTF 新建字体资产（资产不存在时的兜底路径）。</summary>

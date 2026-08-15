@@ -19,14 +19,15 @@ namespace MutationChess.EditorTools
 
         static NodeMaterialSetup()
         {
-            EditorApplication.delayCall += EnsureNodeMaterial;
+            EditorTaskGuard.RunWhenSafe(EnsureNodeMaterial);
         }
 
         /// <summary>手动入口：自动执行失败时可用菜单补执行。</summary>
         [MenuItem("工具/修复地图节点材质")]
         public static void EnsureNodeMaterialMenu()
         {
-            EnsureNodeMaterial();
+            EditorTaskGuard.RunWhenSafe(EnsureNodeMaterial);
+            UnityEngine.Debug.Log("[NodeMaterialSetup] 已提交修复任务（若正在 Play 模式，退出后自动执行）");
         }
 
         private static void EnsureNodeMaterial()

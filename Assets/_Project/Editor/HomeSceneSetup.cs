@@ -29,19 +29,20 @@ namespace MutationChess.EditorTools
 
         static HomeSceneSetup()
         {
-            EditorApplication.delayCall += EnsureAll;
+            EditorTaskGuard.RunWhenSafe(EnsureAll);
         }
 
         /// <summary>手动入口：域重载自动执行失败时可用菜单补生成。</summary>
         [MenuItem("工具/重新生成首页场景（画布+面板+美术）")]
         public static void EnsureAllMenu()
         {
-            EnsureAll();
-            UnityEngine.Debug.Log("[HomeSceneSetup] 手动生成完成：美术 + HomeScene + BuildSettings");
+            EditorTaskGuard.RunWhenSafe(EnsureAll);
+            UnityEngine.Debug.Log("[HomeSceneSetup] 已提交生成任务（若正在 Play 模式，退出后自动执行）");
         }
 
         private static void EnsureAll()
         {
+            LXGWFontSetup.EnsureReady(); // 先修复字体再建场景：场景内文字直接引用健康字体资产
             EnsureArtAssets();
             EnsureHomeScene();
             EnsureBuildSettings();
@@ -273,11 +274,26 @@ namespace MutationChess.EditorTools
             bool hasCanvas = exists && File.ReadAllText(HomeScenePath).Contains("HomeCanvas");
             if (exists && hasCanvas) return;
 
+            // 旧版场景（无画布）可能正被用户打开：先关闭，重建后重新打开，让用户立刻在编辑器看到新场景
+            Scene openScene = EditorSceneManager.GetSceneByPath(HomeScenePath);
+            bool wasOpen = openScene.isLoaded;
+            if (wasOpen)
+            {
+                UnityEngine.Debug.Log("[HomeSceneSetup] HomeScene 正打开且缺少画布，关闭旧版后重建");
+                EditorSceneManager.CloseScene(openScene, true);
+            }
+
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             BuildHomeScene(scene);
             EditorSceneManager.SaveScene(scene, HomeScenePath);
             EditorSceneManager.CloseScene(scene, true);
             UnityEngine.Debug.Log("[HomeSceneSetup] 已重建首页场景（画布+面板+美术）：" + HomeScenePath);
+
+            if (wasOpen)
+            {
+                var reopened = EditorSceneManager.OpenScene(HomeScenePath, OpenSceneMode.Additive);
+                EditorSceneManager.SetActiveScene(reopened);
+            }
         }
 
         private static void BuildHomeScene(Scene scene)
