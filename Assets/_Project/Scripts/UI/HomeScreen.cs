@@ -8,8 +8,9 @@ using MutationChess.Core;
 namespace MutationChess.UI
 {
     /// <summary>
-    /// 首页屏幕（HomeScene 运行时自建，无需场景接线）：
-    /// 游戏标题 + 开始游戏（难度选择）/ 继续游戏（读档）/ 牌库档案 / 设置 四大入口。
+    /// 首页屏幕：游戏标题 + 开始游戏（难度选择）/ 继续游戏（读档）/ 牌库档案 / 设置 四大入口。
+    /// 优先绑定 HomeSceneSetup 生成的场景实体画布（HomeCanvas，编辑器内可见可调）；
+    /// 场景缺接线（旧场景）时回退运行时自建全部 UI。
     /// 开始游戏 → 弹出难度选择面板 → 确认后进入主场景；继续游戏 → 标记待读档槽位 1 并进入主场景；
     /// 牌库档案与设置子面板直接叠加在首页之上（画布层级低于难度面板 900 / 档案 700，保证互不遮挡）。
     /// </summary>
@@ -19,13 +20,8 @@ namespace MutationChess.UI
 
         private Canvas canvas;
         private GameObject settingsSubPanel;
+        private TMP_Text continueHintTmp; // 继续游戏按钮副标签（场景绑定与运行时自建共用）
         private static TMP_FontAsset cachedFont;
-
-        /// <summary>首页按钮引用（继续游戏按钮的副标签用于显示存档摘要）。</summary>
-        private class HomeButtonRef
-        {
-            public TMP_Text hint;
-        }
 
         void Awake()
         {
@@ -39,7 +35,13 @@ namespace MutationChess.UI
 
         void Start()
         {
-            BuildHomeUI();
+            // 优先绑定场景内实体画布（HomeSceneSetup 生成）；旧场景缺接线时回退运行时自建
+            if (!TryBindSceneUI())
+                BuildHomeUI();
+
+            // 设置子面板运行时收起（场景内保持激活是为了编辑器可见）
+            if (settingsSubPanel != null)
+                settingsSubPanel.SetActive(false);
 
             // 牌库档案快捷键就绪（首页也可按 F2 打开图鉴）
             CardArchivePanel.EnsureExists();
@@ -108,46 +110,17 @@ namespace MutationChess.UI
             subtitle.text = "以牌局对抗深渊 · 在诅咒中抉择";
 
             // 开始游戏
-            CreateHomeButton("开始游戏", "选择难度，踏入深渊", -400f, () =>
-            {
-                var dm = DifficultyManager.Instance;
-                dm.ResetChosen();
-                dm.ShowSelectionPanel(() => SceneManager.LoadScene("MainScene"));
-            });
+            CreateHomeButton("开始游戏", "选择难度，踏入深渊", -400f, StartNewGame);
 
             // 继续游戏（有存档才可进入，副标签实时显示存档摘要）
-            // 先声明后赋值：lambda 体内引用 continueRef，声明与赋值同语句会被编译器判为未赋值（CS0165）
-            HomeButtonRef continueRef = null;
-            continueRef = CreateHomeButton("继续游戏", "", -540f, () =>
-            {
-                if (!SaveService.Instance.HasSave(1))
-                {
-                    AudioManager.Instance?.PlayUIClick(0.25f);
-                    if (continueRef.hint != null)
-                    {
-                        continueRef.hint.text = "（暂无存档 · 请先开始游戏）";
-                        continueRef.hint.color = new Color(0.9f, 0.5f, 0.45f);
-                    }
-                    return;
-                }
-                SaveService.SetPendingLoad(1);
-                SceneManager.LoadScene("MainScene");
-            });
-            RefreshContinueHint(continueRef);
+            continueHintTmp = CreateHomeButton("继续游戏", "", -540f, ContinueGame);
+            RefreshContinueHint();
 
             // 牌库档案
-            CreateHomeButton("牌库档案", "图鉴 · 卡组 · 弃牌堆", -680f, () =>
-            {
-                CardArchivePanel.Instance.Open(CardArchivePanel.ArchiveTab.Codex);
-            });
+            CreateHomeButton("牌库档案", "图鉴 · 卡组 · 弃牌堆", -680f, OpenArchive);
 
             // 设置
-            CreateHomeButton("设置", "音量 · 全屏 · 音效开关", -820f, () =>
-            {
-                if (settingsSubPanel == null) BuildSettingsSubPanel();
-                settingsSubPanel.SetActive(true);
-                UiFeel.AnimatePanelIn(settingsSubPanel);
-            });
+            CreateHomeButton("设置", "音量 · 全屏 · 音效开关", -820f, OpenSettings);
 
             // 底部提示
             var footer = CreateText(transform, "Footer", 18, TextAlignmentOptions.Center, new Color(0.45f, 0.43f, 0.4f));
@@ -159,7 +132,7 @@ namespace MutationChess.UI
             footer.text = "分支 8.16.2 · F2 牌库档案 · ESC 关闭面板";
         }
 
-        private HomeButtonRef CreateHomeButton(string label, string hint, float y, UnityAction onClick)
+        private TMP_Text CreateHomeButton(string label, string hint, float y, UnityAction onClick)
         {
             var btnGo = new GameObject("Btn_" + label, typeof(RectTransform), typeof(Image), typeof(Button));
             btnGo.transform.SetParent(transform, false);
@@ -208,30 +181,181 @@ namespace MutationChess.UI
             btn.onClick.AddListener(onClick);
             UiFeel.ApplyButton(btn);
 
-            return new HomeButtonRef { hint = hintTmp };
+            return hintTmp;
         }
 
-        private void RefreshContinueHint(HomeButtonRef continueRef)
+        private void RefreshContinueHint()
         {
-            if (continueRef == null || continueRef.hint == null) return;
+            if (continueHintTmp == null) return;
             if (!SaveService.Instance.HasSave(1))
             {
-                continueRef.hint.text = "（暂无存档）";
-                continueRef.hint.color = new Color(0.45f, 0.43f, 0.4f);
+                continueHintTmp.text = "（暂无存档）";
+                continueHintTmp.color = new Color(0.45f, 0.43f, 0.4f);
                 return;
             }
             var slots = SaveService.Instance.ListSaveSlots();
             var meta = slots != null ? slots.Find(s => s.slot == 1) : null;
             if (meta != null)
             {
-                continueRef.hint.text = $"读取槽位 1：{meta.difficulty} · 第 {meta.floor} 层 · {meta.savedAt}";
-                continueRef.hint.color = new Color(0.62f, 0.68f, 0.5f);
+                continueHintTmp.text = $"读取槽位 1：{meta.difficulty} · 第 {meta.floor} 层 · {meta.savedAt}";
+                continueHintTmp.color = new Color(0.62f, 0.68f, 0.5f);
             }
             else
             {
-                continueRef.hint.text = "（存档数据损坏）";
-                continueRef.hint.color = new Color(0.9f, 0.5f, 0.45f);
+                continueHintTmp.text = "（存档数据损坏）";
+                continueHintTmp.color = new Color(0.9f, 0.5f, 0.45f);
             }
+        }
+
+        // ================= 场景绑定（HomeSceneSetup 生成的实体画布） =================
+
+        /// <summary>绑定场景内实体画布控件；找不到画布返回 false（调用方回退运行时自建）。</summary>
+        private bool TryBindSceneUI()
+        {
+            var canvasGo = GameObject.Find("HomeCanvas");
+            if (canvasGo == null) return false;
+            canvas = canvasGo.GetComponent<Canvas>();
+            if (canvas == null) return false;
+            Transform root = canvasGo.transform;
+
+            if (!BindHomeButton(root, "BtnPanel/Btn_开始游戏", StartNewGame)) return false;
+            if (!BindHomeButton(root, "BtnPanel/Btn_继续游戏", ContinueGame)) return false;
+            if (!BindHomeButton(root, "BtnPanel/Btn_牌库档案", OpenArchive)) return false;
+            if (!BindHomeButton(root, "BtnPanel/Btn_设置", OpenSettings)) return false;
+
+            continueHintTmp = root.Find("BtnPanel/Btn_继续游戏/Hint")?.GetComponent<TMP_Text>();
+            RefreshContinueHint();
+
+            settingsSubPanel = root.Find("HomeSettings")?.gameObject;
+            if (settingsSubPanel == null) return false;
+            BindSettingsPanel();
+            return true;
+        }
+
+        private static bool BindHomeButton(Transform root, string path, UnityAction onClick)
+        {
+            var btn = root.Find(path)?.GetComponent<Button>();
+            if (btn == null) return false;
+            btn.onClick.AddListener(onClick);
+            UiFeel.ApplyButton(btn);
+            return true;
+        }
+
+        private void StartNewGame()
+        {
+            var dm = DifficultyManager.Instance;
+            dm.ResetChosen();
+            dm.ShowSelectionPanel(() => SceneManager.LoadScene("MainScene"));
+        }
+
+        private void ContinueGame()
+        {
+            if (!SaveService.Instance.HasSave(1))
+            {
+                AudioManager.Instance?.PlayUIClick(0.25f);
+                if (continueHintTmp != null)
+                {
+                    continueHintTmp.text = "（暂无存档 · 请先开始游戏）";
+                    continueHintTmp.color = new Color(0.9f, 0.5f, 0.45f);
+                }
+                return;
+            }
+            SaveService.SetPendingLoad(1);
+            SceneManager.LoadScene("MainScene");
+        }
+
+        private void OpenArchive()
+        {
+            CardArchivePanel.Instance.Open(CardArchivePanel.ArchiveTab.Codex);
+        }
+
+        private void OpenSettings()
+        {
+            if (settingsSubPanel == null)
+            {
+                BuildSettingsSubPanel(); // 运行时自建路径延迟构建
+                if (settingsSubPanel == null) return;
+            }
+            settingsSubPanel.SetActive(true);
+            UiFeel.AnimatePanelIn(settingsSubPanel);
+        }
+
+        private void BindSettingsPanel()
+        {
+            Transform p = settingsSubPanel.transform;
+
+            BindSliderRow(p, "Row_主音量", PlayerPrefs.GetFloat("MasterVolume", 1f), v =>
+            {
+                AudioListener.volume = v;
+                PlayerPrefs.SetFloat("MasterVolume", v);
+                PlayerPrefs.Save();
+            });
+
+            BindSliderRow(p, "Row_音乐音量", PlayerPrefs.GetFloat("MusicVolume", 0.8f), v =>
+            {
+                PlayerPrefs.SetFloat("MusicVolume", v);
+                PlayerPrefs.Save();
+            });
+
+            float sfxVol = PlayerPrefs.GetFloat("SFXVolume", 0.8f);
+            AudioManager.SetSFXVolume(sfxVol); // 首页也应用已保存的音效音量
+            BindSliderRow(p, "Row_音效音量", sfxVol, v =>
+            {
+                AudioManager.SetSFXVolume(v);
+                PlayerPrefs.SetFloat("SFXVolume", v);
+                PlayerPrefs.Save();
+            });
+
+            BindToggleRow(p, "Row_Boss遗物主题音效", AudioManager.IsBossRelicPickSfxEnabled(), v =>
+            {
+                AudioManager.SetBossRelicPickSfxEnabled(v);
+                PlayerPrefs.SetInt("BossRelicPickSfx", v ? 1 : 0);
+                PlayerPrefs.Save();
+                if (v) AudioManager.Instance?.PlayUIClick(0.3f);
+            });
+
+            BindToggleRow(p, "Row_全屏显示", Screen.fullScreen, v =>
+            {
+                Screen.fullScreen = v;
+                PlayerPrefs.SetInt("Fullscreen", v ? 1 : 0);
+                PlayerPrefs.Save();
+            });
+
+            var back = p.Find("BackButton")?.GetComponent<Button>();
+            if (back != null)
+            {
+                back.onClick.AddListener(CloseSettingsSubPanel);
+                UiFeel.ApplyButton(back);
+            }
+            UiFeel.ApplyToAllButtons(p.gameObject);
+        }
+
+        /// <summary>滑条行绑定：先赋值再监听（避免初始化触发 onValueChanged 写回默认值）。</summary>
+        private static void BindSliderRow(Transform panel, string rowName, float value, UnityAction<float> onChanged)
+        {
+            var row = panel.Find(rowName);
+            if (row == null) return;
+            var slider = row.Find("Slider")?.GetComponent<Slider>();
+            if (slider == null) return;
+            var percent = row.Find("Percent")?.GetComponent<TMP_Text>();
+            slider.value = value;
+            if (percent != null) UpdatePercent(percent, value);
+            slider.onValueChanged.AddListener(v =>
+            {
+                if (percent != null) UpdatePercent(percent, v);
+                onChanged?.Invoke(v);
+            });
+        }
+
+        /// <summary>开关行绑定：先赋值再监听。</summary>
+        private static void BindToggleRow(Transform panel, string rowName, bool value, UnityAction<bool> onChanged)
+        {
+            var row = panel.Find(rowName);
+            if (row == null) return;
+            var toggle = row.Find("Switch")?.GetComponent<Toggle>();
+            if (toggle == null) return;
+            toggle.isOn = value;
+            toggle.onValueChanged.AddListener(onChanged);
         }
 
         // ================= 设置子面板 =================
