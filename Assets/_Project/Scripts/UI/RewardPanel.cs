@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using DG.Tweening;
 using MutationChess.Core;
 using TMPro;
 
@@ -103,6 +104,9 @@ namespace MutationChess.UI
                 relicRewardObject.SetActive(false);
             if (potionRewardObject != null)
                 potionRewardObject.SetActive(false);
+
+            // 统一按钮手感（按压回弹 + 悬停 + 点击音效）
+            UiFeel.ApplyToAllButtons(gameObject);
         }
 
         void Start()
@@ -151,7 +155,7 @@ namespace MutationChess.UI
             isCardSelectionActive = false;
 
             if (goldAmountText != null)
-                goldAmountText.text = goldReward.ToString();
+                goldAmountText.text = $"点击领取 {goldReward} G";
 
             if (cardRewardLabel != null)
                 cardRewardLabel.text = "";
@@ -396,6 +400,9 @@ namespace MutationChess.UI
                 canvasGroup.interactable = true;
                 canvasGroup.blocksRaycasts = true;
             }
+
+            // 面板弹入动画（放在 CanvasGroup 复位之后，保证淡入生效）
+            UiFeel.AnimatePanelIn(panelRoot);
         }
 
         private void GenerateCards(List<Card> rewards)
@@ -453,15 +460,27 @@ namespace MutationChess.UI
 
         private void ClaimGold()
         {
-            if (goldClaimed) return;
+            if (goldClaimed || currentGoldReward <= 0) return;
             goldClaimed = true;
 
+            // 金币滑落音效 + 立即到账（不再随确认/跳过自动发放）
+            AudioManager.Instance?.PlayCoinSlide();
+
+            var dataManager = PlayerDataManager.Instance;
+            if (dataManager != null)
+            {
+                dataManager.AddGold(currentGoldReward);
+                dataManager.UpdateUI();
+            }
+
             if (goldAmountText != null)
-                goldAmountText.text = $"{currentGoldReward} G";
+                goldAmountText.text = $"+{currentGoldReward}";
+
+            // 金币图标飞向顶栏金币显示处
+            FlyCoinToTopBar();
 
             if (goldRewardObject != null)
             {
-
                 goldRewardObject.SetActive(false);
             }
 
@@ -471,13 +490,39 @@ namespace MutationChess.UI
                 statusBar.UpdateUI();
             }
 
-            var dataManager = PlayerDataManager.Instance;
-            if (dataManager != null)
-            {
-                dataManager.UpdateUI();
-            }
-
             ArrangeRewards();
+        }
+
+        /// <summary>金币图标从奖励堆飞向顶栏金币显示处（视觉反馈，与滑落音效同步）。</summary>
+        private void FlyCoinToTopBar()
+        {
+            if (goldRewardObject == null) return;
+
+            Canvas rootCanvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            if (rootCanvas == null) return;
+
+            RectTransform goldRt = goldRewardObject.GetComponent<RectTransform>();
+            if (goldRt == null) return;
+
+            Sprite coinSprite = Resources.Load<Sprite>("InterfaceUI/获胜奖励界面金币条目图标");
+
+            GameObject fly = new GameObject("CoinFly", typeof(RectTransform), typeof(Image));
+            fly.transform.SetParent(rootCanvas.transform, false);
+            RectTransform flyRt = fly.GetComponent<RectTransform>();
+            flyRt.position = goldRt.position; // 复用金币堆屏幕位置
+            flyRt.sizeDelta = new Vector2(72f, 72f);
+            Image flyImg = fly.GetComponent<Image>();
+            flyImg.sprite = coinSprite;
+            flyImg.raycastTarget = false;
+
+            // 顶栏金币（左上角）
+            Vector3 targetWorld = new Vector3(Screen.width * 0.105f, Screen.height * 0.945f, 0f);
+
+            Sequence seq = DOTween.Sequence().SetUpdate(true); // 奖励界面可能处于暂停状态
+            seq.Append(flyRt.DOMove(targetWorld, 0.6f).SetEase(Ease.InQuad));
+            seq.Join(flyRt.DOScale(0.55f, 0.6f).SetEase(Ease.InQuad));
+            seq.Join(flyRt.DORotate(new Vector3(0f, 0f, 300f), 0.6f, RotateMode.FastBeyond360));
+            seq.OnComplete(() => { if (fly != null) Destroy(fly); });
         }
 
         private void SelectCard(Card card)
@@ -556,10 +601,10 @@ namespace MutationChess.UI
 
         private void OnSkipAll()
         {
-            int finalGold = currentGoldReward;
+            // 金币不再自动领取：只有点击金币堆（ClaimGold 即时到账）才会获得，跳过后未领取的金币即放弃
+            int finalGold = 0;
             Card finalCard = selectedCard;
 
-            // 金币统一由 OnRewardsConfirmed 回调（BattleManager）发放，此处不再重复发放，避免双倍金币
             isPanelShowing = false;
             isCardSelectionActive = false;
             onRewardsConfirmed?.Invoke(finalGold, finalCard);

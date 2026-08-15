@@ -162,7 +162,7 @@ namespace MutationChess.Battle
 
         /// <summary>
         /// 生成 Boss 遗物选择面板的选项（不重复取样）：
-        /// 主池为「未拥有且阵营未解锁」的阵营解锁遗物，不足时用额外Boss遗物池补足。
+        /// 池子仅含「Boss 遗物」（isBossRelic），绝不混入常规/阵营解锁遗物；不足 count 时有多少出多少。
         /// 用于战胜 Boss 后优先弹出的三选一遗物面板。
         /// </summary>
         public List<Relic> GenerateBossRelicChoices(int count)
@@ -173,26 +173,20 @@ namespace MutationChess.Battle
             var relicManager = RelicManager.Instance;
             if (relicManager == null) return choices;
 
+            // 池：全部 Boss 遗物（未拥有）
             List<RelicDataAsset> pool = new List<RelicDataAsset>();
-
-            // 主池：阵营解锁遗物（未拥有、阵营未解锁）
-            foreach (var unlock in LoadAllFactionUnlockRelics())
+            RelicDataAsset[] allRelics = Resources.LoadAll<RelicDataAsset>(ResourcePaths.Relics);
+            foreach (var relic in allRelics)
             {
-                if (unlock == null || !unlock.isFactionUnlocker) continue;
-                if (IsFactionAlreadyUnlocked(unlock.unlockedFaction)) continue;
-                if (IsRelicAlreadyOwned(unlock.relicId)) continue;
-                pool.Add(unlock);
+                if (relic == null || !relic.isBossRelic) continue;
+                if (IsRelicAlreadyOwned(relic.relicId)) continue;
+                pool.Add(relic);
             }
 
-            // 补充池：额外 Boss 遗物（未拥有）
-            foreach (var bonus in GetBonusRelicPool())
-            {
-                if (bonus == null || bonus.isFactionUnlocker) continue;
-                if (IsRelicAlreadyOwned(bonus.relicId)) continue;
-                pool.Add(bonus);
-            }
+            if (debugMode)
+                GameLogger.Log($"[BossRewardService] Boss遗物三选一池：{pool.Count} 个可用 Boss 遗物");
 
-            // 随机取 count 个不重复
+            // 随机取 count 个不重复（不足时少出，不补常规遗物）
             while (choices.Count < count && pool.Count > 0)
             {
                 int idx = Random.Range(0, pool.Count);

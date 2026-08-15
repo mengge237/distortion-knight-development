@@ -54,6 +54,9 @@ namespace MutationChess.UI
                 canvas.enabled = false;
                 canvas.enabled = true;
             }
+
+            // 面板弹入动画
+            UiFeel.AnimatePanelIn(panelRoot);
         }
 
         public void Hide()
@@ -235,6 +238,7 @@ namespace MutationChess.UI
 
                 // 点击：隐藏并回调
                 var button = btnGo.GetComponent<Button>();
+                UiFeel.ApplyButton(button);
                 var captured = relic;
                 button.onClick.AddListener(() =>
                 {

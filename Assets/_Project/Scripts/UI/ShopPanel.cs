@@ -103,6 +103,9 @@ namespace MutationChess.UI
                 closeButton.onClick.AddListener(CloseShop);
             }
 
+            // 全部按钮统一手感
+            UiFeel.ApplyToAllButtons(panelRoot);
+
             ApplyStSLayout();
         }
 
@@ -135,6 +138,9 @@ namespace MutationChess.UI
                 canvasGroup.interactable = true;
                 canvasGroup.blocksRaycasts = true;
             }
+
+            // 面板弹入动画
+            UiFeel.AnimatePanelIn(panelRoot);
 
             if (titleText != null)
                 titleText.text = "商店";
@@ -358,6 +364,9 @@ namespace MutationChess.UI
                 buyButton.onClick.RemoveAllListeners();
                 buyButton.onClick.AddListener(() => TryPurchaseItem(item, slotObj));
             }
+
+            // 槽位按钮手感（场景预制体与运行时构建共用此路径）
+            UiFeel.ApplyToAllButtons(slotObj);
         }
 
         private void TryPurchaseItem(ShopItem item, GameObject slotObj)

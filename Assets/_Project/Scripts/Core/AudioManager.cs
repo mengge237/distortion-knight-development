@@ -7,7 +7,8 @@ namespace MutationChess.Core
     /// 全局音效管理器（运行时自动创建，无需场景接线）。
     /// 音效素材位于 Resources/Audio/：
     ///   relic_acquire(获得遗物) / relic_tick(遗物每次触发,轻响限频) /
-    ///   hidden_awaken(隐藏效果觉醒) / synergy_combo(遗物共鸣激活) / faction_unlock(阵营解锁)。
+    ///   hidden_awaken(隐藏效果觉醒) / synergy_combo(遗物共鸣激活) / faction_unlock(阵营解锁) /
+    ///   coin_slide(金币滑落) / ui_click(按钮点击) / ui_panel(面板弹出)。
     /// </summary>
     public class AudioManager : MonoBehaviour
     {
@@ -94,6 +95,15 @@ namespace MutationChess.Core
 
         /// <summary>阵营解锁：低沉铜锣+心跳重音。</summary>
         public void PlayFactionUnlocked() => Play("faction_unlock", 1f);
+
+        /// <summary>金币滑落：钱币碰撞叮当串+落堆闷响。</summary>
+        public void PlayCoinSlide(float volume = 0.9f) => Play("coin_slide", volume, 0.97f, 1.03f);
+
+        /// <summary>通用按钮点击：轻短嗒声。</summary>
+        public void PlayUIClick(float volume = 0.45f) => Play("ui_click", volume, 0.95f, 1.08f);
+
+        /// <summary>面板弹出：柔和下扫"唰"声。</summary>
+        public void PlayUIPanel(float volume = 0.55f) => Play("ui_panel", volume);
 
         void OnDestroy()
         {

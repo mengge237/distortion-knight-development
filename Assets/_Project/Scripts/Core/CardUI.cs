@@ -53,6 +53,13 @@ namespace MutationChess.UI
         private Vector3 dragStartPosition;
         private bool hasExceededThreshold = false;
 
+        // 质感层（运行时构建，不依赖场景预制体）
+        private Image shadowImage;
+        private Image glowImage;
+        private const float ShadowBaseAlpha = 0.42f;
+        private const float GlowBaseAlpha = 0.45f;
+        private const float GlowDisabledAlpha = 0.12f;
+
         public System.Action<Card> OnCardClicked;
         public System.Action<Card> OnCardDragStart;
         public System.Action<Card> OnCardDragEnd;
@@ -71,6 +78,8 @@ namespace MutationChess.UI
                 originalScale = Vector3.one;
                 originalPosition = Vector3.zero;
             }
+
+            EnsureCardFx();
         }
 
         void OnDestroy()
@@ -169,6 +178,49 @@ namespace MutationChess.UI
             SetInteractable(isInteractable);
         }
 
+        /// <summary>运行时构建柔边投影 + 稀有度辉光边框（中空环形贴图，不遮挡卡面内容）。</summary>
+        private void EnsureCardFx()
+        {
+            if (rectTransform == null || transform.Find("CardShadow") != null) return;
+
+            Sprite shadowSprite = Resources.Load<Sprite>("InterfaceUI/card_shadow");
+            Sprite glowSprite = Resources.Load<Sprite>("InterfaceUI/card_glow");
+
+            // 柔边投影（垫底，向下偏移）
+            if (shadowSprite != null)
+            {
+                var shadowGo = new GameObject("CardShadow", typeof(RectTransform), typeof(Image));
+                shadowGo.transform.SetParent(transform, false);
+                shadowGo.transform.SetAsFirstSibling();
+                var rt = shadowGo.GetComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = new Vector2(12f, -16f);
+                rt.offsetMax = new Vector2(-12f, 8f);
+                shadowImage = shadowGo.GetComponent<Image>();
+                shadowImage.sprite = shadowSprite;
+                shadowImage.color = new Color(0f, 0f, 0f, ShadowBaseAlpha);
+                shadowImage.raycastTarget = false;
+            }
+
+            // 稀有度辉光（边框光环，颜色随稀有度）
+            if (glowSprite != null)
+            {
+                var glowGo = new GameObject("CardGlow", typeof(RectTransform), typeof(Image));
+                glowGo.transform.SetParent(transform, false);
+                glowGo.transform.SetAsFirstSibling();
+                var rt = glowGo.GetComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = new Vector2(-6f, -6f);
+                rt.offsetMax = new Vector2(6f, 6f);
+                glowImage = glowGo.GetComponent<Image>();
+                glowImage.sprite = glowSprite;
+                glowImage.raycastTarget = false;
+                glowImage.color = new Color(1f, 1f, 1f, GlowBaseAlpha);
+            }
+        }
+
         public void SetInteractable(bool interactable)
         {
             isInteractable = interactable;
@@ -178,6 +230,12 @@ namespace MutationChess.UI
                 Color color = interactable ? CardVisualConfig.GetRarityColor(cardData.rarity) : disabledColor;
                 color.a = 1f;
                 borderImage.color = color;
+            }
+
+            if (glowImage != null && cardData != null)
+            {
+                Color glowColor = CardVisualConfig.GetRarityColor(cardData.rarity);
+                glowImage.color = new Color(glowColor.r, glowColor.g, glowColor.b, interactable ? GlowBaseAlpha : GlowDisabledAlpha);
             }
         }
 
@@ -198,6 +256,10 @@ namespace MutationChess.UI
                     transform.SetAsLastSibling();
                 })
                 .Play();
+
+            // 悬停强化投影与辉光
+            shadowImage?.DOFade(0.62f, hoverDuration).SetEase(Ease.OutQuad).SetUpdate(true);
+            glowImage?.DOFade(0.78f, hoverDuration).SetEase(Ease.OutQuad).SetUpdate(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -211,6 +273,10 @@ namespace MutationChess.UI
                 .Join(rectTransform.DOScale(originalScale, hoverDuration).SetEase(Ease.OutQuad))
                 .Join(rectTransform.DOAnchorPos3D(originalPosition, hoverDuration).SetEase(Ease.OutQuad))
                 .Play();
+
+            // 恢复基础投影与辉光
+            shadowImage?.DOFade(ShadowBaseAlpha, hoverDuration).SetEase(Ease.OutQuad).SetUpdate(true);
+            glowImage?.DOFade(isInteractable ? GlowBaseAlpha : GlowDisabledAlpha, hoverDuration).SetEase(Ease.OutQuad).SetUpdate(true);
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -233,6 +299,7 @@ namespace MutationChess.UI
 
             if (!isDragging && !isBigCardShowing)
             {
+                AudioManager.Instance?.PlayUIClick(0.35f);
                 OnCardClicked?.Invoke(cardData);
             }
         }

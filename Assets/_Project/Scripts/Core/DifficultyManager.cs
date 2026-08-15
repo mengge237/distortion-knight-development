@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using MutationChess.UI;
 
 namespace MutationChess.Core
 {
@@ -357,6 +358,9 @@ namespace MutationChess.Core
             CreateColumn(frameGo.transform, font, leftCol, leftColors, -185f);
             CreateColumn(frameGo.transform, font, rightCol, rightColors, 185f);
 
+            // 面板弹入动画
+            UiFeel.AnimatePanelIn(frameGo);
+
             GameLogger.Log("[难度] 已弹出难度选择面板（游戏暂停）");
         }
 
@@ -392,6 +396,7 @@ namespace MutationChess.Core
                 Button btn = btnGo.GetComponent<Button>();
                 btn.targetGraphic = btnImg;
                 btn.onClick.AddListener(() => ChooseDifficulty(captured));
+                UiFeel.ApplyButton(btn);
             }
         }
     }
