@@ -156,7 +156,7 @@ namespace MutationChess.UI
             footerRt.pivot = new Vector2(0.5f, 0f);
             footerRt.anchoredPosition = new Vector2(0f, 34f);
             footerRt.sizeDelta = new Vector2(1200f, 34f);
-            footer.text = "分支 8.16.1 · F2 牌库档案 · ESC 关闭面板";
+            footer.text = "分支 8.16.2 · F2 牌库档案 · ESC 关闭面板";
         }
 
         private HomeButtonRef CreateHomeButton(string label, string hint, float y, UnityAction onClick)
@@ -489,7 +489,7 @@ namespace MutationChess.UI
         private static TMP_FontAsset LoadFont()
         {
             if (cachedFont == null)
-                cachedFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+                cachedFont = UiFonts.Load();
             return cachedFont;
         }
 

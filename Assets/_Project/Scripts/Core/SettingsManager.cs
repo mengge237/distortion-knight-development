@@ -297,7 +297,7 @@ namespace MutationChess.Core
             if (sliderRt == null) return;
             Transform anchorParent = sliderRt.parent;
 
-            TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+            TMP_FontAsset font = UiFonts.Load();
 
             // 行容器：开关盒 + 中文标签
             GameObject rowGo = new GameObject("BossRelicSfxToggle", typeof(RectTransform));

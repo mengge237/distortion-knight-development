@@ -821,7 +821,7 @@ namespace MutationChess.UI
         private static TMP_FontAsset LoadFont()
         {
             if (cachedFont == null)
-                cachedFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+                cachedFont = UiFonts.Load();
             return cachedFont;
         }
 

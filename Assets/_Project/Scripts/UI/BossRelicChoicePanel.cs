@@ -10,7 +10,7 @@ namespace MutationChess.UI
     /// <summary>
     /// Boss 遗物三选一面板：战胜 Boss 后优先弹出（先于金币/卡牌奖励页）。
     /// 场景可预接线（panelRoot / relicContainer / titleText），缺失时运行时自动构建，
-    /// 视觉素材复用 InterfaceUI 获胜奖励图集 + 各遗物 RelicsArt 图标 + SIMSUN SDF 中文字体。
+    /// 视觉素材复用 InterfaceUI 获胜奖励图集 + 各遗物 RelicsArt 图标 + 霞鹜文楷中文字体。
     /// </summary>
     public class BossRelicChoicePanel : MonoBehaviour
     {
@@ -257,7 +257,7 @@ namespace MutationChess.UI
         private static TMP_FontAsset LoadFont()
         {
             if (cachedFont == null)
-                cachedFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+                cachedFont = UiFonts.Load();
             return cachedFont;
         }
 

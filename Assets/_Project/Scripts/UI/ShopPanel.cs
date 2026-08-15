@@ -71,14 +71,14 @@ namespace MutationChess.UI
             }
         }
 
-        // 场景文本统一使用的 TMP 中文字体（SIMSUN SDF，位于 TMP 插件 Resources 目录，运行时可直接加载）
+        // 场景文本统一使用的 TMP 中文字体（霞鹜文楷 SDF，由 UiFonts 集中加载）
         private static TMP_FontAsset _tmpChineseFont;
         private static TMP_FontAsset TmpChineseFont
         {
             get
             {
                 if (_tmpChineseFont == null)
-                    _tmpChineseFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+                    _tmpChineseFont = UiFonts.Load();
                 return _tmpChineseFont;
             }
         }

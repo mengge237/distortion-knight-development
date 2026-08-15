@@ -112,7 +112,7 @@ namespace MutationChess.UI
         private TMP_FontAsset LoadFont()
         {
             if (chineseFont == null)
-                chineseFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+                chineseFont = UiFonts.Load();
             return chineseFont;
         }
 

@@ -409,7 +409,7 @@ namespace MutationChess.Core
             }
             else frameImg.color = new Color(0.09f, 0.08f, 0.1f, 0.99f);
 
-            TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+            TMP_FontAsset font = UiFonts.Load();
 
             // 标题
             TMP_Text title = CreatePanelText(frameGo.transform, "Title", font, 46, TextAlignmentOptions.Center, new Color(0.92f, 0.8f, 0.42f));

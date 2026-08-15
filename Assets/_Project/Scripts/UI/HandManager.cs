@@ -1005,7 +1005,7 @@ namespace MutationChess.UI
             rt.anchoredPosition = anchor.rectTransform.anchoredPosition + new Vector2(0f, -34f);
             rt.sizeDelta = new Vector2(420f, 32f);
 
-            nextDrawPeekText.font = Resources.Load<TMP_FontAsset>("Fonts & Materials/SIMSUN SDF");
+            nextDrawPeekText.font = UiFonts.Load();
             nextDrawPeekText.fontSize = 20f;
             nextDrawPeekText.alignment = TextAlignmentOptions.Center;
             nextDrawPeekText.color = new Color(0.86f, 0.72f, 0.35f, 0.95f);
