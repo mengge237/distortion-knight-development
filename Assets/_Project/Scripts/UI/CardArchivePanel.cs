@@ -46,6 +46,7 @@ namespace MutationChess.UI
 
         private Canvas canvas;
         private ArchiveTab currentTab = ArchiveTab.Codex;
+        private ScrollRect scrollRect;        // 列表滚动视图
         private RectTransform listContent;    // 滚动列表内容根
         private GameObject previewPanel;      // 右侧大卡预览
         private Button upgradeToggleBtn;

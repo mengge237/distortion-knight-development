@@ -233,14 +233,14 @@ namespace MutationChess.Core
             }
             if (chance <= 0f) return 0;
 
-            if (Random.value > chance)
+            if (UnityEngine.Random.value > chance)
             {
                 GameLogger.Log($"[诅咒] 本层抽签未中（概率 {Mathf.RoundToInt(chance * 100f)}%），平安无事");
                 return 0;
             }
 
             int maxCount = GetMaxCursesPerFloor(currentDifficulty);
-            int count = maxCount <= 1 ? 1 : Random.Range(1, maxCount + 1);
+            int count = maxCount <= 1 ? 1 : UnityEngine.Random.Range(1, maxCount + 1);
             int granted = CurseSystem.GrantRandomCurses(rm, count, "楼层诅咒");
 
             // 迷雾诅咒降临立即刷新地图迷雾
