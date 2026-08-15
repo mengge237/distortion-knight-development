@@ -422,7 +422,7 @@ namespace MutationChess.UI
             costTmp.text = $"费用 {shown.cost}";
 
             // 名称
-            var nameTmp = CreateText(previewCardArea, "Name", 32, TextAlignmentOptions.TopCenter, rarity);
+            var nameTmp = CreateText(previewCardArea, "Name", 32, TextAlignmentOptions.Top, rarity);
             var nameRt = nameTmp.rectTransform;
             nameRt.anchorMin = nameRt.anchorMax = new Vector2(0.5f, 1f);
             nameRt.pivot = new Vector2(0.5f, 1f);
@@ -432,7 +432,7 @@ namespace MutationChess.UI
             nameTmp.text = shown.cardName;
 
             // 元信息（类型 · 阵营 · 稀有度）
-            var metaTmp = CreateText(previewCardArea, "Meta", 21, TextAlignmentOptions.BottomCenter, new Color(0.78f, 0.78f, 0.82f));
+            var metaTmp = CreateText(previewCardArea, "Meta", 21, TextAlignmentOptions.Bottom, new Color(0.78f, 0.78f, 0.82f));
             var metaRt = metaTmp.rectTransform;
             metaRt.anchorMin = metaRt.anchorMax = new Vector2(0.5f, 0f);
             metaRt.pivot = new Vector2(0.5f, 0f);
@@ -446,7 +446,7 @@ namespace MutationChess.UI
                 : shown.cardType == CardType.Curse ? "诅咒"
                 : shown.magicNumber > 0 ? $"效果值 {shown.magicNumber}"
                 : "";
-            var statsTmp = CreateText(previewCardArea, "Stats", 25, TextAlignmentOptions.BottomCenter, new Color(0.95f, 0.95f, 1f));
+            var statsTmp = CreateText(previewCardArea, "Stats", 25, TextAlignmentOptions.Bottom, new Color(0.95f, 0.95f, 1f));
             var statsRt = statsTmp.rectTransform;
             statsRt.anchorMin = statsRt.anchorMax = new Vector2(0.5f, 0f);
             statsRt.pivot = new Vector2(0.5f, 0f);
@@ -603,6 +603,7 @@ namespace MutationChess.UI
                 tabLabel.text = tabNames[i];
                 var tabBtn = tabGo.GetComponent<Button>();
                 tabBtn.targetGraphic = tabImg;
+                tabBtn.image = tabImg; // 运行时构建的 Button 不会自动关联 image 序列化字段
                 int tabIndex = i;
                 tabBtn.onClick.AddListener(() => SwitchTab((ArchiveTab)tabIndex));
                 tabButtons[i] = tabBtn;
@@ -687,7 +688,7 @@ namespace MutationChess.UI
             previewDescText.enableWordWrapping = true;
 
             // 升级增量（绿色高亮，升级后视图显示）
-            previewDeltaText = CreateText(previewPanel.transform, "Delta", 21, TextAlignmentOptions.MidlineCenter, new Color(0.45f, 1f, 0.55f));
+            previewDeltaText = CreateText(previewPanel.transform, "Delta", 21, TextAlignmentOptions.Midline, new Color(0.45f, 1f, 0.55f));
             var deltaRt = previewDeltaText.rectTransform;
             deltaRt.anchorMin = Vector2.zero;
             deltaRt.anchorMax = Vector2.one;
