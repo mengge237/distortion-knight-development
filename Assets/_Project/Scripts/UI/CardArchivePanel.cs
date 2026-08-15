@@ -71,6 +71,11 @@ namespace MutationChess.UI
         private float timeScaleBeforeOpen = 1f;
         private static TMP_FontAsset cachedFont;
 
+        // 真实卡牌预制体（由编辑器脚本 CardPrefabResourcesSetup 同步到 Resources）
+        private static GameObject cardTilePrefab;
+        private static bool cardTilePrefabTried;
+        private RectTransform currentCardGrid; // 最近一次 BeginCardGrid 创建的网格容器（卡牌瓦片挂载点）
+
         public bool IsVisible => panelRoot != null && panelRoot.activeSelf;
 
         void Awake()
@@ -192,17 +197,18 @@ namespace MutationChess.UI
                 if (first || asset.faction != lastFaction)
                 {
                     CreateHeaderRow(GetFactionDisplayName(asset.faction), GetFactionColor(asset.faction));
+                    BeginCardGrid();
                     first = false;
                     lastFaction = asset.faction;
                 }
 
                 owned.TryGetValue(asset.cardName, out var o);
-                string ownedMark = o.count > 0 ? $"  <color=#7FFF7F>✓拥有 x{o.count}</color>" : "";
-                if (o.upgraded) ownedMark += " <color=#FFD24D>★强化</color>";
-
-                string main = $"<color=#{ColorUtility.ToHtmlStringRGB(CardVisualConfig.GetRarityColor(asset.rarity))}>{asset.cardName}</color>"
-                    + $"  <color=#CCCCCC>{GetCardTypeName(asset.cardType)} · 费用 {asset.cost}</color>{ownedMark}";
-                CreateCardRow(asset, main);
+                string badge = o.count > 0 ? $"✓ 拥有 x{o.count}" : "";
+                if (o.upgraded) badge += " ★强化";
+                Color badgeColor = o.upgraded ? new Color(1f, 0.82f, 0.3f)
+                    : o.count > 0 ? new Color(0.5f, 1f, 0.5f)
+                    : new Color(0.75f, 0.75f, 0.75f);
+                CreateCardTile(CardData.CreateCardFromAsset(asset), asset, badge, badgeColor);
             }
         }
 
@@ -218,6 +224,7 @@ namespace MutationChess.UI
             }
 
             CreateHeaderRow("当前牌组", new Color(0.9f, 0.85f, 0.6f));
+            BeginCardGrid();
 
             var groups = GroupByName(deck);
             var names = new List<string>(groups.Keys);
@@ -226,13 +233,11 @@ namespace MutationChess.UI
             {
                 var g = groups[name];
                 var asset = CardData.GetAssetByName(name);
-                string star = g.upgraded ? " <color=#FFD24D>★</color>" : "";
-                string main = asset != null
-                    ? $"<color=#{ColorUtility.ToHtmlStringRGB(CardVisualConfig.GetRarityColor(asset.rarity))}>{name}</color>"
-                        + $"  <color=#7FFF7F>x{g.count}</color>{star}"
-                        + $"  <color=#CCCCCC>{GetCardTypeName(asset.cardType)} · 费用 {asset.cost}</color>"
-                    : $"<color=#EEEEEE>{name}</color>  <color=#7FFF7F>x{g.count}</color>{star}";
-                CreateCardRow(asset, main);
+                string badge = $"x{g.count}" + (g.upgraded ? " ★" : "");
+                CreateCardTile(
+                    asset != null ? CardData.CreateCardFromAsset(asset) : null,
+                    asset, badge,
+                    g.upgraded ? new Color(1f, 0.82f, 0.3f) : new Color(0.5f, 1f, 0.5f));
             }
         }
 
@@ -260,6 +265,7 @@ namespace MutationChess.UI
                 return;
             }
 
+            BeginCardGrid();
             var groups = GroupByName(pile);
             var names = new List<string>(groups.Keys);
             names.Sort();
@@ -267,12 +273,11 @@ namespace MutationChess.UI
             {
                 var g = groups[name];
                 var asset = CardData.GetAssetByName(name);
-                string star = g.upgraded ? " <color=#FFD24D>★</color>" : "";
-                string main = asset != null
-                    ? $"<color=#{ColorUtility.ToHtmlStringRGB(CardVisualConfig.GetRarityColor(asset.rarity))}>{name}</color>"
-                        + $"  <color=#7FFF7F>x{g.count}</color>{star}  <color=#CCCCCC>{GetCardTypeName(asset.cardType)}</color>"
-                    : $"<color=#EEEEEE>{name}</color>  <color=#7FFF7F>x{g.count}</color>{star}";
-                CreateCardRow(asset, main);
+                string badge = $"x{g.count}" + (g.upgraded ? " ★" : "");
+                CreateCardTile(
+                    asset != null ? CardData.CreateCardFromAsset(asset) : null,
+                    asset, badge,
+                    g.upgraded ? new Color(1f, 0.82f, 0.3f) : new Color(0.5f, 1f, 0.5f));
             }
         }
 
@@ -321,28 +326,185 @@ namespace MutationChess.UI
             tmp.text = text;
         }
 
-        private void CreateCardRow(CardDataAsset asset, string richText)
+        /// <summary>在滚动列表内新建一个 4 列卡牌网格区（真实卡牌预制体铺排，自适应高度）。</summary>
+        private void BeginCardGrid()
         {
-            var rowGo = new GameObject("Row_" + (asset != null ? asset.cardName : "?"),
-                typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            rowGo.transform.SetParent(listContent, false);
-            rowGo.GetComponent<LayoutElement>().preferredHeight = 46f;
-            var img = rowGo.GetComponent<Image>();
-            img.color = new Color(0.13f, 0.12f, 0.1f, 0.85f);
+            var gridGo = new GameObject("CardGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            gridGo.transform.SetParent(listContent, false);
+            var grid = gridGo.GetComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(178f, 232f); // 卡面 150×200 居中放置，四周留出徽标空间
+            grid.spacing = new Vector2(12f, 14f);
+            grid.padding = new RectOffset(14, 14, 8, 14);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
+            grid.childAlignment = TextAnchor.MiddleCenter;
+            grid.childControlWidth = false;
+            grid.childControlHeight = false;
+            grid.childForceExpandWidth = false;
+            grid.childForceExpandHeight = false;
+            var fitter = gridGo.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            currentCardGrid = gridGo.GetComponent<RectTransform>();
+        }
 
-            var tmp = CreateText(rowGo.transform, "Label", 24, TextAlignmentOptions.MidlineLeft, Color.white);
-            var rt = tmp.rectTransform;
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(18f, 0f);
-            rt.offsetMax = new Vector2(-18f, 0f);
-            tmp.text = richText;
+        /// <summary>
+        /// 放置一张真实卡牌预制体（CardUI 驱动，展示模式：禁悬停/拖拽，保留稀有度配色，点击弹大卡预览）。
+        /// Resources 下预制体缺失时（编辑器同步任务未执行）用程序化卡面兜底。
+        /// </summary>
+        private GameObject CreateCardTile(Card card, CardDataAsset asset, string badgeText, Color badgeColor)
+        {
+            GameObject tile = null;
 
-            var btn = rowGo.GetComponent<Button>();
-            btn.targetGraphic = img;
+            if (cardTilePrefab == null && !cardTilePrefabTried)
+            {
+                cardTilePrefabTried = true;
+                cardTilePrefab = Resources.Load<GameObject>("Prefabs/CardPrefab");
+                if (cardTilePrefab == null)
+                    GameLogger.LogWarning("[牌库档案] Resources 下未找到卡牌预制体（CardPrefabResourcesSetup 未执行？），使用程序化卡面兜底");
+            }
+
+            if (cardTilePrefab != null)
+            {
+                Transform tileParent = currentCardGrid != null ? (Transform)currentCardGrid : listContent;
+                tile = Instantiate(cardTilePrefab, tileParent);
+                var ui = tile.GetComponent<CardUI>();
+                if (ui != null)
+                {
+                    ui.Initialize(card);
+                    // 展示模式：直接禁用 CardUI 组件。其实现了拖拽/悬停等事件接口，
+                    // Unity 事件系统沿层级向上查找首个实现者即停止，不禁用会拦截
+                    // 列表滚动（ScrollRect 收不到拖拽）。禁用后事件穿透到滚动区，
+                    // 点击由下方补挂的 Button 转发弹大卡预览。
+                    ui.enabled = false;
+                }
+
+                var clickBtn = tile.GetComponent<Button>();
+                if (clickBtn == null) clickBtn = tile.AddComponent<Button>();
+                clickBtn.transition = Selectable.Transition.None;
+                clickBtn.targetGraphic = tile.GetComponent<Image>();
+                UiFeel.ApplyButton(clickBtn);
+                var captured = asset;
+                clickBtn.onClick.AddListener(() =>
+                {
+                    if (captured != null) ShowPreview(captured);
+                });
+            }
+            else
+            {
+                tile = BuildProceduralTile(card, asset);
+            }
+
+            AddCardBadge(tile, badgeText, badgeColor);
+            return tile;
+        }
+
+        /// <summary>程序化卡面兜底：稀有度边框 + 卡图 + 费用 + 名称 + 描述，尺寸与卡牌预制体一致（150×200）。</summary>
+        private GameObject BuildProceduralTile(Card card, CardDataAsset asset)
+        {
+            var go = new GameObject("Tile_" + (card != null ? card.cardName : "?"),
+                typeof(RectTransform), typeof(Image), typeof(Button));
+            Transform tileParent = currentCardGrid != null ? (Transform)currentCardGrid : listContent;
+            go.transform.SetParent(tileParent, false);
+            go.GetComponent<RectTransform>().sizeDelta = new Vector2(150f, 200f);
+
+            Color rarity = card != null ? CardVisualConfig.GetRarityColor(card.rarity) : new Color(0.6f, 0.6f, 0.6f);
+
+            // 稀有度边框（全铺底色即描边）
+            go.GetComponent<Image>().color = rarity;
+            go.GetComponent<Image>().raycastTarget = true;
+
+            // 卡面内衬（暗底，四周留出稀有度描边）
+            var innerGo = new GameObject("Inner", typeof(RectTransform), typeof(Image));
+            innerGo.transform.SetParent(go.transform, false);
+            var innerRt = innerGo.GetComponent<RectTransform>();
+            innerRt.anchorMin = new Vector2(0.03f, 0.03f);
+            innerRt.anchorMax = new Vector2(0.97f, 0.97f);
+            innerRt.offsetMin = Vector2.zero;
+            innerRt.offsetMax = Vector2.zero;
+            innerGo.GetComponent<Image>().color = rarity * 0.3f + new Color(0.05f, 0.05f, 0.08f);
+            innerGo.GetComponent<Image>().raycastTarget = false;
+
+            // 卡图
+            if (card != null && card.cardArt != null)
+            {
+                var artGo = new GameObject("Art", typeof(RectTransform), typeof(Image));
+                artGo.transform.SetParent(go.transform, false);
+                var artRt = artGo.GetComponent<RectTransform>();
+                artRt.anchorMin = new Vector2(0.08f, 0.30f);
+                artRt.anchorMax = new Vector2(0.92f, 0.78f);
+                artRt.offsetMin = Vector2.zero;
+                artRt.offsetMax = Vector2.zero;
+                var artImg = artGo.GetComponent<Image>();
+                artImg.sprite = card.cardArt;
+                artImg.preserveAspect = true;
+                artImg.raycastTarget = false;
+            }
+
+            // 费用（左上）
+            var costTmp = CreateText(go.transform, "Cost", 18, TextAlignmentOptions.Midline, new Color(1f, 0.9f, 0.5f));
+            costTmp.fontStyle = FontStyles.Bold;
+            var costRt = costTmp.rectTransform;
+            costRt.anchorMin = costRt.anchorMax = new Vector2(0f, 1f);
+            costRt.pivot = new Vector2(0.5f, 0.5f);
+            costRt.anchoredPosition = new Vector2(18f, -14f);
+            costRt.sizeDelta = new Vector2(32f, 26f);
+            costTmp.text = card != null ? card.cost.ToString() : "-";
+
+            // 名称（顶部居中）
+            var nameTmp = CreateText(go.transform, "Name", 16, TextAlignmentOptions.Top, Color.Lerp(rarity, Color.white, 0.45f));
+            nameTmp.fontStyle = FontStyles.Bold;
+            var nameRt = nameTmp.rectTransform;
+            nameRt.anchorMin = nameRt.anchorMax = new Vector2(0.5f, 1f);
+            nameRt.pivot = new Vector2(0.5f, 1f);
+            nameRt.anchoredPosition = new Vector2(0f, -8f);
+            nameRt.sizeDelta = new Vector2(138f, 40f);
+            nameTmp.text = card != null ? card.cardName : "";
+
+            // 描述（底部）
+            if (card != null)
+            {
+                var descTmp = CreateText(go.transform, "Desc", 12, TextAlignmentOptions.Top, new Color(0.75f, 0.75f, 0.78f));
+                var descRt = descTmp.rectTransform;
+                descRt.anchorMin = descRt.anchorMax = new Vector2(0.5f, 0f);
+                descRt.pivot = new Vector2(0.5f, 0f);
+                descRt.anchoredPosition = new Vector2(0f, 10f);
+                descRt.sizeDelta = new Vector2(136f, 42f);
+                descTmp.text = card.GetDescription();
+            }
+
+            var btn = go.GetComponent<Button>();
+            btn.targetGraphic = go.GetComponent<Image>();
+            btn.transition = Selectable.Transition.None;
             UiFeel.ApplyButton(btn);
             var captured = asset;
-            btn.onClick.AddListener(() => ShowPreview(captured));
+            btn.onClick.AddListener(() =>
+            {
+                if (captured != null) ShowPreview(captured);
+            });
+            return go;
+        }
+
+        /// <summary>卡面底部徽标（拥有 xN / ★强化），半透明暗底药丸，不参与点击。</summary>
+        private void AddCardBadge(GameObject tile, string badgeText, Color badgeColor)
+        {
+            if (tile == null || string.IsNullOrEmpty(badgeText)) return;
+
+            var badgeGo = new GameObject("Badge", typeof(RectTransform), typeof(Image));
+            badgeGo.transform.SetParent(tile.transform, false);
+            var rt = badgeGo.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.anchoredPosition = new Vector2(0f, 4f); // 骑跨卡面底边：一半在卡上，一半在网格留白
+            rt.sizeDelta = new Vector2(150f, 22f);
+            badgeGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
+            badgeGo.GetComponent<Image>().raycastTarget = false;
+
+            var tmp = CreateText(badgeGo.transform, "Label", 15, TextAlignmentOptions.Center, badgeColor);
+            StretchFull(tmp.rectTransform);
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.text = badgeText;
+            tmp.raycastTarget = false;
         }
 
         #endregion
@@ -419,22 +581,23 @@ namespace MutationChess.UI
                 artImg.color = Color.white;
             }
 
-            // 费用
-            var costTmp = CreateText(previewCardArea, "Cost", 26, TextAlignmentOptions.TopLeft, new Color(1f, 0.9f, 0.5f));
+            // 费用（左上角，与名称分行避免重叠）
+            var costTmp = CreateText(previewCardArea, "Cost", 24, TextAlignmentOptions.MidlineLeft, new Color(1f, 0.9f, 0.5f));
+            costTmp.fontStyle = FontStyles.Bold;
             var costRt = costTmp.rectTransform;
             costRt.anchorMin = costRt.anchorMax = new Vector2(0f, 1f);
             costRt.pivot = new Vector2(0f, 1f);
-            costRt.anchoredPosition = new Vector2(14f, -10f);
-            costRt.sizeDelta = new Vector2(150f, 40f);
+            costRt.anchoredPosition = new Vector2(14f, -8f);
+            costRt.sizeDelta = new Vector2(100f, 36f);
             costTmp.text = $"费用 {shown.cost}";
 
-            // 名称
-            var nameTmp = CreateText(previewCardArea, "Name", 32, TextAlignmentOptions.Top, rarity);
+            // 名称（顶部居中，位于费用行下方）
+            var nameTmp = CreateText(previewCardArea, "Name", 26, TextAlignmentOptions.Top, rarity);
             var nameRt = nameTmp.rectTransform;
             nameRt.anchorMin = nameRt.anchorMax = new Vector2(0.5f, 1f);
             nameRt.pivot = new Vector2(0.5f, 1f);
-            nameRt.anchoredPosition = new Vector2(0f, -14f);
-            nameRt.sizeDelta = new Vector2(270f, 46f);
+            nameRt.anchoredPosition = new Vector2(0f, -48f);
+            nameRt.sizeDelta = new Vector2(256f, 40f);
             nameTmp.fontStyle = FontStyles.Bold;
             nameTmp.text = shown.cardName;
 
@@ -668,25 +831,25 @@ namespace MutationChess.UI
             previewRt.offsetMax = Vector2.zero;
             previewPanel.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.14f, 0.96f);
 
-            // 卡面容器（翻面动画对象）
+            // 卡面容器（翻面动画对象，左侧：卡面 270×360，绕顶部中心翻面）
             var cardAreaGo = new GameObject("CardArea", typeof(RectTransform));
             cardAreaGo.transform.SetParent(previewPanel.transform, false);
             previewCardArea = cardAreaGo.GetComponent<RectTransform>();
-            previewCardArea.anchorMin = previewCardArea.anchorMax = new Vector2(0.5f, 1f);
+            previewCardArea.anchorMin = previewCardArea.anchorMax = new Vector2(0f, 1f);
             previewCardArea.pivot = new Vector2(0.5f, 1f);
-            previewCardArea.anchoredPosition = new Vector2(0f, -18f);
-            previewCardArea.sizeDelta = new Vector2(300f, 390f);
+            previewCardArea.anchoredPosition = new Vector2(153f, -18f);
+            previewCardArea.sizeDelta = new Vector2(270f, 360f);
 
-            // 描述框
+            // 描述框（右侧上部：与卡面并排，330 高足够容纳完整描述）
             var descBoxGo = new GameObject("DescBox", typeof(RectTransform), typeof(Image));
             descBoxGo.transform.SetParent(previewPanel.transform, false);
             var descBoxRt = descBoxGo.GetComponent<RectTransform>();
-            descBoxRt.anchorMin = Vector2.zero;
-            descBoxRt.anchorMax = Vector2.one;
-            descBoxRt.offsetMin = new Vector2(16f, 110f);
-            descBoxRt.offsetMax = new Vector2(-16f, -425f);
+            descBoxRt.anchorMin = descBoxRt.anchorMax = new Vector2(1f, 1f);
+            descBoxRt.pivot = new Vector2(1f, 1f);
+            descBoxRt.anchoredPosition = new Vector2(-18f, -18f);
+            descBoxRt.sizeDelta = new Vector2(250f, 330f);
             descBoxGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.28f);
-            previewDescText = CreateText(descBoxGo.transform, "Desc", 22, TextAlignmentOptions.TopLeft, new Color(0.88f, 0.88f, 0.9f));
+            previewDescText = CreateText(descBoxGo.transform, "Desc", 21, TextAlignmentOptions.TopLeft, new Color(0.88f, 0.88f, 0.9f));
             var descRt = previewDescText.rectTransform;
             descRt.anchorMin = Vector2.zero;
             descRt.anchorMax = Vector2.one;
@@ -694,40 +857,41 @@ namespace MutationChess.UI
             descRt.offsetMax = new Vector2(-12f, -10f);
             previewDescText.enableWordWrapping = true;
 
-            // 升级增量（绿色高亮，升级后视图显示）
-            previewDeltaText = CreateText(previewPanel.transform, "Delta", 21, TextAlignmentOptions.Midline, new Color(0.45f, 1f, 0.55f));
+            // 升级增量（绿色高亮，描述框正下方，升级后视图显示）
+            previewDeltaText = CreateText(previewPanel.transform, "Delta", 20, TextAlignmentOptions.Midline, new Color(0.45f, 1f, 0.55f));
             var deltaRt = previewDeltaText.rectTransform;
-            deltaRt.anchorMin = Vector2.zero;
-            deltaRt.anchorMax = Vector2.one;
-            deltaRt.offsetMin = new Vector2(16f, 66f);
-            deltaRt.offsetMax = new Vector2(-16f, -502f);
+            deltaRt.anchorMin = deltaRt.anchorMax = new Vector2(1f, 1f);
+            deltaRt.pivot = new Vector2(1f, 1f);
+            deltaRt.anchoredPosition = new Vector2(-18f, -356f);
+            deltaRt.sizeDelta = new Vector2(250f, 60f);
+            previewDeltaText.enableWordWrapping = true;
 
-            // 升级前后对比按钮
+            // 升级前后对比按钮（底部居中，避开右侧返回按钮）
             var upgradeGo = new GameObject("UpgradeToggle", typeof(RectTransform), typeof(Image), typeof(Button));
             upgradeGo.transform.SetParent(previewPanel.transform, false);
             var upgradeRt = upgradeGo.GetComponent<RectTransform>();
             upgradeRt.anchorMin = upgradeRt.anchorMax = new Vector2(0.5f, 0f);
             upgradeRt.pivot = new Vector2(0.5f, 0f);
-            upgradeRt.anchoredPosition = new Vector2(24f, 16f);
-            upgradeRt.sizeDelta = new Vector2(300f, 52f);
+            upgradeRt.anchoredPosition = new Vector2(0f, 16f);
+            upgradeRt.sizeDelta = new Vector2(240f, 52f);
             upgradeGo.GetComponent<Image>().color = new Color(0.3f, 0.34f, 0.2f, 1f);
-            upgradeToggleLabel = CreateText(upgradeGo.transform, "Label", 24, TextAlignmentOptions.Center, new Color(0.8f, 1f, 0.7f));
+            upgradeToggleLabel = CreateText(upgradeGo.transform, "Label", 22, TextAlignmentOptions.Center, new Color(0.8f, 1f, 0.7f));
             StretchFull(upgradeToggleLabel.rectTransform);
             upgradeToggleLabel.text = "查看升级后 →";
             upgradeToggleBtn = upgradeGo.GetComponent<Button>();
             upgradeToggleBtn.targetGraphic = upgradeGo.GetComponent<Image>();
             upgradeToggleBtn.onClick.AddListener(ToggleUpgradePreview);
 
-            // 返回列表按钮
+            // 返回列表按钮（右下角，与居中的对比按钮互不重叠）
             var backGo = new GameObject("BackButton", typeof(RectTransform), typeof(Image), typeof(Button));
             backGo.transform.SetParent(previewPanel.transform, false);
             var backRt = backGo.GetComponent<RectTransform>();
-            backRt.anchorMin = backRt.anchorMax = new Vector2(0f, 0f);
-            backRt.pivot = new Vector2(0f, 0f);
-            backRt.anchoredPosition = new Vector2(14f, 14f);
+            backRt.anchorMin = backRt.anchorMax = new Vector2(1f, 0f);
+            backRt.pivot = new Vector2(1f, 0f);
+            backRt.anchoredPosition = new Vector2(-14f, 14f);
             backRt.sizeDelta = new Vector2(130f, 44f);
             backGo.GetComponent<Image>().color = new Color(0.24f, 0.22f, 0.18f, 1f);
-            var backTmp = CreateText(backGo.transform, "Label", 22, TextAlignmentOptions.Center, new Color(0.9f, 0.88f, 0.8f));
+            var backTmp = CreateText(backGo.transform, "Label", 18, TextAlignmentOptions.Center, new Color(0.9f, 0.88f, 0.8f));
             StretchFull(backTmp.rectTransform);
             backTmp.text = "← 返回列表";
             var backBtn = backGo.GetComponent<Button>();

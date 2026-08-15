@@ -239,6 +239,29 @@ namespace MutationChess.UI
             }
         }
 
+        /// <summary>
+        /// 展示模式（牌库档案等非战斗界面用）：禁用悬停/拖拽/长按放大，
+        /// 但保留稀有度边框与辉光配色（SetInteractable(false) 会整体变灰，不适合展示）。
+        /// 点击仍会触发 OnCardClicked（OnPointerUp 不检查 isInteractable）。
+        /// </summary>
+        public void SetDisplayOnly()
+        {
+            isInteractable = false;
+
+            if (borderImage != null && cardData != null)
+            {
+                Color color = CardVisualConfig.GetRarityColor(cardData.rarity);
+                color.a = 1f;
+                borderImage.color = color;
+            }
+
+            if (glowImage != null && cardData != null)
+            {
+                Color glowColor = CardVisualConfig.GetRarityColor(cardData.rarity);
+                glowImage.color = new Color(glowColor.r, glowColor.g, glowColor.b, GlowBaseAlpha);
+            }
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (cardData == null || !isInteractable || isDragging) return;

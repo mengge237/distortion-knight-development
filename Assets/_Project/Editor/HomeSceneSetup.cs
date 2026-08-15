@@ -42,10 +42,23 @@ namespace MutationChess.EditorTools
 
         private static void EnsureAll()
         {
-            LXGWFontSetup.EnsureReady(); // 先修复字体再建场景：场景内文字直接引用健康字体资产
-            EnsureArtAssets();
-            EnsureHomeScene();
-            EnsureBuildSettings();
+            // 分阶段容错：任一阶段失败不阻断后续（否则字体/美术异常会导致场景永远重建不出来）
+            TryPhase("字体修复", LXGWFontSetup.EnsureReady); // 先修复字体再建场景：场景内文字直接引用健康字体资产
+            TryPhase("首页美术", EnsureArtAssets);
+            TryPhase("首页场景", EnsureHomeScene);
+            TryPhase("BuildSettings", EnsureBuildSettings);
+        }
+
+        private static void TryPhase(string phaseName, System.Action phase)
+        {
+            try
+            {
+                phase();
+            }
+            catch (System.Exception e)
+            {
+                UnityEngine.Debug.LogError($"[HomeSceneSetup] 「{phaseName}」阶段执行失败（已跳过，不影响后续阶段）：{e}");
+            }
         }
 
         // ================= 美术贴图 =================

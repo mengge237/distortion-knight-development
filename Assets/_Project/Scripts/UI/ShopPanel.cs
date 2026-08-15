@@ -791,15 +791,29 @@ namespace MutationChess.UI
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
 
-            // 清掉其它类型的布局组件，统一为横排
+            // 统一为横排：其它布局组件不可 Destroy——场景接线里 GridLayoutGroup 被
+            // ShopRelicLayout 以 [RequireComponent] 依赖，Unity 会拒绝移除并报
+            // "Can't remove ... depends on it"，同帧 AddComponent 还可能拿到失效实例 → NRE。
+            // 改为禁用（LayoutGroup 继承 Behaviour，enabled=false 即停止布局）。
             foreach (var lg in container.GetComponents<LayoutGroup>())
             {
                 if (!(lg is HorizontalLayoutGroup))
-                    Destroy(lg);
+                    lg.enabled = false;
             }
+
+            // 自定义网格布局脚本同步禁用，避免与横排布局争抢子物体位置
+            var relicLayout = container.GetComponent<ShopRelicLayout>();
+            if (relicLayout != null)
+                relicLayout.enabled = false;
 
             var hlg = container.GetComponent<HorizontalLayoutGroup>();
             if (hlg == null) hlg = container.gameObject.AddComponent<HorizontalLayoutGroup>();
+            if (hlg == null)
+            {
+                GameLogger.LogError("[ShopPanel] 无法为 " + container.name + " 添加 HorizontalLayoutGroup，该行布局跳过");
+                return;
+            }
+            hlg.enabled = true;
             hlg.spacing = 14;
             hlg.padding = new RectOffset(10, 10, 10, 10);
             hlg.childAlignment = TextAnchor.MiddleCenter;
