@@ -40,10 +40,12 @@ namespace MutationChess.Core
         [Tooltip("Boss遗物选取主题音效开关（缺失时运行时在设置面板内自动构建）")]
         [SerializeField] private Toggle bossRelicSfxToggle;
 
-        // 显示设置附加行（窗口模式/目标帧率/长宽比——运行时自动构建，无场景接线）
+        // 显示设置附加行（窗口模式/目标帧率/长宽比/分辨率/画质——运行时自动构建，无场景接线）
         private TMP_Text windowModeValueTmp;
         private TMP_Text targetFpsValueTmp;
         private TMP_Text aspectValueTmp;
+        private TMP_Text resOptionValueTmp;
+        private TMP_Text qualityValueTmp;
 
         private Resolution[] resolutions;
         private float fpsTimer = 0f;
@@ -235,12 +237,16 @@ namespace MutationChess.Core
             Screen.SetResolution(res.width, res.height, Screen.fullScreenMode, res.refreshRateRatio);
             PlayerPrefs.SetInt("ResolutionIndex", index);
             PlayerPrefs.Save();
+            // 同步分辨率候选索引 + 刷新窗口模式等步进行标签
+            DisplaySettings.SyncResOptionFromCurrent(res.width, res.height);
+            RefreshExtraSettingRowLabels();
         }
 
         void OnFullscreenChanged(bool isFullscreen)
         {
             // 经由 DisplaySettings 统一入口：同步 WindowMode 键与旧 Fullscreen 键，两处显示设置互不打架
             DisplaySettings.SetFullscreen(isFullscreen);
+            RefreshExtraSettingRowLabels(); // 窗口模式行标签同步
         }
 
         void OnUIStyleChanged(int index)
@@ -440,7 +446,59 @@ namespace MutationChess.Core
                     RefreshExtraSettingRowLabels();
                 });
 
-            GameLogger.Log("[Settings] 显示设置附加行已运行时构建（窗口模式/目标帧率/长宽比）");
+            // 分辨率步进行：场景已接线旧分辨率下拉时不再重复构建
+            if (resolutionDropdown == null)
+            {
+                yOffset -= 44f;
+                resOptionValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_分辨率", "分辨率",
+                    DisplaySettings.ResolutionNames, DisplaySettings.GetResOptionIndex(), idx =>
+                    {
+                        DisplaySettings.SetResOptionIndex(idx);
+                        RefreshExtraSettingRowLabels();
+                    });
+            }
+
+            yOffset -= 44f;
+            qualityValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_画质", "画质",
+                DisplaySettings.QualityNames, DisplaySettings.GetQualityIndex(), idx =>
+                {
+                    DisplaySettings.SetQualityIndex(idx);
+                    RefreshExtraSettingRowLabels();
+                });
+
+            // 新行可能超出固定尺寸的场景面板 → 按世界坐标自适应扩展面板高度
+            FitPanelToRows(new System.Collections.Generic.List<RectTransform>
+            {
+                windowModeValueTmp != null ? windowModeValueTmp.rectTransform : null,
+                targetFpsValueTmp != null ? targetFpsValueTmp.rectTransform : null,
+                aspectValueTmp != null ? aspectValueTmp.rectTransform : null,
+                resOptionValueTmp != null ? resOptionValueTmp.rectTransform : null,
+                qualityValueTmp != null ? qualityValueTmp.rectTransform : null
+            });
+
+            GameLogger.Log("[Settings] 显示设置附加行已运行时构建（窗口模式/目标帧率/长宽比/分辨率/画质）");
+        }
+
+        /// <summary>新行超出面板底边时向下扩展面板（世界坐标计算，任意锚定/父级均适用）。</summary>
+        private void FitPanelToRows(System.Collections.Generic.List<RectTransform> rows)
+        {
+            if (settingsPanel == null || rows == null || rows.Count == 0) return;
+            RectTransform panelRt = settingsPanel.GetComponent<RectTransform>();
+            if (panelRt == null) return;
+
+            float panelBottom = panelRt.position.y - panelRt.rect.height * 0.5f * panelRt.lossyScale.y;
+            float minY = float.MaxValue;
+            foreach (RectTransform row in rows)
+            {
+                if (row == null) continue;
+                minY = Mathf.Min(minY, row.position.y - row.rect.height * 0.5f * row.lossyScale.y);
+            }
+            if (minY < panelBottom - 20f)
+            {
+                float grow = (panelBottom - minY) + 40f; // 底部留 40px 余量
+                panelRt.sizeDelta += new Vector2(0f, grow);
+                GameLogger.Log($"[Settings] 设置面板高度自适应扩展 +{Mathf.RoundToInt(grow)}px");
+            }
         }
 
         /// <summary>构建单个步进选择行：左标签 + ◀ 当前值 ▶（相对锚定，分辨率无关）。返回值文本。</summary>
@@ -551,7 +609,7 @@ namespace MutationChess.Core
             valueTmp.text = options[Mathf.Clamp(index, 0, options.Length - 1)];
         }
 
-        /// <summary>从当前 PlayerPrefs 刷新三条步进行的显示值（读档/重置后调用）。</summary>
+        /// <summary>从当前 PlayerPrefs 刷新步进行的显示值（读档/重置/旧控件联动后调用）。</summary>
         private void RefreshExtraSettingRowLabels()
         {
             if (windowModeValueTmp != null)
@@ -560,6 +618,10 @@ namespace MutationChess.Core
                 targetFpsValueTmp.text = DisplaySettings.GetTargetFpsLabel();
             if (aspectValueTmp != null)
                 aspectValueTmp.text = DisplaySettings.GetAspectRatioLabel();
+            if (resOptionValueTmp != null)
+                resOptionValueTmp.text = DisplaySettings.GetResOptionLabel();
+            if (qualityValueTmp != null)
+                qualityValueTmp.text = DisplaySettings.GetQualityLabel();
         }
 
         void SaveSettings()
@@ -593,8 +655,9 @@ namespace MutationChess.Core
 
             if (fullscreenToggle != null && PlayerPrefs.HasKey("Fullscreen"))
             {
-                fullscreenToggle.isOn = PlayerPrefs.GetInt("Fullscreen") == 1;
-                Screen.fullScreen = fullscreenToggle.isOn;
+                bool isOn = PlayerPrefs.GetInt("Fullscreen") == 1;
+                fullscreenToggle.isOn = isOn;
+                DisplaySettings.SetFullscreen(isOn); // 同步 WindowMode 键（旧实现只改 Screen 不改键）
             }
 
             if (masterVolumeSlider != null && PlayerPrefs.HasKey("MasterVolume"))
@@ -632,6 +695,11 @@ namespace MutationChess.Core
 
         public void ResetSettings()
         {
+            // 显示/音量设置恢复默认并立即应用——只删设置相关键，
+            // 不动 ActiveSlot/图鉴等存档键（旧实现 PlayerPrefs.DeleteAll 会误删全部）
+            DisplaySettings.ResetToDefaults();
+
+            // UI 控件回显默认值（控件赋值会触发监听写回 PlayerPrefs，与默认值一致）
             if (masterVolumeSlider != null)
             {
                 masterVolumeSlider.value = 1f;
@@ -650,10 +718,7 @@ namespace MutationChess.Core
             }
 
             if (fullscreenToggle != null)
-            {
-                fullscreenToggle.isOn = true;
-                Screen.fullScreen = true;
-            }
+                fullscreenToggle.isOn = Screen.fullScreen;
 
             if (showFpsToggle != null)
             {
@@ -671,25 +736,9 @@ namespace MutationChess.Core
             if (bossRelicSfxToggle != null)
                 bossRelicSfxToggle.isOn = true;
 
-            PlayerPrefs.DeleteAll();
-            PlayerPrefs.Save();
-
-            // 恢复默认值后重新落盘（DeleteAll 已清空旧值）
             AudioManager.SetSFXVolume(0.8f);
             AudioManager.SetBossRelicPickSfxEnabled(true);
-
-            if (resolutions != null && resolutions.Length > 0)
-            {
-                var res = resolutions[resolutions.Length - 1];
-                Screen.SetResolution(res.width, res.height, Screen.fullScreenMode, res.refreshRateRatio);
-            }
-
-            // 显示设置恢复默认并即时应用（DeleteAll 后各键回默认：帧率不限/全屏/跟随分辨率）
-            DisplaySettings.ApplyAll();
-            if (fullscreenToggle != null)
-                fullscreenToggle.isOn = Screen.fullScreen;
             RefreshExtraSettingRowLabels();
-
         }
 
         public bool IsSettingsOpen() => settingsOpen;

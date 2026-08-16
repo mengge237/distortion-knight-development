@@ -24,6 +24,8 @@ namespace MutationChess.UI
         private TMP_Text homeWindowModeTmp;
         private TMP_Text homeTargetFpsTmp;
         private TMP_Text homeAspectTmp;
+        private TMP_Text homeResTmp;
+        private TMP_Text homeQualityTmp;
         private static TMP_FontAsset cachedFont;
 
         void Awake()
@@ -363,15 +365,15 @@ namespace MutationChess.UI
 
         // ================= 显示设置行（场景/运行时面板共用） =================
 
-        /// <summary>场景设置面板补建显示设置行（显示FPS/窗口模式/目标帧率/长宽比），幂等。</summary>
+        /// <summary>场景设置面板补建显示设置行（显示FPS/窗口模式/目标帧率/长宽比/分辨率/画质），幂等。</summary>
         private void EnsureHomeExtraSettingRows(Transform p)
         {
-            if (p == null || p.Find("Row_窗口模式") != null) return;
+            if (p == null || p.Find("Row_画质") != null) return;
 
             // 场景面板加高容纳新增行（BackButton 底部锚定随面板下移）
             RectTransform panelRt = settingsSubPanel != null ? settingsSubPanel.GetComponent<RectTransform>() : null;
             if (panelRt != null)
-                panelRt.sizeDelta = new Vector2(panelRt.sizeDelta.x, 960f);
+                panelRt.sizeDelta = new Vector2(panelRt.sizeDelta.x, 1120f);
 
             // 显示 FPS 角标
             CreateToggleRow(p, "显示FPS角标", -510f, PlayerPrefs.GetInt("ShowFPS", 0) == 1, v =>
@@ -409,6 +411,44 @@ namespace MutationChess.UI
                     DisplaySettings.SetAspectRatioIndex(idx);
                     RefreshHomeExtraRowLabels();
                 });
+
+            // 分辨率（固定候选列表，选中后长宽比约束回退为"跟随分辨率"）
+            homeResTmp = CreateStepperRow(p, "分辨率", -830f,
+                DisplaySettings.ResolutionNames, DisplaySettings.GetResOptionIndex(), idx =>
+                {
+                    DisplaySettings.SetResOptionIndex(idx);
+                    RefreshHomeExtraRowLabels();
+                });
+
+            // 画质
+            homeQualityTmp = CreateStepperRow(p, "画质", -910f,
+                DisplaySettings.QualityNames, DisplaySettings.GetQualityIndex(), idx =>
+                {
+                    DisplaySettings.SetQualityIndex(idx);
+                    RefreshHomeExtraRowLabels();
+                });
+
+            // 恢复默认按钮（场景面板只有返回按钮，运行时补建在返回按钮左侧）
+            if (p.Find("ResetButton") == null)
+            {
+                var resetGo = new GameObject("ResetButton", typeof(RectTransform), typeof(Image), typeof(Button));
+                resetGo.transform.SetParent(p, false);
+                var resetRt = resetGo.GetComponent<RectTransform>();
+                resetRt.anchorMin = resetRt.anchorMax = new Vector2(0.5f, 0f);
+                resetRt.pivot = new Vector2(0.5f, 0f);
+                resetRt.anchoredPosition = new Vector2(-235f, 30f);
+                resetRt.sizeDelta = new Vector2(140f, 58f);
+                var resetImg = resetGo.GetComponent<Image>();
+                resetImg.color = new Color(0.28f, 0.25f, 0.19f, 1f);
+                var resetTmp = CreateText(resetGo.transform, "Label", 22, TextAlignmentOptions.Center, new Color(0.93f, 0.86f, 0.66f));
+                StretchFull(resetTmp.rectTransform);
+                resetTmp.text = "恢复默认";
+                var resetBtn = resetGo.GetComponent<Button>();
+                resetBtn.targetGraphic = resetImg;
+                resetBtn.transition = Selectable.Transition.None;
+                resetBtn.onClick.AddListener(ResetHomeSettings);
+                UiFeel.ApplyButton(resetBtn);
+            }
 
             RefreshHomeExtraRowLabels();
         }
@@ -488,6 +528,56 @@ namespace MutationChess.UI
             if (homeWindowModeTmp != null) homeWindowModeTmp.text = DisplaySettings.GetWindowModeLabel();
             if (homeTargetFpsTmp != null) homeTargetFpsTmp.text = DisplaySettings.GetTargetFpsLabel();
             if (homeAspectTmp != null) homeAspectTmp.text = DisplaySettings.GetAspectRatioLabel();
+            if (homeResTmp != null) homeResTmp.text = DisplaySettings.GetResOptionLabel();
+            if (homeQualityTmp != null) homeQualityTmp.text = DisplaySettings.GetQualityLabel();
+        }
+
+        // ================= 恢复默认 =================
+
+        /// <summary>恢复默认：显示/音量全部回默认值并刷新面板控件（只清设置键，不动存档键）。</summary>
+        private void ResetHomeSettings()
+        {
+            DisplaySettings.ResetToDefaults();
+            AudioListener.volume = 1f;
+            AudioManager.SetSFXVolume(0.8f);
+            AudioManager.SetBossRelicPickSfxEnabled(true);
+            RefreshAllSettingsUI();
+            AudioManager.Instance?.PlayUIClick(0.3f);
+        }
+
+        /// <summary>面板控件回显默认值（滑条/开关/百分比/步进行标签）。</summary>
+        private void RefreshAllSettingsUI()
+        {
+            if (settingsSubPanel == null) return;
+            Transform p = settingsSubPanel.transform;
+            SetSliderRow(p, "Row_主音量", 1f);
+            SetSliderRow(p, "Row_音乐音量", 0.8f);
+            SetSliderRow(p, "Row_音效音量", 0.8f);
+            SetToggleRow(p, "Row_全屏显示", Screen.fullScreen);
+            SetToggleRow(p, "Row_显示FPS角标", false);
+            SetToggleRow(p, "Row_Boss遗物主题音效", true);
+            RefreshHomeExtraRowLabels();
+        }
+
+        private static void SetSliderRow(Transform panel, string rowName, float value)
+        {
+            var row = panel.Find(rowName);
+            if (row == null) return;
+            var slider = row.Find("Slider")?.GetComponent<Slider>();
+            if (slider == null) return;
+            var percent = row.Find("Percent")?.GetComponent<TMP_Text>();
+            slider.value = value;
+            if (percent != null) UpdatePercent(percent, value);
+        }
+
+        private static void SetToggleRow(Transform panel, string rowName, bool value)
+        {
+            var row = panel.Find(rowName);
+            if (row == null) row = panel.Find(rowName + "（选取时播放）"); // 运行时路径行名带后缀
+            if (row == null) return;
+            var toggle = row.Find("Switch")?.GetComponent<Toggle>();
+            if (toggle == null) return;
+            toggle.isOn = value;
         }
 
         // ================= 设置子面板 =================
@@ -498,7 +588,7 @@ namespace MutationChess.UI
             settingsSubPanel.transform.SetParent(transform, false);
             var panelRt = settingsSubPanel.GetComponent<RectTransform>();
             panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRt.sizeDelta = new Vector2(820f, 960f);
+            panelRt.sizeDelta = new Vector2(820f, 1120f);
             settingsSubPanel.GetComponent<Image>().color = new Color(0.08f, 0.08f, 0.11f, 0.99f);
 
             // 标题
@@ -591,14 +681,30 @@ namespace MutationChess.UI
                     RefreshHomeExtraRowLabels();
                 });
 
+            // 分辨率（固定候选列表，选中后长宽比约束回退为"跟随分辨率"）
+            homeResTmp = CreateStepperRow(settingsSubPanel.transform, "分辨率", -830f,
+                DisplaySettings.ResolutionNames, DisplaySettings.GetResOptionIndex(), idx =>
+                {
+                    DisplaySettings.SetResOptionIndex(idx);
+                    RefreshHomeExtraRowLabels();
+                });
+
+            // 画质
+            homeQualityTmp = CreateStepperRow(settingsSubPanel.transform, "画质", -910f,
+                DisplaySettings.QualityNames, DisplaySettings.GetQualityIndex(), idx =>
+                {
+                    DisplaySettings.SetQualityIndex(idx);
+                    RefreshHomeExtraRowLabels();
+                });
+
             // 返回按钮
             var backGo = new GameObject("BackButton", typeof(RectTransform), typeof(Image), typeof(Button));
             backGo.transform.SetParent(settingsSubPanel.transform, false);
             var backRt = backGo.GetComponent<RectTransform>();
             backRt.anchorMin = backRt.anchorMax = new Vector2(0.5f, 0f);
             backRt.pivot = new Vector2(0.5f, 0f);
-            backRt.anchoredPosition = new Vector2(0f, 30f);
-            backRt.sizeDelta = new Vector2(320f, 58f);
+            backRt.anchoredPosition = new Vector2(80f, 30f);
+            backRt.sizeDelta = new Vector2(200f, 58f);
             var backImg = backGo.GetComponent<Image>();
             backImg.color = new Color(0.28f, 0.25f, 0.19f, 1f);
             var backTmp = CreateText(backGo.transform, "Label", 26, TextAlignmentOptions.Center, new Color(0.93f, 0.86f, 0.66f));
@@ -609,6 +715,25 @@ namespace MutationChess.UI
             backBtn.transition = Selectable.Transition.None;
             backBtn.onClick.AddListener(CloseSettingsSubPanel);
             UiFeel.ApplyButton(backBtn);
+
+            // 恢复默认按钮（返回按钮左侧）
+            var resetGo = new GameObject("ResetButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            resetGo.transform.SetParent(settingsSubPanel.transform, false);
+            var resetRt = resetGo.GetComponent<RectTransform>();
+            resetRt.anchorMin = resetRt.anchorMax = new Vector2(0.5f, 0f);
+            resetRt.pivot = new Vector2(0.5f, 0f);
+            resetRt.anchoredPosition = new Vector2(-80f, 30f);
+            resetRt.sizeDelta = new Vector2(200f, 58f);
+            var resetImg = resetGo.GetComponent<Image>();
+            resetImg.color = new Color(0.28f, 0.25f, 0.19f, 1f);
+            var resetTmp = CreateText(resetGo.transform, "Label", 22, TextAlignmentOptions.Center, new Color(0.93f, 0.86f, 0.66f));
+            StretchFull(resetTmp.rectTransform);
+            resetTmp.text = "恢复默认";
+            var resetBtn = resetGo.GetComponent<Button>();
+            resetBtn.targetGraphic = resetImg;
+            resetBtn.transition = Selectable.Transition.None;
+            resetBtn.onClick.AddListener(ResetHomeSettings);
+            UiFeel.ApplyButton(resetBtn);
 
             UiFeel.ApplyToAllButtons(settingsSubPanel);
             settingsSubPanel.SetActive(false);

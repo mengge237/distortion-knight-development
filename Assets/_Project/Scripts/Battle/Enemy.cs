@@ -564,7 +564,6 @@ namespace MutationChess.Battle
     }
 
     [System.Serializable]
-    [System.Serializable]
     public class DelayedDamage
     {
         public int damageAmount;
