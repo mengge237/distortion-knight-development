@@ -34,11 +34,10 @@ namespace MutationChess.Core
 
         public static int GetAspectRatioIndex() => Mathf.Clamp(PlayerPrefs.GetInt(KeyAspectRatio, 0), 0, AspectRatioNames.Length - 1);
 
-        /// <summary>画质索引（clamp 到项目实际等级数，默认最高画质）。</summary>
+        /// <summary>画质索引（固定三档 0低/1中/2高，默认高——应用时按比例映射到项目实际画质等级）。</summary>
         public static int GetQualityIndex()
         {
-            int max = Mathf.Max(0, QualitySettings.names.Length - 1);
-            return Mathf.Clamp(PlayerPrefs.GetInt(KeyQuality, max), 0, max);
+            return Mathf.Clamp(PlayerPrefs.GetInt(KeyQuality, 2), 0, QualityNames.Length - 1);
         }
 
         /// <summary>分辨率候选索引：有保存键用保存键，否则按当前窗口尺寸就近匹配。</summary>
@@ -136,14 +135,13 @@ namespace MutationChess.Core
             PlayerPrefs.Save();
         }
 
-        /// <summary>设置画质等级并立即应用（clamp 到项目实际等级数）。</summary>
+        /// <summary>设置画质（固定三档）并立即应用。</summary>
         public static void SetQualityIndex(int index)
         {
-            int max = Mathf.Max(0, QualitySettings.names.Length - 1);
-            index = Mathf.Clamp(index, 0, max);
-            QualitySettings.SetQualityLevel(index, true);
+            index = Mathf.Clamp(index, 0, QualityNames.Length - 1);
             PlayerPrefs.SetInt(KeyQuality, index);
             PlayerPrefs.Save();
+            ApplyQuality();
         }
 
         // ================= 应用 =================
@@ -221,9 +219,17 @@ namespace MutationChess.Core
             GameLogger.Log($"[DisplaySettings] 分辨率 {ResolutionNames[idx]}");
         }
 
+        /// <summary>应用画质：三档索引按比例映射到项目实际画质等级（低=最低档/中=中间档/高=最高档）。</summary>
         public static void ApplyQuality()
         {
-            QualitySettings.SetQualityLevel(GetQualityIndex(), true);
+            string[] names = QualitySettings.names;
+            if (names == null || names.Length == 0) return;
+            int maxLevel = names.Length - 1;
+            int idx = GetQualityIndex();
+            int level = maxLevel;
+            if (idx == 0) level = 0;
+            else if (idx == 1) level = maxLevel / 2;
+            QualitySettings.SetQualityLevel(level, true);
         }
 
         /// <summary>启动时一次性恢复全部显示设置（首页/主场景入口各调用一次，幂等）。</summary>
