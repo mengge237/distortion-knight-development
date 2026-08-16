@@ -49,6 +49,10 @@ namespace MutationChess.UI
             if (settingsSubPanel != null)
                 settingsSubPanel.SetActive(false);
 
+            // 难度选择面板同样场景内激活供编辑、运行时收起：触碰难度管理器，
+            // 其 Awake 会绑定场景面板实体并在首帧渲染前隐藏（无实体则运行时自建）
+            DifficultyManager.Instance.TryBindScenePanel();
+
             // 牌库档案快捷键就绪（首页也可按 F2 打开图鉴）
             CardArchivePanel.EnsureExists();
         }

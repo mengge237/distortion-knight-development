@@ -15,8 +15,9 @@ namespace MutationChess.EditorTools
     /// 1. 程序化生成首页美术贴图（深渊夜色渐变背景 / 金边按钮面板 / 设置面板 / 顶部纹章 / 四角金饰），
     ///    输出到 Resources/UI/Home 并配置 9-slice 导入；
     /// 2. 重建 HomeScene.unity：场景内实体画布（1920×1080 ScaleWithScreenSize 全屏适配）+
-    ///    标题/副标题/四入口按钮/设置面板全部编辑器可见，无需运行时自建；
+    ///    标题/副标题/四入口按钮/设置面板/难度选择面板全部编辑器可见，无需运行时自建；
     ///    HomeScreen 组件负责绑定控件逻辑；场景缺接线时回退运行时自建（兼容旧场景）；
+    ///    难度选择面板由 DifficultyManager 绑定（独立 900 层画布场景实体）；
     /// 3. 注册 BuildSettings：HomeScene(0) → MainScene(1)。
     /// </summary>
     [InitializeOnLoad]
@@ -285,7 +286,8 @@ namespace MutationChess.EditorTools
         private static void EnsureHomeScene()
         {
             bool exists = File.Exists(HomeScenePath);
-            bool fileOk = exists && SceneFileHasMarker(HomeScenePath) && SceneFileHasTabbedSettings(HomeScenePath);
+            bool fileOk = exists && SceneFileHasMarker(HomeScenePath) && SceneFileHasTabbedSettings(HomeScenePath)
+                && SceneFileHasDifficultyPanel(HomeScenePath);
             if (fileOk) return;
 
             // 旧版场景（无画布）可能正被用户打开：不能关闭"最后一个打开的场景"（CloseScene 会静默失败），
@@ -293,10 +295,11 @@ namespace MutationChess.EditorTools
             Scene openScene = EditorSceneManager.GetSceneByPath(HomeScenePath);
             if (openScene.isLoaded)
             {
-                // 打开态以内存为准：已含画布或标记（含未保存的手动修改）→ 只升级设置子面板，不动其余节点
+                // 打开态以内存为准：已含画布或标记（含未保存的手动修改）→ 只升级设置子面板/难度面板，不动其余节点
                 if (SceneHasCanvas(openScene) || SceneHasMarker(openScene))
                 {
                     UpgradeSettingsPanelInScene(openScene);
+                    EnsureDifficultyPanelInScene(openScene);
                     return;
                 }
 
@@ -347,6 +350,36 @@ namespace MutationChess.EditorTools
         private static bool SceneFileHasTabbedSettings(string scenePath)
         {
             return File.ReadAllText(scenePath).Contains("TabBar");
+        }
+
+        /// <summary>场景文件内是否含难度选择面板节点（DifficultyPanelBuilder 生成的场景实体哨兵）。</summary>
+        private static bool SceneFileHasDifficultyPanel(string scenePath)
+        {
+            return File.ReadAllText(scenePath).Contains("DifficultySelectPanel");
+        }
+
+        /// <summary>补建难度选择面板场景实体（独立 900 层画布，盖在首页 500 层之上；已存在则不动）。</summary>
+        private static void EnsureDifficultyPanelInScene(Scene scene)
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+                if (root.name == "DifficultySelectPanel") return;
+
+            CreateDifficultyPanel(scene);
+            EditorSceneManager.SaveScene(scene);
+            UnityEngine.Debug.Log("[HomeSceneSetup] 已补建场景内难度选择面板（DifficultySelectPanel，可手动编辑）");
+        }
+
+        /// <summary>
+        /// 难度选择面板场景实体：与运行时兜底自建共用 DifficultyPanelBuilder 同一构建器，
+        /// 场景实体与运行时结构完全一致（滚轮几何参数存于 DifficultyWheel 组件可直接改）。
+        /// 场景内保持激活供编辑器查看；运行时由 DifficultyManager 绑定控件并在加载时隐藏，弹出时复用。
+        /// </summary>
+        private static void CreateDifficultyPanel(Scene scene)
+        {
+            GameObject root = DifficultyPanelBuilder.CreateCanvasRoot("DifficultySelectPanel");
+            // 面板根画布独立成根节点：创建时归入目标场景（HomeScene 打开时活动场景可能是别的场景）
+            SceneManager.MoveGameObjectToScene(root, scene);
+            DifficultyPanelBuilder.Build(root.transform);
         }
 
         /// <summary>
@@ -442,6 +475,9 @@ namespace MutationChess.EditorTools
 
             // 设置子面板（编辑器内可见；运行时由 HomeScreen 绑定并隐藏）
             CreateSettingsPanel(canvasGo.transform);
+
+            // 难度选择面板（独立 900 层画布场景实体；运行时由 DifficultyManager 绑定并隐藏）
+            CreateDifficultyPanel(scene);
         }
 
         private static void CreateCornerDecor(Transform parent, string name, Vector2 anchor, Vector2 pivot, float rotation)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,7 +9,7 @@ using MutationChess.UI;
 namespace MutationChess.Core
 {
     /// <summary>
-    /// 困难度系统（运行时自动创建，无需场景接线）——六档难度：
+    /// 困难度系统——六档难度：
     ///   简单   无诅咒
     ///   普通   每层 15% 概率降临诅咒 · 至多 1 个
     ///   困难   每层 30% 概率降临诅咒 · 至多 1 个
@@ -19,7 +18,10 @@ namespace MutationChess.Core
     ///   深渊   起始 3 个诅咒 · 每层 75% 概率 · 至多 3 个
     /// 每层诅咒由 GameManager 在楼层推进时调用 RollFloorCurses() 按概率抽签，
     /// 持有黑烛免疫一切诅咒，持有净秽香炉则概率减半。
-    /// 本局尚未选择难度时，EnsureSelected() 弹出运行时自建的选择面板（暂停游戏）。
+    /// 选择面板：优先绑定场景内可编辑实体（HomeSceneSetup 生成进 HomeScene 的
+    /// DifficultySelectPanel，编辑器可直接手动调整），场景缺失（主场景直启等）时
+    /// 回退运行时自建——两路径共用 DifficultyPanelBuilder 同一构建器，结构完全一致。
+    /// 本局尚未选择难度时，EnsureSelected() 弹出选择面板（暂停游戏）。
     /// </summary>
     public class DifficultyManager : MonoBehaviour, ISaveable
     {
@@ -61,7 +63,12 @@ namespace MutationChess.Core
         private Difficulty currentDifficulty = Difficulty.Normal;
         private bool chosen = false;
         private bool startCursesApplied = false; // 开局诅咒已发放标记（跨场景/读档防重复发放）
-        private GameObject panelGo;
+        private GameObject panelGo;           // 运行时自建面板（关闭时销毁）
+        private GameObject scenePanelGo;      // 场景实体面板（HomeSceneSetup 生成，隐藏/显示复用不销毁）
+        private bool scenePanelBound;         // 场景面板绑定尝试标记（每域只试一次）
+        private DifficultyPanelState panelState; // 当前面板选择状态（场景/自建两路径共用）
+        private DifficultyWheel boundWheel;   // 当前面板滚轮（两路径共用）
+        private Transform boundFrame;         // 当前面板底板（弹入动画对象）
         private Action pendingOnChosen; // 面板确认后的回调（首页选择完成后进入主场景等）
 
         // 冒险须知分页面板（难度面板内的覆盖层）
@@ -156,6 +163,10 @@ namespace MutationChess.Core
             _instance = this;
             DontDestroyOnLoad(gameObject); // 跨场景（首页→主场景）保留难度选择状态
             SaveService.Instance.Register(this);
+
+            // 首页场景里存在可编辑难度面板实体时：立即绑定并隐藏（场景内默认激活供编辑，
+            // 游戏加载首帧前收起，等待 ShowSelectionPanel 弹出复用；无则运行时自建）
+            TryBindScenePanel();
         }
 
         void OnDestroy()
@@ -178,11 +189,7 @@ namespace MutationChess.Core
         {
             chosen = false;
             startCursesApplied = false;
-            if (panelGo != null)
-            {
-                Destroy(panelGo);
-                panelGo = null;
-            }
+            CloseActivePanel();
             Time.timeScale = 1f;
         }
 
@@ -198,11 +205,7 @@ namespace MutationChess.Core
             currentDifficulty = d;
             chosen = true;
 
-            if (panelGo != null)
-            {
-                Destroy(panelGo);
-                panelGo = null;
-            }
+            CloseActivePanel();
             Time.timeScale = 1f;
 
             ApplyRunStartCurses();
@@ -354,20 +357,35 @@ namespace MutationChess.Core
         /// <summary>弹出难度选择面板（可选确认后回调，如首页选择完成后进入主场景）。</summary>
         public void ShowSelectionPanel(Action onChosen = null)
         {
+            pendingOnChosen = onChosen;
+            Time.timeScale = 0f; // 选择前暂停游戏
+
+            // 优先复用场景内可编辑面板（HomeSceneSetup 生成进 HomeScene 的场景实体）；
+            // 场景缺失（主场景直启等）回退运行时自建
+            if (TryBindScenePanel() && scenePanelGo != null)
+            {
+                scenePanelGo.SetActive(true);
+                // 滚轮初始定位：居中"普通"，刷新已选提示与确认按钮
+                if (boundWheel != null)
+                    boundWheel.SnapTo(1, false);
+                if (boundFrame != null)
+                    UiFeel.AnimatePanelIn(boundFrame.gameObject);
+                GameLogger.Log("[难度] 已弹出难度选择面板（场景实体版，游戏暂停）");
+                return;
+            }
+
             // 防重入：已弹出则先销毁旧面板
             if (panelGo != null)
             {
                 Destroy(panelGo);
                 panelGo = null;
             }
-            pendingOnChosen = onChosen;
+            panelState = new DifficultyPanelState();
             BuildSelectionPanel();
         }
 
         private void BuildSelectionPanel()
         {
-            Time.timeScale = 0f; // 选择前暂停游戏
-
             // 保险：场景缺失 EventSystem 时自动创建（MainScene 已有，首页等场景兜底）
             if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
             {
@@ -377,329 +395,127 @@ namespace MutationChess.Core
                 DontDestroyOnLoad(es);
             }
 
-            panelGo = new GameObject("DifficultySelectPanel", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            Canvas canvas = panelGo.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 900;
-            CanvasScaler scaler = panelGo.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-
-            // 半透明暗底
-            GameObject bgGo = new GameObject("Dim", typeof(RectTransform), typeof(Image));
-            bgGo.transform.SetParent(panelGo.transform, false);
-            RectTransform bgRt = bgGo.GetComponent<RectTransform>();
-            bgRt.anchorMin = Vector2.zero;
-            bgRt.anchorMax = Vector2.one;
-            bgRt.offsetMin = Vector2.zero;
-            bgRt.offsetMax = Vector2.zero;
-            bgGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.78f);
-
-            // 金边外框（衬在面板底板后形成描边）
-            GameObject borderOuter = new GameObject("GoldBorder", typeof(RectTransform), typeof(Image));
-            borderOuter.transform.SetParent(panelGo.transform, false);
-            RectTransform borderOuterRt = borderOuter.GetComponent<RectTransform>();
-            borderOuterRt.anchorMin = borderOuterRt.anchorMax = new Vector2(0.5f, 0.5f);
-            borderOuterRt.sizeDelta = new Vector2(1488f, 868f);
-            borderOuter.GetComponent<Image>().color = new Color(0.62f, 0.5f, 0.24f, 1f);
-
-            // 面板底板（复用获胜奖励图集背景，缺失回退暗色）
-            GameObject frameGo = new GameObject("Frame", typeof(RectTransform), typeof(Image));
-            frameGo.transform.SetParent(panelGo.transform, false);
-            RectTransform frameRt = frameGo.GetComponent<RectTransform>();
-            frameRt.anchorMin = frameRt.anchorMax = new Vector2(0.5f, 0.5f);
-            frameRt.sizeDelta = new Vector2(1472f, 852f);
-            Image frameImg = frameGo.GetComponent<Image>();
-            Sprite innerBg = Resources.Load<Sprite>("InterfaceUI/获胜奖励面板底层内嵌背景");
-            if (innerBg != null)
-            {
-                frameImg.sprite = innerBg;
-                frameImg.color = Color.white;
-            }
-            else frameImg.color = new Color(0.09f, 0.08f, 0.1f, 0.99f);
-
-            TMP_FontAsset font = UiFonts.Load();
-
-            // 标题
-            TMP_Text title = CreatePanelText(frameGo.transform, "Title", font, 46, TextAlignmentOptions.Center, new Color(0.92f, 0.8f, 0.42f));
-            title.fontStyle = FontStyles.Bold;
-            RectTransform titleRt = title.rectTransform;
-            titleRt.anchorMin = titleRt.anchorMax = new Vector2(0.5f, 1f);
-            titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -30f);
-            titleRt.sizeDelta = new Vector2(800f, 56f);
-            title.text = "选择本局难度";
-
-            // 副标题
-            TMP_Text subtitle = CreatePanelText(frameGo.transform, "Subtitle", font, 20, TextAlignmentOptions.Center, new Color(0.62f, 0.6f, 0.55f));
-            RectTransform subRt = subtitle.rectTransform;
-            subRt.anchorMin = subRt.anchorMax = new Vector2(0.5f, 1f);
-            subRt.pivot = new Vector2(0.5f, 1f);
-            subRt.anchoredPosition = new Vector2(0f, -92f);
-            subRt.sizeDelta = new Vector2(900f, 30f);
-            subtitle.text = "诅咒将随楼层降临 · 难度越高，深渊越近 · 选定后本局不可更改";
-
-            // 六档难度滚轮（滑轮框）：横排滚轮 + 居中吸附，鼠标滚轮/拖拽/点击均可切换
-            DifficultyPanelState state = new DifficultyPanelState();
-            DifficultyWheel wheel = BuildDifficultyWheel(frameGo.transform, font, state);
-
-            // 底部：已选难度提示 + 确认开始
-            GameObject bottomGo = new GameObject("BottomBar", typeof(RectTransform));
-            bottomGo.transform.SetParent(frameGo.transform, false);
-            RectTransform bottomRt = bottomGo.GetComponent<RectTransform>();
-            bottomRt.anchorMin = bottomRt.anchorMax = new Vector2(0.5f, 0f);
-            bottomRt.pivot = new Vector2(0.5f, 0f);
-            bottomRt.anchoredPosition = new Vector2(0f, 26f);
-            bottomRt.sizeDelta = new Vector2(1200f, 120f);
-
-            state.selectedText = CreatePanelText(bottomGo.transform, "SelectedText", font, 21, TextAlignmentOptions.Center, new Color(0.7f, 0.68f, 0.62f));
-            RectTransform selTextRt = state.selectedText.rectTransform;
-            selTextRt.anchorMin = selTextRt.anchorMax = new Vector2(0.5f, 1f);
-            selTextRt.pivot = new Vector2(0.5f, 1f);
-            selTextRt.anchoredPosition = new Vector2(0f, -6f);
-            selTextRt.sizeDelta = new Vector2(1100f, 34f);
-            state.selectedText.text = "尚未选择难度 —— 点击上方卡牌选择";
-
-            GameObject confirmGo = new GameObject("ConfirmButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            confirmGo.transform.SetParent(bottomGo.transform, false);
-            RectTransform confirmRt = confirmGo.GetComponent<RectTransform>();
-            confirmRt.anchorMin = confirmRt.anchorMax = new Vector2(0.5f, 0f);
-            confirmRt.pivot = new Vector2(0.5f, 0f);
-            confirmRt.anchoredPosition = new Vector2(160f, 8f);
-            confirmRt.sizeDelta = new Vector2(300f, 60f);
-            state.confirmImg = confirmGo.GetComponent<Image>();
-            state.confirmImg.color = new Color(0.24f, 0.21f, 0.16f, 1f); // 未选：暗灰
-            state.confirmLabel = CreatePanelText(confirmGo.transform, "Label", font, 27, TextAlignmentOptions.Center, new Color(0.55f, 0.52f, 0.45f));
-            StretchPanelFull(state.confirmLabel.rectTransform);
-            state.confirmLabel.text = "请先选择难度";
-            state.confirmBtn = confirmGo.GetComponent<Button>();
-            state.confirmBtn.targetGraphic = state.confirmImg;
-            state.confirmBtn.transition = Selectable.Transition.None;
-            state.confirmBtn.onClick.AddListener(() =>
-            {
-                if (!state.hasSelection)
-                {
-                    AudioManager.Instance?.PlayUIClick(0.25f);
-                    return;
-                }
-                ChooseDifficulty(state.selected);
-            });
-            UiFeel.ApplyButton(state.confirmBtn);
-
-            // 冒险须知按钮（确认按钮左侧）：翻开游戏常识/隐藏效果分页
-            GameObject guideBtnGo = new GameObject("GuideButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            guideBtnGo.transform.SetParent(bottomGo.transform, false);
-            RectTransform guideBtnRt = guideBtnGo.GetComponent<RectTransform>();
-            guideBtnRt.anchorMin = guideBtnRt.anchorMax = new Vector2(0.5f, 0f);
-            guideBtnRt.pivot = new Vector2(0.5f, 0f);
-            guideBtnRt.anchoredPosition = new Vector2(-160f, 8f);
-            guideBtnRt.sizeDelta = new Vector2(240f, 60f);
-            Image guideBtnImg = guideBtnGo.GetComponent<Image>();
-            guideBtnImg.color = new Color(0.2f, 0.2f, 0.24f, 1f);
-            TMP_Text guideBtnLabel = CreatePanelText(guideBtnGo.transform, "Label", font, 24, TextAlignmentOptions.Center, new Color(0.8f, 0.82f, 0.85f));
-            StretchPanelFull(guideBtnLabel.rectTransform);
-            guideBtnLabel.text = "冒险须知";
-            Button guideBtn = guideBtnGo.GetComponent<Button>();
-            guideBtn.targetGraphic = guideBtnImg;
-            guideBtn.transition = Selectable.Transition.None;
-            guideBtn.onClick.AddListener(ShowGuide);
-            UiFeel.ApplyButton(guideBtn);
+            panelGo = DifficultyPanelBuilder.CreateCanvasRoot("DifficultySelectPanel");
+            DifficultyPanelHandle handle = DifficultyPanelBuilder.Build(panelGo.transform);
+            BindPanelHandle(handle);
 
             // 滚轮初始定位：居中"普通"，刷新已选提示与确认按钮（须在底部栏建成后调用）
-            if (wheel != null)
-                wheel.SnapTo(1, false);
+            if (boundWheel != null)
+                boundWheel.SnapTo(1, false);
 
             // 面板弹入动画
-            UiFeel.AnimatePanelIn(frameGo);
+            UiFeel.AnimatePanelIn(handle.Frame.gameObject);
 
-            GameLogger.Log("[难度] 已弹出难度选择面板（视觉升级版，游戏暂停）");
+            GameLogger.Log("[难度] 已弹出难度选择面板（运行时自建，游戏暂停）");
         }
 
         /// <summary>
-        /// 构建难度滚轮（滑轮框）：横向一排六档难度卡牌（视口遮罩裁剪两侧），
-        /// 居中卡牌即为所选，支持鼠标滚轮滚动、拖拽吸附、直接点击。
-        /// 拖拽/滚轮事件由 DifficultyWheel 自行处理（不用 ScrollRect，避免同物体事件竞争）。
+        /// 尝试绑定场景内可编辑难度选择面板（HomeSceneSetup 生成的 DifficultySelectPanel
+        /// 场景实体）。只在当前活动场景存在该节点时成功；绑定后立即隐藏（场景里默认激活
+        /// 供编辑器查看），待 ShowSelectionPanel 弹出复用。主场景直启等无此节点时返回
+        /// false，走运行时自建兜底。
         /// </summary>
-        private DifficultyWheel BuildDifficultyWheel(Transform parent, TMP_FontAsset font, DifficultyPanelState state)
+        public bool TryBindScenePanel()
         {
-            const float cardW = 300f, cardH = 320f, spacing = 24f;
-            float slotWidth = cardW + spacing;
-            const int count = 6;
-            const float padding = 450f; // 首尾卡牌滚到正中央时视口两侧不露空（视口半宽 560 + 边距余量）
-            float contentW = padding * 2f + count * cardW + (count - 1) * spacing;
-            // 内容锚定视口中心 + 两侧留白：第 i 张卡居中时 content.x = centerOffset - i*slotWidth
-            float centerOffset = padding + cardW / 2f;
+            // 已绑且实体存活直接复用；实体随场景切换销毁（scenePanelGo == null）时允许重试，
+            // 这样返回首页重新加载出的面板实体能被再次绑定
+            if (scenePanelBound && scenePanelGo != null) return true;
+            scenePanelBound = true;
 
-            // 滚轮操作提示
-            TMP_Text wheelHint = CreatePanelText(parent, "WheelHint", font, 19, TextAlignmentOptions.Center, new Color(0.6f, 0.58f, 0.52f));
-            RectTransform hintRt = wheelHint.rectTransform;
-            hintRt.anchorMin = hintRt.anchorMax = new Vector2(0.5f, 1f);
-            hintRt.pivot = new Vector2(0.5f, 1f);
-            hintRt.anchoredPosition = new Vector2(0f, -128f);
-            hintRt.sizeDelta = new Vector2(900f, 28f);
-            wheelHint.text = "滚动鼠标滚轮 / 拖拽卡牌选择 · 居中卡牌即为所选难度";
+            GameObject root = GameObject.Find("DifficultySelectPanel");
+            if (root == null) return false;
 
-            // 视口（遮罩裁剪两侧卡牌；拖拽/滚轮事件由 DifficultyWheel 自行处理——
-            // 不用 ScrollRect：它与 DifficultyWheel 同挂一物体时，事件系统只调用
-            // 组件顺序靠前的 ScrollRect 的拖拽接口，吸附逻辑将永远收不到松手事件）
-            GameObject viewportGo = new GameObject("WheelViewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(DifficultyWheel));
-            viewportGo.transform.SetParent(parent, false);
-            RectTransform viewportRt = viewportGo.GetComponent<RectTransform>();
-            viewportRt.anchorMin = viewportRt.anchorMax = new Vector2(0.5f, 1f);
-            viewportRt.pivot = new Vector2(0.5f, 1f);
-            viewportRt.anchoredPosition = new Vector2(0f, -168f);
-            viewportRt.sizeDelta = new Vector2(1120f, 372f);
-            viewportGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f); // 全透明：仅保留射线接收（拖拽命中），色块不再叠在卡牌下层
+            DifficultyPanelHandle handle = DifficultyPanelBuilder.GetHandle(root);
+            if (handle == null || handle.Wheel == null || handle.Cards == null || handle.Cards.Count == 0)
+                return false;
 
-            // 内容横排（六个卡位 + 左右留白）
-            GameObject contentGo = new GameObject("WheelContent", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            contentGo.transform.SetParent(viewportGo.transform, false);
-            RectTransform contentRt = contentGo.GetComponent<RectTransform>();
-            contentRt.anchorMin = contentRt.anchorMax = new Vector2(0.5f, 0.5f);
-            contentRt.pivot = new Vector2(0.5f, 0.5f);
-            contentRt.sizeDelta = new Vector2(contentW, cardH);
-            contentRt.anchoredPosition = new Vector2(centerOffset - slotWidth, 0f); // 初始居中"普通"（下标 1）
-            HorizontalLayoutGroup hlg = contentGo.GetComponent<HorizontalLayoutGroup>();
-            hlg.spacing = spacing;
-            hlg.padding = new RectOffset((int)padding, (int)padding, 0, 0);
-            hlg.childAlignment = TextAnchor.MiddleCenter;
-            hlg.childControlWidth = false;
-            hlg.childControlHeight = false;
-            hlg.childForceExpandWidth = false;
-            hlg.childForceExpandHeight = false;
-
-            // 六档难度卡牌（简单 → 深渊）
-            Difficulty[] order = { Difficulty.Simple, Difficulty.Normal, Difficulty.Hard, Difficulty.Purgatory, Difficulty.Nightmare, Difficulty.Abyss };
-            Color[] colors =
-            {
-                new Color(0.36f, 0.6f, 0.38f),  // 简单 绿
-                new Color(0.45f, 0.47f, 0.55f), // 普通 灰蓝
-                new Color(0.65f, 0.45f, 0.2f),  // 困难 橙铜
-                new Color(0.55f, 0.32f, 0.62f), // 炼狱 紫
-                new Color(0.6f, 0.2f, 0.24f),   // 噩梦 暗红
-                new Color(0.18f, 0.11f, 0.26f)  // 深渊 近黑紫
-            };
-            for (int i = 0; i < order.Length; i++)
-                CreateWheelCard(contentGo.transform, font, order[i], colors[i], i, state);
-
-            DifficultyWheel wheel = viewportGo.GetComponent<DifficultyWheel>();
-            wheel.content = contentRt;
-            wheel.slotWidth = slotWidth;
-            wheel.centerOffset = centerOffset;
-            wheel.state = state;
-            wheel.owner = this;
-            OnWheelCardClicked = idx => wheel.SnapTo(idx, true); // 点击卡牌 → 吸附选中
-            return wheel;
+            scenePanelGo = root;
+            BindPanelHandle(handle);
+            scenePanelGo.SetActive(false);
+            GameLogger.Log("[难度] 已绑定场景内可编辑难度选择面板（DifficultySelectPanel），运行时复用场景实体");
+            return true;
         }
 
-        /// <summary>滚轮内单张难度卡牌（300×320，选中时点亮描边+放大）。</summary>
-        private void CreateWheelCard(Transform content, TMP_FontAsset font, Difficulty d, Color accent, int index, DifficultyPanelState state)
+        /// <summary>关闭当前弹出的面板：场景实体只隐藏（保留实体可复用），运行时自建则销毁。</summary>
+        private void CloseActivePanel()
         {
-            // 卡牌本体（金边由下层 Border 提供）
-            GameObject cardGo = new GameObject($"Card_{d}", typeof(RectTransform), typeof(Image), typeof(Button));
-            cardGo.transform.SetParent(content, false);
-            RectTransform cardRt = cardGo.GetComponent<RectTransform>();
-            cardRt.sizeDelta = new Vector2(300f, 320f);
-            Image cardImg = cardGo.GetComponent<Image>();
-            cardImg.color = new Color(accent.r * 0.22f + 0.03f, accent.g * 0.22f + 0.03f, accent.b * 0.22f + 0.03f, 0.96f);
-
-            // 金色描边（先建，位于卡牌后层；选中时点亮）
-            GameObject borderGo = new GameObject("Border", typeof(RectTransform), typeof(Image));
-            borderGo.transform.SetParent(cardGo.transform, false);
-            borderGo.transform.SetAsFirstSibling();
-            RectTransform borderRt = borderGo.GetComponent<RectTransform>();
-            borderRt.anchorMin = Vector2.zero;
-            borderRt.anchorMax = Vector2.one;
-            borderRt.offsetMin = new Vector2(-4f, -4f);
-            borderRt.offsetMax = new Vector2(4f, 4f);
-            Image borderImg = borderGo.GetComponent<Image>();
-            borderImg.color = new Color(0.92f, 0.78f, 0.38f, 0f);
-            borderImg.raycastTarget = false;
-
-            // 左侧强调条
-            GameObject accentGo = new GameObject("AccentBar", typeof(RectTransform), typeof(Image));
-            accentGo.transform.SetParent(cardGo.transform, false);
-            RectTransform accentRt = accentGo.GetComponent<RectTransform>();
-            accentRt.anchorMin = new Vector2(0f, 0.08f);
-            accentRt.anchorMax = new Vector2(0f, 0.92f);
-            accentRt.pivot = new Vector2(0f, 0.5f);
-            accentRt.anchoredPosition = Vector2.zero;
-            accentRt.sizeDelta = new Vector2(10f, 0f);
-            Image accentImg = accentGo.GetComponent<Image>();
-            accentImg.color = accent;
-            accentImg.raycastTarget = false;
-
-            // 难度名（大）
-            TMP_Text nameTxt = CreatePanelText(cardGo.transform, "Name", font, 30, TextAlignmentOptions.TopLeft, Color.Lerp(accent, Color.white, 0.3f));
-            nameTxt.fontStyle = FontStyles.Bold;
-            RectTransform nameRt = nameTxt.rectTransform;
-            nameRt.anchorMin = nameRt.anchorMax = new Vector2(0f, 1f);
-            nameRt.pivot = new Vector2(0f, 1f);
-            nameRt.anchoredPosition = new Vector2(24f, -16f);
-            nameRt.sizeDelta = new Vector2(250f, 44f);
-            nameTxt.text = GetDisplayName(d);
-
-            // 数值三行
-            int chance = Mathf.RoundToInt(GetFloorCurseChance(d) * 100f);
-            TMP_Text stats = CreatePanelText(cardGo.transform, "Stats", font, 19, TextAlignmentOptions.TopLeft, new Color(0.85f, 0.84f, 0.8f));
-            RectTransform statsRt = stats.rectTransform;
-            statsRt.anchorMin = statsRt.anchorMax = new Vector2(0f, 1f);
-            statsRt.pivot = new Vector2(0f, 1f);
-            statsRt.anchoredPosition = new Vector2(24f, -74f);
-            statsRt.sizeDelta = new Vector2(262f, 92f);
-            stats.text = $"起始诅咒：{GetStartCurseCount(d)} 个\n每层诅咒概率：{chance}%\n每层至多降临：{GetMaxCursesPerFloor(d)} 个";
-
-            // 风味描述
-            TMP_Text flavor = CreatePanelText(cardGo.transform, "Flavor", font, 17, TextAlignmentOptions.TopLeft, new Color(0.55f, 0.53f, 0.5f));
-            RectTransform flavorRt = flavor.rectTransform;
-            flavorRt.anchorMin = flavorRt.anchorMax = new Vector2(0f, 1f);
-            flavorRt.pivot = new Vector2(0f, 1f);
-            flavorRt.anchoredPosition = new Vector2(24f, -176f);
-            flavorRt.sizeDelta = new Vector2(264f, 32f);
-            flavor.text = GetFlavorText(d);
-
-            // 难度排序（罗马数字）
-            TMP_Text orderTxt = CreatePanelText(cardGo.transform, "Order", font, 22, TextAlignmentOptions.TopRight, new Color(0.75f, 0.72f, 0.66f, 0.8f));
-            RectTransform orderRt = orderTxt.rectTransform;
-            orderRt.anchorMin = orderRt.anchorMax = new Vector2(1f, 1f);
-            orderRt.pivot = new Vector2(1f, 1f);
-            orderRt.anchoredPosition = new Vector2(-20f, -18f);
-            orderRt.sizeDelta = new Vector2(60f, 34f);
-            orderTxt.text = new[] { "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ" }[index];
-
-            // "✓ 已选"角标（默认透明）
-            TMP_Text tag = CreatePanelText(cardGo.transform, "Tag", font, 20, TextAlignmentOptions.TopRight, new Color(0.95f, 0.82f, 0.42f, 0f));
-            tag.fontStyle = FontStyles.Bold;
-            RectTransform tagRt = tag.rectTransform;
-            tagRt.anchorMin = tagRt.anchorMax = new Vector2(1f, 1f);
-            tagRt.pivot = new Vector2(1f, 1f);
-            tagRt.anchoredPosition = new Vector2(-20f, -58f);
-            tagRt.sizeDelta = new Vector2(120f, 34f);
-            tag.text = "✓ 已选";
-
-            state.cards.Add(new CardSelectionVisuals
+            HideGuide();
+            if (scenePanelGo != null && scenePanelGo.activeSelf)
             {
-                difficulty = d,
-                border = borderImg,
-                accent = accentImg,
-                baseAccent = accent,
-                tag = tag,
-                cardRoot = cardRt
-            });
-
-            Button btn = cardGo.GetComponent<Button>();
-            btn.targetGraphic = cardImg;
-            btn.transition = Selectable.Transition.None;
-            int captured = index;
-            btn.onClick.AddListener(() =>
+                scenePanelGo.SetActive(false);
+                return;
+            }
+            if (panelGo != null)
             {
-                // 点击卡牌：滚轮吸附到该卡（BuildDifficultyWheel 里已接线到滚轮组件）
-                OnWheelCardClicked?.Invoke(captured);
-            });
+                Destroy(panelGo);
+                panelGo = null;
+            }
         }
 
-        /// <summary>点击滚轮卡牌事件（BuildDifficultyWheel 里接线到滚轮吸附）。</summary>
-        private System.Action<int> OnWheelCardClicked;
+        /// <summary>
+        /// 面板控件接线（场景实体与运行时自建共用）：卡牌点击→滚轮吸附、确认→选定难度、
+        /// 须知→翻页、滚轮选中→刷新视觉。构建器只搭结构不接监听，监听统一在此绑定。
+        /// </summary>
+        private void BindPanelHandle(DifficultyPanelHandle handle)
+        {
+            if (panelState == null) panelState = new DifficultyPanelState();
+            panelState.cards.Clear();
+            foreach (DifficultyCardRef cr in handle.Cards)
+            {
+                panelState.cards.Add(new CardSelectionVisuals
+                {
+                    difficulty = cr.difficulty,
+                    border = cr.border,
+                    accent = cr.accent,
+                    baseAccent = cr.baseAccent,
+                    tag = cr.tag,
+                    cardRoot = cr.cardRoot
+                });
+            }
+            panelState.selectedText = handle.SelectedText;
+            panelState.confirmBtn = handle.ConfirmBtn;
+            panelState.confirmLabel = handle.ConfirmLabel;
+            panelState.confirmImg = handle.ConfirmImg;
+
+            DifficultyWheel wheel = handle.Wheel;
+            boundWheel = wheel;
+            boundFrame = handle.Frame;
+
+            for (int i = 0; i < handle.Cards.Count; i++)
+            {
+                Button b = handle.Cards[i].button;
+                if (b == null) continue;
+                int captured = i;
+                b.onClick.RemoveAllListeners();
+                b.onClick.AddListener(() => wheel.SnapTo(captured, true)); // 点击卡牌 → 吸附选中
+            }
+
+            if (handle.ConfirmBtn != null)
+            {
+                handle.ConfirmBtn.onClick.RemoveAllListeners();
+                handle.ConfirmBtn.onClick.AddListener(() =>
+                {
+                    if (!panelState.hasSelection)
+                    {
+                        AudioManager.Instance?.PlayUIClick(0.25f);
+                        return;
+                    }
+                    ChooseDifficulty(panelState.selected);
+                });
+            }
+            if (handle.GuideBtn != null)
+            {
+                handle.GuideBtn.onClick.RemoveAllListeners();
+                handle.GuideBtn.onClick.AddListener(ShowGuide);
+            }
+
+            // 几何兜底：场景里若手滑清空序列化字段，用构建默认值回填
+            if (wheel.content == null) wheel.content = handle.Content;
+            if (wheel.slotWidth <= 0.01f) wheel.slotWidth = DifficultyPanelBuilder.SlotWidth;
+            if (wheel.centerOffset <= 0.01f) wheel.centerOffset = DifficultyPanelBuilder.CenterOffset;
+            wheel.cardCount = panelState.cards.Count;
+            wheel.onSelectionChanged = (idx, snd) => ApplyWheelSelection(idx, panelState, snd);
+        }
 
         /// <summary>滚轮选中刷新：点亮居中卡牌描边+放大，同步底部已选提示与确认按钮。</summary>
         private void ApplyWheelSelection(int index, DifficultyPanelState state, bool playSound)
@@ -736,103 +552,8 @@ namespace MutationChess.Core
                 AudioManager.Instance?.PlayUIClick(0.35f);
         }
 
-        /// <summary>
-        /// 难度滚轮控制器：挂在滚轮视口上，自实现拖拽/滚轮/吸附（不用 ScrollRect，
-        /// 避免同物体多组件抢事件：ExecuteEvents 只调用层级上首个实现者）。
-        /// 鼠标滚轮切换相邻难度、拖拽松手/点击后吸附到最近的居中卡位
-        /// （unscaled 时间动画，面板打开时 timeScale=0 也不受影响），居中卡牌自动成为所选难度。
-        /// </summary>
-        private class DifficultyWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IScrollHandler
-        {
-            public RectTransform content;
-            public float slotWidth;
-            public float centerOffset; // 第 0 张卡居中时的 content.x（padding + cardW/2）
-            public DifficultyPanelState state;
-            public DifficultyManager owner;
-            private Canvas canvas;
-            private bool snapping;
-            private int targetIndex;
-
-            void Awake()
-            {
-                canvas = GetComponentInParent<Canvas>();
-            }
-
-            private float TargetXForIndex(int index)
-            {
-                return centerOffset - index * slotWidth;
-            }
-
-            /// <summary>吸附到指定卡位并刷新选中视觉（可静默，供初始定位）。</summary>
-            public void SnapTo(int index, bool playSound)
-            {
-                targetIndex = Mathf.Clamp(index, 0, state != null ? state.cards.Count - 1 : 5);
-                snapping = true;
-                if (owner != null)
-                    owner.ApplyWheelSelection(targetIndex, state, playSound);
-            }
-
-            void Update()
-            {
-                if (!snapping || content == null) return;
-
-                // 吸附动画（面板暂停时 timeScale=0，必须用 unscaled 时间）
-                float targetX = TargetXForIndex(targetIndex);
-                float cur = content.anchoredPosition.x;
-                float next = Mathf.Lerp(cur, targetX, Mathf.Clamp01(12f * Time.unscaledDeltaTime));
-                if (Mathf.Abs(next - targetX) < 0.5f)
-                {
-                    next = targetX;
-                    snapping = false;
-                }
-                content.anchoredPosition = new Vector2(next, content.anchoredPosition.y);
-            }
-
-            void LateUpdate()
-            {
-                // 拖拽过程中实时高亮最近的居中卡牌（无音效，避免滚动时连响）
-                if (snapping || content == null || state == null || owner == null) return;
-                int nearest = GetNearestIndex();
-                if (nearest != state.wheelIndex)
-                    owner.ApplyWheelSelection(nearest, state, false);
-            }
-
-            public void OnBeginDrag(PointerEventData eventData)
-            {
-                snapping = false; // 用户接管滚轮，取消吸附动画
-            }
-
-            public void OnDrag(PointerEventData eventData)
-            {
-                if (content == null) return;
-                // 屏幕像素位移换算到画布单位（ScaleWithScreenSize 缩放因子）
-                float scale = canvas != null && canvas.scaleFactor > 0.001f ? canvas.scaleFactor : 1f;
-                float x = content.anchoredPosition.x + eventData.delta.x / scale;
-                int maxIndex = state != null ? state.cards.Count - 1 : 5;
-                x = Mathf.Clamp(x, TargetXForIndex(maxIndex), TargetXForIndex(0));
-                content.anchoredPosition = new Vector2(x, content.anchoredPosition.y);
-            }
-
-            public void OnEndDrag(PointerEventData eventData)
-            {
-                SnapTo(GetNearestIndex(), true);
-            }
-
-            public void OnScroll(PointerEventData eventData)
-            {
-                int dir = eventData.scrollDelta.y > 0.01f ? -1 : eventData.scrollDelta.y < -0.01f ? 1 : 0;
-                if (dir == 0) return;
-                SnapTo(state.wheelIndex + dir, true);
-            }
-
-            private int GetNearestIndex()
-            {
-                int idx = Mathf.RoundToInt((centerOffset - content.anchoredPosition.x) / slotWidth);
-                return Mathf.Clamp(idx, 0, state != null ? state.cards.Count - 1 : 5);
-            }
-        }
-
-        private static string GetFlavorText(Difficulty d)
+        /// <summary>难度风味描述（DifficultyPanelBuilder 构建卡牌时使用）。</summary>
+        public static string GetFlavorText(Difficulty d)
         {
             switch (d)
             {
@@ -848,10 +569,20 @@ namespace MutationChess.Core
 
         // ================= 冒险须知分页 =================
 
+        /// <summary>当前弹出中的面板根（场景实体优先）。</summary>
+        private Transform ActivePanelRoot
+        {
+            get
+            {
+                if (scenePanelGo != null && scenePanelGo.activeSelf) return scenePanelGo.transform;
+                return panelGo != null ? panelGo.transform : null;
+            }
+        }
+
         /// <summary>翻开冒险须知：懒加载构建覆盖页，分页展示游戏常识/隐藏效果（GameTips）。</summary>
         private void ShowGuide()
         {
-            if (panelGo == null) return;
+            if (ActivePanelRoot == null) return;
             if (guideGo == null) BuildGuidePage();
             guidePageIndex = 0;
             RefreshGuidePage();
@@ -870,7 +601,7 @@ namespace MutationChess.Core
             TMP_FontAsset font = UiFonts.Load();
 
             guideGo = new GameObject("GuidePage", typeof(RectTransform));
-            guideGo.transform.SetParent(panelGo.transform, false);
+            guideGo.transform.SetParent(ActivePanelRoot, false);
             RectTransform guideRt = guideGo.GetComponent<RectTransform>();
             guideRt.anchorMin = Vector2.zero;
             guideRt.anchorMax = Vector2.one;
@@ -911,7 +642,7 @@ namespace MutationChess.Core
             else frameImg.color = new Color(0.08f, 0.075f, 0.1f, 0.99f);
 
             // 标题
-            TMP_Text title = CreatePanelText(frame.transform, "Title", font, 40, TextAlignmentOptions.Center, new Color(0.92f, 0.8f, 0.42f));
+            TMP_Text title = DifficultyPanelBuilder.CreateText(frame.transform, "Title", font, 40, TextAlignmentOptions.Center, new Color(0.92f, 0.8f, 0.42f));
             title.fontStyle = FontStyles.Bold;
             RectTransform titleRt = title.rectTransform;
             titleRt.anchorMin = titleRt.anchorMax = new Vector2(0.5f, 1f);
@@ -921,7 +652,7 @@ namespace MutationChess.Core
             title.text = "冒 险 须 知";
 
             // 副标题
-            TMP_Text subtitle = CreatePanelText(frame.transform, "Subtitle", font, 19, TextAlignmentOptions.Center, new Color(0.6f, 0.58f, 0.52f));
+            TMP_Text subtitle = DifficultyPanelBuilder.CreateText(frame.transform, "Subtitle", font, 19, TextAlignmentOptions.Center, new Color(0.6f, 0.58f, 0.52f));
             RectTransform subRt = subtitle.rectTransform;
             subRt.anchorMin = subRt.anchorMax = new Vector2(0.5f, 1f);
             subRt.pivot = new Vector2(0.5f, 1f);
@@ -930,7 +661,7 @@ namespace MutationChess.Core
             subtitle.text = "深渊中的常识与隐藏效果 · 细读可少走弯路";
 
             // 分页正文
-            guideText = CreatePanelText(frame.transform, "GuideText", font, 23, TextAlignmentOptions.TopLeft, new Color(0.9f, 0.88f, 0.8f));
+            guideText = DifficultyPanelBuilder.CreateText(frame.transform, "GuideText", font, 23, TextAlignmentOptions.TopLeft, new Color(0.9f, 0.88f, 0.8f));
             RectTransform textRt = guideText.rectTransform;
             textRt.anchorMin = textRt.anchorMax = new Vector2(0.5f, 1f);
             textRt.pivot = new Vector2(0.5f, 1f);
@@ -939,7 +670,7 @@ namespace MutationChess.Core
             guideText.lineSpacing = 14f;
 
             // 页码
-            guidePageLabel = CreatePanelText(frame.transform, "PageLabel", font, 18, TextAlignmentOptions.Center, new Color(0.6f, 0.58f, 0.52f));
+            guidePageLabel = DifficultyPanelBuilder.CreateText(frame.transform, "PageLabel", font, 18, TextAlignmentOptions.Center, new Color(0.6f, 0.58f, 0.52f));
             RectTransform pageRt = guidePageLabel.rectTransform;
             pageRt.anchorMin = pageRt.anchorMax = new Vector2(0.5f, 0f);
             pageRt.pivot = new Vector2(0.5f, 0f);
@@ -968,8 +699,8 @@ namespace MutationChess.Core
             backRt.sizeDelta = new Vector2(320f, 58f);
             Image backImg = backGo.GetComponent<Image>();
             backImg.color = new Color(0.24f, 0.21f, 0.16f, 1f);
-            TMP_Text backLabel = CreatePanelText(backGo.transform, "Label", font, 26, TextAlignmentOptions.Center, new Color(0.93f, 0.86f, 0.66f));
-            StretchPanelFull(backLabel.rectTransform);
+            TMP_Text backLabel = DifficultyPanelBuilder.CreateText(backGo.transform, "Label", font, 26, TextAlignmentOptions.Center, new Color(0.93f, 0.86f, 0.66f));
+            DifficultyPanelBuilder.StretchFull(backLabel.rectTransform);
             backLabel.text = "返回难度选择";
             Button backBtn = backGo.GetComponent<Button>();
             backBtn.targetGraphic = backImg;
@@ -993,8 +724,8 @@ namespace MutationChess.Core
             rt.sizeDelta = new Vector2(240f, 54f);
             Image img = go.GetComponent<Image>();
             img.color = new Color(0.2f, 0.2f, 0.24f, 1f);
-            TMP_Text txt = CreatePanelText(go.transform, "Label", font, 23, TextAlignmentOptions.Center, new Color(0.8f, 0.82f, 0.85f));
-            StretchPanelFull(txt.rectTransform);
+            TMP_Text txt = DifficultyPanelBuilder.CreateText(go.transform, "Label", font, 23, TextAlignmentOptions.Center, new Color(0.8f, 0.82f, 0.85f));
+            DifficultyPanelBuilder.StretchFull(txt.rectTransform);
             txt.text = label;
             Button btn = go.GetComponent<Button>();
             btn.targetGraphic = img;
@@ -1010,26 +741,6 @@ namespace MutationChess.Core
             guideText.text = GameTips.GetPageText(guidePageIndex);
             if (guidePageLabel != null)
                 guidePageLabel.text = $"{guidePageIndex + 1} / {GameTips.PageCount}";
-        }
-
-        private static TMP_Text CreatePanelText(Transform parent, string goName, TMP_FontAsset font, int fontSize, TextAlignmentOptions align, Color color)
-        {
-            GameObject go = new GameObject(goName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
-            TMP_Text tmp = go.GetComponent<TextMeshProUGUI>();
-            if (font != null) tmp.font = font;
-            tmp.fontSize = fontSize;
-            tmp.alignment = align;
-            tmp.color = color;
-            return tmp;
-        }
-
-        private static void StretchPanelFull(RectTransform rt)
-        {
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
         }
     }
 }

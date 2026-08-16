@@ -417,15 +417,15 @@ namespace MutationChess.UI
             // GridLayoutGroup 只摆放子物体位置、不改 sizeDelta，且没有 childControl/
             // childForceExpand 开关（那是 Horizontal/VerticalLayoutGroup 的成员）——
             // cellSize 直接取卡牌预制体当前尺寸（预制体日后改动自动跟随，不硬编码
-            // 150×200），行距留 44 供底部徽标骑跨（徽标高 24 完全落在行距内，
+            // 150×200），行距留 48 供底部徽标骑跨（徽标高 24 完全落在行距内，
             // 不遮卡面描述、也不碰下一行卡面）
             RectTransform prefabRt = null;
             GameObject prefab = GetCardTilePrefab();
             if (prefab != null) prefabRt = prefab.GetComponent<RectTransform>();
             Vector2 cell = prefabRt != null ? prefabRt.rect.size : new Vector2(150f, 200f);
             grid.cellSize = cell;
-            grid.spacing = new Vector2(20f, 44f);
-            grid.padding = new RectOffset(14, 14, 8, 18);
+            grid.spacing = new Vector2(26f, 48f);
+            grid.padding = new RectOffset(14, 14, 8, 22);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 5;
             grid.childAlignment = TextAnchor.MiddleCenter;
@@ -476,6 +476,19 @@ namespace MutationChess.UI
                     // 列表滚动（ScrollRect 收不到拖拽）。禁用后事件穿透到滚动区，
                     // 点击由下方补挂的 Button 转发弹大卡预览。
                     ui.enabled = false;
+
+                    // 网格瓦片只留卡面本体：CardUI 在 Awake 建的柔边投影左右各外扩
+                    // 12px（相邻两卡阴影 24px > 行距，叠成暗带像卡牌堆叠）+ 辉光外扩
+                    // 6px，全部关掉——网格里不需要投影层次感
+                    Transform fx = tile.transform.Find("CardShadow");
+                    if (fx != null) fx.gameObject.SetActive(false);
+                    fx = tile.transform.Find("CardGlow");
+                    if (fx != null) fx.gameObject.SetActive(false);
+
+                    // 长描述会溢出预制体文本框（TMP 溢出渲染不裁剪），压到徽标与
+                    // 下一行卡面；瓦片只显示名称/费用/卡图，完整描述点击大卡预览看
+                    Transform desc = tile.transform.Find("DescriptionText");
+                    if (desc != null) desc.gameObject.SetActive(false);
                 }
 
                 var clickBtn = tile.GetComponent<Button>();
@@ -1075,7 +1088,7 @@ namespace MutationChess.UI
             closeBtnGo.GetComponent<Image>().color = new Color(0.32f, 0.16f, 0.12f, 0.95f);
             var closeTmp = CreateText(closeBtnGo.transform, "Label", 24, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.8f));
             StretchFull(closeTmp.rectTransform);
-            closeTmp.text = "✕ 关闭";
+            closeTmp.text = "× 关闭";
             var closeBtn = closeBtnGo.GetComponent<Button>();
             closeBtn.targetGraphic = closeBtnGo.GetComponent<Image>();
             closeBtn.onClick.AddListener(Close);
@@ -1118,10 +1131,15 @@ namespace MutationChess.UI
             scrollRt.offsetMax = Vector2.zero;
             scrollRect = scrollGo.GetComponent<ScrollRect>();
 
-            var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+            // 与编辑器 ScrollRect 向导同构：RectTransform + Image + RectMask2D。
+            // Image 近全透明（0.002）仅作射线接收层——空白处拖拽/滚轮也能命中
+            // 滚动区；RectMask2D 只裁剪 MaskableGraphic（Image/TMP 都是），
+            // 滑出视口的卡牌/徽标在此被裁掉，不会溢出列表边框
+            var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
             viewportGo.transform.SetParent(scrollGo.transform, false);
             var viewportRt = viewportGo.GetComponent<RectTransform>();
             StretchFull(viewportRt);
+            viewportGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.002f);
 
             var contentGo = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
             contentGo.transform.SetParent(viewportGo.transform, false);

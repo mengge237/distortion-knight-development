@@ -60,6 +60,17 @@ namespace MutationChess.UI
         private Vector3 baseScale = Vector3.one;
         private Tween scaleTween;
 
+        void Awake()
+        {
+            // 场景实体路径自举：编辑期生成时 ApplyButton→Init 已把 rt/baseScale 置好，
+            // 但私有字段不序列化，运行时加载后 rt 为空——悬停/按压会 NRE。
+            // Awake 重取引用与基准缩放（运行时自建路径：AddComponent 时 Awake 先跑、
+            // 随后 Init 再设 pressScale，二者不冲突）
+            rt = GetComponent<RectTransform>();
+            if (rt == null) rt = gameObject.AddComponent<RectTransform>();
+            baseScale = rt.localScale;
+        }
+
         public void Init(float scale)
         {
             rt = GetComponent<RectTransform>();

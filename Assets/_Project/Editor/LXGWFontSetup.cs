@@ -28,9 +28,6 @@ namespace MutationChess.EditorTools
         private const string SimsunFontAssetPath = "Assets/_Project/Resources/Fonts & Materials/SIMSUN SDF.asset";
         private const string TmpSettingsPath = "Assets/Plugins/TextMesh Pro/Resources/TMP Settings.asset";
 
-        /// <summary>首次预填充阈值：字形表小于该数量视为需要填充（修复后一次填充，后续跳过）。</summary>
-        private const int PrefillThreshold = 500;
-
         static LXGWFontSetup()
         {
             EditorTaskGuard.RunWhenSafe(EnsureReady);
@@ -168,14 +165,19 @@ namespace MutationChess.EditorTools
                 dirty = true;
             }
 
-            // 4. 字符预填充：扫描工程全部文本，一次性栅格化到图集（静态字形，运行时零 FontEngine 依赖）
-            if (fa.characterTable == null || fa.characterTable.Count < PrefillThreshold)
+            // 4. 字符预填充（每次域重载增量执行）：扫描工程全部文本，只栅格化字形表里
+            //    还没有的新字符。此前是"字形表低于阈值才全量扫"——域重载只跑一次，
+            //    之后提交的代码里新加的文字（如 ✕）扫不到，运行时会缺字显示为 □。
+            //    增量 TryAddCharacters 对已存在字符是快速跳过，重扫成本可忽略。
+            string chars = CollectProjectCharacters();
+            if (!string.IsNullOrEmpty(chars))
             {
-                string chars = CollectProjectCharacters();
-                if (!string.IsNullOrEmpty(chars))
+                var before = fa.characterTable != null ? fa.characterTable.Count : 0;
+                fa.TryAddCharacters(chars); // 字体缺失的字形自动跳过，不影响其余
+                var after = fa.characterTable != null ? fa.characterTable.Count : 0;
+                if (after > before)
                 {
-                    fa.TryAddCharacters(chars); // 字体缺失的字形自动跳过，不影响其余
-                    UnityEngine.Debug.Log($"[LXGWFontSetup] 字符预填充完成：扫描 {chars.Length} 个字符，字形表 {fa.characterTable?.Count ?? 0} 项");
+                    UnityEngine.Debug.Log($"[LXGWFontSetup] 字符增量预填充：扫描 {chars.Length} 个字符，新增 {after - before} 个字形（字形表共 {after} 项）");
                     dirty = true;
                 }
             }

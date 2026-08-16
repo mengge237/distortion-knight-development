@@ -153,7 +153,7 @@ namespace MutationChess.UI
             closeGo.GetComponent<Image>().color = new Color(0.32f, 0.16f, 0.12f, 0.95f);
             TMP_Text closeLabel = CreateText(closeGo.transform, "Label", 22, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.8f));
             StretchFull(closeLabel.rectTransform);
-            closeLabel.text = "✕ 关闭";
+            closeLabel.text = "× 关闭";
             h.CloseButton = SetupButton(closeGo);
 
             // ===== 标签页栏 =====
