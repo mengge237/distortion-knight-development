@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Shadow_Cloak
   relicName: 暗影斗篷
+  codexId: 1024
   rarity: 1
   faction: 5
   description: 战斗开始+10格挡（隐藏：战斗开始+1敏捷）

@@ -156,6 +156,9 @@ namespace MutationChess.Core
 
             card.GenerateDescription();
 
+            // 图鉴"见过才解锁"：创建卡牌（获得/入牌库/预览）即记录
+            CodexProgress.MarkCardSeen(asset);
+
             return card;
         }
 

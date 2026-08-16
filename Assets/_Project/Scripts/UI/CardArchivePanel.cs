@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -8,9 +9,10 @@ using MutationChess.Core;
 namespace MutationChess.UI
 {
     /// <summary>
-    /// 牌库档案面板：图鉴（按阵营分组的全部卡牌+拥有/强化标记）、卡组（运行时牌组统计）、
-    /// 弃牌堆（本场战斗弃牌堆+消耗堆）。战斗中点击"抽牌/弃牌"计数或按 F2 打开，
-    /// 点击卡牌弹出大卡预览，可切换"升级前后对比"查看绿色数值增量（翻面动画）。
+    /// 全屏图鉴面板（以撒式"见过才解锁"）：卡牌图鉴/遗物图鉴/药水图鉴（仅显示已见过条目，
+    /// 按 codexId 排序，未见过完全隐藏）、卡组（运行时牌组统计）、弃牌堆（本场战斗弃牌堆+消耗堆）。
+    /// 战斗中点击"抽牌/弃牌"计数或按 F2 打开，点击条目弹出大卡/遗物预览，
+    /// 卡牌可切换"升级前后对比"查看绿色数值增量（翻面动画）。
     /// 场景可接线（panelRoot/openButton），缺失时运行时自动构建，视觉复用获胜奖励图集。
     /// </summary>
     public class CardArchivePanel : MonoBehaviour
@@ -46,12 +48,12 @@ namespace MutationChess.UI
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private Button openButton;
 
-        public enum ArchiveTab { Codex, Deck, Discard }
+        public enum ArchiveTab { Cards, Relics, Potions, Deck, Discard }
 
         private const int CanvasOrder = 700;
 
         private Canvas canvas;
-        private ArchiveTab currentTab = ArchiveTab.Codex;
+        private ArchiveTab currentTab = ArchiveTab.Cards;
         private ScrollRect scrollRect;        // 列表滚动视图
         private RectTransform listContent;    // 滚动列表内容根
         private GameObject previewPanel;      // 右侧大卡预览
@@ -91,7 +93,7 @@ namespace MutationChess.UI
         void Start()
         {
             if (openButton != null)
-                openButton.onClick.AddListener(() => Open(ArchiveTab.Codex));
+                openButton.onClick.AddListener(() => Open(ArchiveTab.Cards));
         }
 
         void Update()
@@ -100,7 +102,7 @@ namespace MutationChess.UI
                 (SettingsManager.Instance == null || !SettingsManager.Instance.IsSettingsOpen()))
             {
                 if (IsVisible) Close();
-                else Open(ArchiveTab.Codex);
+                else Open(ArchiveTab.Cards);
             }
             else if (Input.GetKeyDown(KeyCode.Escape) && IsVisible)
             {
@@ -164,7 +166,9 @@ namespace MutationChess.UI
 
             switch (currentTab)
             {
-                case ArchiveTab.Codex: BuildCodexList(); break;
+                case ArchiveTab.Cards: BuildCardCodexList(); break;
+                case ArchiveTab.Relics: BuildRelicCodexList(); break;
+                case ArchiveTab.Potions: BuildPotionCodexList(); break;
                 case ArchiveTab.Deck: BuildDeckList(); break;
                 case ArchiveTab.Discard: BuildDiscardList(); break;
             }
@@ -172,10 +176,20 @@ namespace MutationChess.UI
 
         #region 三个标签页
 
-        /// <summary>图鉴：全部卡牌资产，按阵营分组，附带拥有/强化标记。</summary>
-        private void BuildCodexList()
+        /// <summary>卡牌图鉴：仅显示已见过的卡牌（见过才解锁），按 codexId 排序并分组，附 No. 编号与拥有/强化标记。</summary>
+        private void BuildCardCodexList()
         {
-            var assets = CardData.GetAllCardAssets();
+            var seen = CodexProgress.Instance;
+            var assets = CodexIdRegistry.GetCardsByIdOrdered();
+            int seenCount = assets.Count(a => seen.IsCardSeen(a.codexId));
+
+            CreateHeaderRow($"卡牌图鉴 · 已发现 {seenCount} / {assets.Count}", new Color(0.9f, 0.82f, 0.5f));
+            if (seenCount == 0)
+            {
+                CreateEmptyHint("尚未发现任何卡牌——获得或见过卡牌后将自动收录于此（调试命令 seeall 可解锁全部）");
+                return;
+            }
+
             var dm = PlayerDataManager.Instance;
             var deck = dm != null ? dm.GetRuntimeDeckCopy() : null;
             var owned = new Dictionary<string, (int count, bool upgraded)>();
@@ -194,6 +208,8 @@ namespace MutationChess.UI
             foreach (var asset in assets)
             {
                 if (asset == null) continue;
+                if (!seen.IsCardSeen(asset.codexId)) continue; // 未见过：完全隐藏
+
                 if (first || asset.faction != lastFaction)
                 {
                     CreateHeaderRow(GetFactionDisplayName(asset.faction), GetFactionColor(asset.faction));
@@ -203,12 +219,62 @@ namespace MutationChess.UI
                 }
 
                 owned.TryGetValue(asset.cardName, out var o);
-                string badge = o.count > 0 ? $"✓ 拥有 x{o.count}" : "";
-                if (o.upgraded) badge += " ★强化";
+                string badge = $"No.{asset.codexId}";
+                if (o.count > 0) badge += $" ✓x{o.count}";
+                if (o.upgraded) badge += " ★";
                 Color badgeColor = o.upgraded ? new Color(1f, 0.82f, 0.3f)
                     : o.count > 0 ? new Color(0.5f, 1f, 0.5f)
-                    : new Color(0.75f, 0.75f, 0.75f);
+                    : new Color(0.8f, 0.8f, 0.8f);
                 CreateCardTile(CardData.CreateCardFromAsset(asset), asset, badge, badgeColor);
+            }
+        }
+
+        /// <summary>遗物图鉴：仅显示已获得的遗物，按 codexId 排序，附 No. 编号，点击查看详情。</summary>
+        private void BuildRelicCodexList()
+        {
+            var seen = CodexProgress.Instance;
+            var assets = CodexIdRegistry.GetRelicsByIdOrdered();
+            int seenCount = assets.Count(a => seen.IsRelicSeen(a.codexId));
+
+            CreateHeaderRow($"遗物图鉴 · 已发现 {seenCount} / {assets.Count}", new Color(0.9f, 0.82f, 0.5f));
+            if (seenCount == 0)
+            {
+                CreateEmptyHint("尚未发现任何遗物——获得遗物后将自动收录于此");
+                return;
+            }
+
+            BeginRelicGrid();
+            foreach (var asset in assets)
+            {
+                if (asset == null || !seen.IsRelicSeen(asset.codexId)) continue;
+                CreateRelicTile(asset);
+            }
+        }
+
+        /// <summary>药水图鉴：仅显示已获得的药水，按 codexId 排序，附 No. 编号。</summary>
+        private void BuildPotionCodexList()
+        {
+            var seen = CodexProgress.Instance;
+            var assets = CodexIdRegistry.GetPotionsByIdOrdered();
+            int seenCount = assets.Count(a => seen.IsPotionSeen(a.codexId));
+
+            CreateHeaderRow($"药水图鉴 · 已发现 {seenCount} / {assets.Count}", new Color(0.9f, 0.82f, 0.5f));
+            if (assets.Count == 0)
+            {
+                CreateEmptyHint("暂无药水资产（药水系统待实装，获得后自动收录）");
+                return;
+            }
+            if (seenCount == 0)
+            {
+                CreateEmptyHint("尚未发现任何药水——获得药水后将自动收录于此");
+                return;
+            }
+
+            BeginRelicGrid();
+            foreach (var asset in assets)
+            {
+                if (asset == null || !seen.IsPotionSeen(asset.codexId)) continue;
+                CreatePotionTile(asset);
             }
         }
 
@@ -326,7 +392,7 @@ namespace MutationChess.UI
             tmp.text = text;
         }
 
-        /// <summary>在滚动列表内新建一个 4 列卡牌网格区（真实卡牌预制体铺排，自适应高度）。</summary>
+        /// <summary>在滚动列表内新建一个 5 列卡牌网格区（真实卡牌预制体铺排，自适应高度）。</summary>
         private void BeginCardGrid()
         {
             var gridGo = new GameObject("CardGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
@@ -339,7 +405,25 @@ namespace MutationChess.UI
             grid.spacing = new Vector2(20f, 32f);
             grid.padding = new RectOffset(14, 14, 8, 18);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 4;
+            grid.constraintCount = 5;
+            grid.childAlignment = TextAnchor.MiddleCenter;
+            var fitter = gridGo.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            currentCardGrid = gridGo.GetComponent<RectTransform>();
+        }
+
+        /// <summary>在滚动列表内新建一个 6 列图标网格区（遗物/药水瓦片用）。</summary>
+        private void BeginRelicGrid()
+        {
+            var gridGo = new GameObject("IconGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            gridGo.transform.SetParent(listContent, false);
+            var grid = gridGo.GetComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(130f, 150f);
+            grid.spacing = new Vector2(18f, 26f);
+            grid.padding = new RectOffset(14, 14, 8, 18);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 6;
             grid.childAlignment = TextAnchor.MiddleCenter;
             var fitter = gridGo.GetComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
@@ -506,6 +590,119 @@ namespace MutationChess.UI
             tmp.raycastTarget = false;
         }
 
+        /// <summary>遗物瓦片：图标 + 名称 + No. 编号，点击弹出遗物详情预览。</summary>
+        private GameObject CreateRelicTile(RelicDataAsset asset)
+        {
+            var go = new GameObject("RelicTile_" + asset.relicName, typeof(RectTransform), typeof(Image), typeof(Button));
+            Transform tileParent = currentCardGrid != null ? (Transform)currentCardGrid : listContent;
+            go.transform.SetParent(tileParent, false);
+            go.GetComponent<RectTransform>().sizeDelta = new Vector2(130f, 150f);
+
+            Color rarity = GetRelicRarityColor(asset.rarity);
+            go.GetComponent<Image>().color = rarity * 0.35f + new Color(0.05f, 0.05f, 0.08f);
+            go.GetComponent<Image>().raycastTarget = true;
+
+            // 图标（顶部居中）
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(go.transform, false);
+            var iconRt = iconGo.GetComponent<RectTransform>();
+            iconRt.anchorMin = iconRt.anchorMax = new Vector2(0.5f, 1f);
+            iconRt.pivot = new Vector2(0.5f, 1f);
+            iconRt.anchoredPosition = new Vector2(0f, -10f);
+            iconRt.sizeDelta = new Vector2(84f, 84f);
+            var iconImg = iconGo.GetComponent<Image>();
+            if (!string.IsNullOrEmpty(asset.iconPath))
+                iconImg.sprite = Resources.Load<Sprite>(asset.iconPath);
+            iconImg.preserveAspect = true;
+            iconImg.color = iconImg.sprite != null ? Color.white : rarity * 0.5f;
+            iconImg.raycastTarget = false;
+
+            // 名称（底部居中）
+            var nameTmp = CreateText(go.transform, "Name", 17, TextAlignmentOptions.Center, Color.Lerp(rarity, Color.white, 0.4f));
+            nameTmp.fontStyle = FontStyles.Bold;
+            var nameRt = nameTmp.rectTransform;
+            nameRt.anchorMin = nameRt.anchorMax = new Vector2(0.5f, 0f);
+            nameRt.pivot = new Vector2(0.5f, 0f);
+            nameRt.anchoredPosition = new Vector2(0f, 24f);
+            nameRt.sizeDelta = new Vector2(124f, 44f);
+            nameTmp.text = asset.relicName;
+            nameTmp.enableWordWrapping = true;
+            nameTmp.raycastTarget = false;
+
+            // No. 编号（左上角）
+            var idTmp = CreateText(go.transform, "Id", 14, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
+            var idRt = idTmp.rectTransform;
+            idRt.anchorMin = idRt.anchorMax = new Vector2(0f, 1f);
+            idRt.pivot = new Vector2(0f, 1f);
+            idRt.anchoredPosition = new Vector2(6f, -4f);
+            idRt.sizeDelta = new Vector2(72f, 20f);
+            idTmp.text = $"No.{asset.codexId}";
+            idTmp.raycastTarget = false;
+
+            var btn = go.GetComponent<Button>();
+            btn.targetGraphic = go.GetComponent<Image>();
+            btn.transition = Selectable.Transition.None;
+            UiFeel.ApplyButton(btn);
+            var captured = asset;
+            btn.onClick.AddListener(() => ShowRelicPreview(captured));
+            return go;
+        }
+
+        /// <summary>药水瓦片：图标 + 名称 + No. 编号，点击弹出药水详情预览。</summary>
+        private GameObject CreatePotionTile(PotionDataAsset asset)
+        {
+            var go = new GameObject("PotionTile_" + asset.potionName, typeof(RectTransform), typeof(Image), typeof(Button));
+            Transform tileParent = currentCardGrid != null ? (Transform)currentCardGrid : listContent;
+            go.transform.SetParent(tileParent, false);
+            go.GetComponent<RectTransform>().sizeDelta = new Vector2(130f, 150f);
+
+            Color rarity = GetPotionRarityColor(asset.rarity);
+            go.GetComponent<Image>().color = rarity * 0.35f + new Color(0.05f, 0.05f, 0.08f);
+            go.GetComponent<Image>().raycastTarget = true;
+
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(go.transform, false);
+            var iconRt = iconGo.GetComponent<RectTransform>();
+            iconRt.anchorMin = iconRt.anchorMax = new Vector2(0.5f, 1f);
+            iconRt.pivot = new Vector2(0.5f, 1f);
+            iconRt.anchoredPosition = new Vector2(0f, -10f);
+            iconRt.sizeDelta = new Vector2(84f, 84f);
+            var iconImg = iconGo.GetComponent<Image>();
+            if (!string.IsNullOrEmpty(asset.iconPath))
+                iconImg.sprite = Resources.Load<Sprite>(asset.iconPath);
+            iconImg.preserveAspect = true;
+            iconImg.color = iconImg.sprite != null ? Color.white : rarity * 0.5f;
+            iconImg.raycastTarget = false;
+
+            var nameTmp = CreateText(go.transform, "Name", 17, TextAlignmentOptions.Center, Color.Lerp(rarity, Color.white, 0.4f));
+            nameTmp.fontStyle = FontStyles.Bold;
+            var nameRt = nameTmp.rectTransform;
+            nameRt.anchorMin = nameRt.anchorMax = new Vector2(0.5f, 0f);
+            nameRt.pivot = new Vector2(0.5f, 0f);
+            nameRt.anchoredPosition = new Vector2(0f, 24f);
+            nameRt.sizeDelta = new Vector2(124f, 44f);
+            nameTmp.text = asset.potionName;
+            nameTmp.enableWordWrapping = true;
+            nameTmp.raycastTarget = false;
+
+            var idTmp = CreateText(go.transform, "Id", 14, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
+            var idRt = idTmp.rectTransform;
+            idRt.anchorMin = idRt.anchorMax = new Vector2(0f, 1f);
+            idRt.pivot = new Vector2(0f, 1f);
+            idRt.anchoredPosition = new Vector2(6f, -4f);
+            idRt.sizeDelta = new Vector2(72f, 20f);
+            idTmp.text = $"No.{asset.codexId}";
+            idTmp.raycastTarget = false;
+
+            var btn = go.GetComponent<Button>();
+            btn.targetGraphic = go.GetComponent<Image>();
+            btn.transition = Selectable.Transition.None;
+            UiFeel.ApplyButton(btn);
+            var captured = asset;
+            btn.onClick.AddListener(() => ShowRelicPreviewForPotion(captured));
+            return go;
+        }
+
         #endregion
 
         #region 大卡预览与升级前后对比
@@ -552,8 +749,7 @@ namespace MutationChess.UI
             Card shown = showingUpgraded ? previewUpgradedCard : previewBaseCard;
             if (shown == null) return;
 
-            for (int i = previewCardArea.childCount - 1; i >= 0; i--)
-                Destroy(previewCardArea.GetChild(i).gameObject);
+            ClearPreviewCardArea();
 
             Color rarity = CardVisualConfig.GetRarityColor(shown.rarity);
 
@@ -607,7 +803,10 @@ namespace MutationChess.UI
             metaRt.pivot = new Vector2(0.5f, 0f);
             metaRt.anchoredPosition = new Vector2(0f, 62f);
             metaRt.sizeDelta = new Vector2(280f, 34f);
-            metaTmp.text = $"{GetCardTypeName(shown.cardType)} · {shown.GetFactionName()} · {shown.GetRarityName()}";
+            string metaText = $"{GetCardTypeName(shown.cardType)} · {shown.GetFactionName()} · {shown.GetRarityName()}";
+            if (currentAsset != null && currentAsset.codexId > 0)
+                metaText += $" · No.{currentAsset.codexId}";
+            metaTmp.text = metaText;
 
             // 属性行
             string stats = shown.cardType == CardType.Attack ? $"伤害 {shown.damage}"
@@ -658,6 +857,90 @@ namespace MutationChess.UI
             return "升级变化：" + string.Join(" · ", parts);
         }
 
+        /// <summary>清空预览卡面容器（卡牌翻面重建 / 图标预览共用）。</summary>
+        private void ClearPreviewCardArea()
+        {
+            for (int i = previewCardArea.childCount - 1; i >= 0; i--)
+                Destroy(previewCardArea.GetChild(i).gameObject);
+        }
+
+        /// <summary>遗物详情预览：图标 + 名称 + No./稀有度 + 描述。</summary>
+        private void ShowRelicPreview(RelicDataAsset asset)
+        {
+            if (asset == null) return;
+            ShowIconPreview(asset.relicName, asset.codexId, asset.description, asset.iconPath,
+                GetRelicRarityColor(asset.rarity), GetRelicRarityName(asset.rarity), asset.relicId);
+        }
+
+        /// <summary>药水详情预览（复用图标预览布局）。</summary>
+        private void ShowRelicPreviewForPotion(PotionDataAsset asset)
+        {
+            if (asset == null) return;
+            ShowIconPreview(asset.potionName, asset.codexId, asset.description, asset.iconPath,
+                GetPotionRarityColor(asset.rarity), GetPotionRarityName(asset.rarity), asset.potionId);
+        }
+
+        /// <summary>通用图标预览（遗物/药水）：无升级对比，卡牌专属控件隐藏。</summary>
+        private void ShowIconPreview(string name, int codexId, string description, string iconPath,
+                                     Color rarity, string rarityName, string assetId)
+        {
+            currentAsset = null; // 清除卡牌预览状态
+            previewBaseCard = null;
+            previewUpgradedCard = null;
+            showingUpgraded = false;
+
+            ClearPreviewCardArea();
+
+            // 底色（稀有度色调）
+            var bgGo = new GameObject("Bg", typeof(RectTransform), typeof(Image));
+            bgGo.transform.SetParent(previewCardArea, false);
+            StretchFull(bgGo.GetComponent<RectTransform>());
+            bgGo.GetComponent<Image>().color = rarity * 0.35f + new Color(0.06f, 0.06f, 0.09f);
+            bgGo.GetComponent<Image>().raycastTarget = false;
+
+            // 图标（顶部居中）
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(previewCardArea, false);
+            var iconRt = iconGo.GetComponent<RectTransform>();
+            iconRt.anchorMin = iconRt.anchorMax = new Vector2(0.5f, 1f);
+            iconRt.pivot = new Vector2(0.5f, 1f);
+            iconRt.anchoredPosition = new Vector2(0f, -20f);
+            iconRt.sizeDelta = new Vector2(170f, 170f);
+            var iconImg = iconGo.GetComponent<Image>();
+            if (!string.IsNullOrEmpty(iconPath))
+                iconImg.sprite = Resources.Load<Sprite>(iconPath);
+            iconImg.preserveAspect = true;
+            iconImg.color = iconImg.sprite != null ? Color.white : rarity * 0.5f;
+            iconImg.raycastTarget = false;
+
+            // 名称
+            var nameTmp = CreateText(previewCardArea, "Name", 27, TextAlignmentOptions.Center, rarity);
+            nameTmp.fontStyle = FontStyles.Bold;
+            var nameRt = nameTmp.rectTransform;
+            nameRt.anchorMin = nameRt.anchorMax = new Vector2(0.5f, 1f);
+            nameRt.pivot = new Vector2(0.5f, 1f);
+            nameRt.anchoredPosition = new Vector2(0f, -202f);
+            nameRt.sizeDelta = new Vector2(272f, 42f);
+            nameTmp.text = name;
+
+            // 元信息（No. 编号 · 稀有度 · 资产ID）
+            var metaTmp = CreateText(previewCardArea, "Meta", 18, TextAlignmentOptions.Center, new Color(0.78f, 0.78f, 0.82f));
+            var metaRt = metaTmp.rectTransform;
+            metaRt.anchorMin = metaRt.anchorMax = new Vector2(0.5f, 0f);
+            metaRt.pivot = new Vector2(0.5f, 0f);
+            metaRt.anchoredPosition = new Vector2(0f, 14f);
+            metaRt.sizeDelta = new Vector2(280f, 64f);
+            metaTmp.text = $"No.{codexId} · {rarityName}\n{assetId}";
+
+            previewDescText.text = description;
+            previewDeltaText.text = "";
+            previewDeltaText.color = new Color(0f, 0f, 0f, 0f);
+            upgradeToggleBtn.gameObject.SetActive(false);
+
+            previewPanel.SetActive(true);
+            UiFeel.AnimatePanelIn(previewPanel);
+        }
+
         #endregion
 
         #region 运行时构建
@@ -697,13 +980,15 @@ namespace MutationChess.UI
             StretchFull(maskGo.GetComponent<RectTransform>());
             maskGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
 
-            // 中央面板
+            // 中央面板（全屏图鉴：铺满整屏，四周留 20px 边框）
             var centerGo = new GameObject("CenterPanel", typeof(RectTransform), typeof(Image));
             centerGo.transform.SetParent(panelRoot.transform, false);
             var centerRt = centerGo.GetComponent<RectTransform>();
-            centerRt.anchorMin = centerRt.anchorMax = new Vector2(0.5f, 0.5f);
+            centerRt.anchorMin = Vector2.zero;
+            centerRt.anchorMax = Vector2.one;
             centerRt.pivot = new Vector2(0.5f, 0.5f);
-            centerRt.sizeDelta = new Vector2(1600f, 860f);
+            centerRt.offsetMin = new Vector2(20f, 20f);
+            centerRt.offsetMax = new Vector2(-20f, -20f);
             var centerImg = centerGo.GetComponent<Image>();
             Sprite innerBg = LoadUISprite("获胜奖励面板底层内嵌背景");
             if (innerBg != null)
@@ -733,7 +1018,7 @@ namespace MutationChess.UI
             var titleTmp = CreateText(titleBar.transform, "Title", 42, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.35f));
             StretchFull(titleTmp.rectTransform);
             titleTmp.fontStyle = FontStyles.Bold;
-            titleTmp.text = "牌库档案";
+            titleTmp.text = "图鉴";
 
             // 关闭按钮
             var closeBtnGo = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -751,8 +1036,8 @@ namespace MutationChess.UI
             closeBtn.targetGraphic = closeBtnGo.GetComponent<Image>();
             closeBtn.onClick.AddListener(Close);
 
-            // 标签页按钮（图鉴 / 卡组 / 弃牌堆）
-            string[] tabNames = { "图鉴", "卡组", "弃牌堆" };
+            // 标签页按钮（卡牌图鉴 / 遗物图鉴 / 药水图鉴 / 卡组 / 弃牌堆）
+            string[] tabNames = { "卡牌图鉴", "遗物图鉴", "药水图鉴", "卡组", "弃牌堆" };
             tabButtons = new Button[tabNames.Length];
             tabLabels = new TMP_Text[tabNames.Length];
             for (int i = 0; i < tabNames.Length; i++)
@@ -762,7 +1047,7 @@ namespace MutationChess.UI
                 var tabRt = tabGo.GetComponent<RectTransform>();
                 tabRt.anchorMin = tabRt.anchorMax = new Vector2(0.5f, 1f);
                 tabRt.pivot = new Vector2(0.5f, 1f);
-                tabRt.anchoredPosition = new Vector2(-260f + i * 260f, -128f);
+                tabRt.anchoredPosition = new Vector2(-500f + i * 250f, -128f);
                 tabRt.sizeDelta = new Vector2(230f, 54f);
                 var tabImg = tabGo.GetComponent<Image>();
                 tabImg.color = new Color(0.2f, 0.18f, 0.15f, 1f);
@@ -779,12 +1064,12 @@ namespace MutationChess.UI
                 tabLabels[i] = tabLabel;
             }
 
-            // 列表滚动区（左）
+            // 列表滚动区（左，占满下方区域）
             var scrollGo = new GameObject("Scroll", typeof(RectTransform), typeof(ScrollRect));
             scrollGo.transform.SetParent(centerGo.transform, false);
             var scrollRt = scrollGo.GetComponent<RectTransform>();
-            scrollRt.anchorMin = new Vector2(0.02f, 0.08f);
-            scrollRt.anchorMax = new Vector2(0.60f, 0.78f);
+            scrollRt.anchorMin = new Vector2(0.02f, 0.05f);
+            scrollRt.anchorMax = new Vector2(0.62f, 0.82f);
             scrollRt.offsetMin = Vector2.zero;
             scrollRt.offsetMax = Vector2.zero;
             scrollRect = scrollGo.GetComponent<ScrollRect>();
@@ -824,29 +1109,29 @@ namespace MutationChess.UI
             previewPanel = new GameObject("Preview", typeof(RectTransform), typeof(Image));
             previewPanel.transform.SetParent(centerGo.transform, false);
             var previewRt = previewPanel.GetComponent<RectTransform>();
-            previewRt.anchorMin = new Vector2(0.62f, 0.08f);
-            previewRt.anchorMax = new Vector2(0.98f, 0.78f);
+            previewRt.anchorMin = new Vector2(0.64f, 0.05f);
+            previewRt.anchorMax = new Vector2(0.98f, 0.82f);
             previewRt.offsetMin = Vector2.zero;
             previewRt.offsetMax = Vector2.zero;
             previewPanel.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.14f, 0.96f);
 
-            // 卡面容器（翻面动画对象，左侧：卡面 270×360，绕顶部中心翻面）
+            // 卡面容器（翻面动画对象，左侧：卡面 300×420，绕顶部中心翻面）
             var cardAreaGo = new GameObject("CardArea", typeof(RectTransform));
             cardAreaGo.transform.SetParent(previewPanel.transform, false);
             previewCardArea = cardAreaGo.GetComponent<RectTransform>();
             previewCardArea.anchorMin = previewCardArea.anchorMax = new Vector2(0f, 1f);
             previewCardArea.pivot = new Vector2(0.5f, 1f);
-            previewCardArea.anchoredPosition = new Vector2(153f, -18f);
-            previewCardArea.sizeDelta = new Vector2(270f, 360f);
+            previewCardArea.anchoredPosition = new Vector2(172f, -18f);
+            previewCardArea.sizeDelta = new Vector2(300f, 420f);
 
-            // 描述框（右侧上部：与卡面并排，330 高足够容纳完整描述）
+            // 描述框（右侧上部：与卡面并排，足够容纳完整描述）
             var descBoxGo = new GameObject("DescBox", typeof(RectTransform), typeof(Image));
             descBoxGo.transform.SetParent(previewPanel.transform, false);
             var descBoxRt = descBoxGo.GetComponent<RectTransform>();
             descBoxRt.anchorMin = descBoxRt.anchorMax = new Vector2(1f, 1f);
             descBoxRt.pivot = new Vector2(1f, 1f);
             descBoxRt.anchoredPosition = new Vector2(-18f, -18f);
-            descBoxRt.sizeDelta = new Vector2(250f, 330f);
+            descBoxRt.sizeDelta = new Vector2(300f, 400f);
             descBoxGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.28f);
             previewDescText = CreateText(descBoxGo.transform, "Desc", 21, TextAlignmentOptions.TopLeft, new Color(0.88f, 0.88f, 0.9f));
             var descRt = previewDescText.rectTransform;
@@ -861,8 +1146,8 @@ namespace MutationChess.UI
             var deltaRt = previewDeltaText.rectTransform;
             deltaRt.anchorMin = deltaRt.anchorMax = new Vector2(1f, 1f);
             deltaRt.pivot = new Vector2(1f, 1f);
-            deltaRt.anchoredPosition = new Vector2(-18f, -356f);
-            deltaRt.sizeDelta = new Vector2(250f, 60f);
+            deltaRt.anchoredPosition = new Vector2(-18f, -426f);
+            deltaRt.sizeDelta = new Vector2(300f, 60f);
             previewDeltaText.enableWordWrapping = true;
 
             // 升级前后对比按钮（底部居中，避开右侧返回按钮）
@@ -907,7 +1192,7 @@ namespace MutationChess.UI
             hintRt.pivot = new Vector2(0f, 0f);
             hintRt.anchoredPosition = new Vector2(24f, 6f);
             hintRt.sizeDelta = new Vector2(900f, 34f);
-            hintTmp.text = "F2 打开/关闭 · 点击卡牌查看详情与升级前后对比";
+            hintTmp.text = "F2 打开/关闭 · 点击条目查看详情 · 未发现的内容不显示";
 
             UiFeel.ApplyToAllButtons(panelRoot);
         }
@@ -974,6 +1259,54 @@ namespace MutationChess.UI
         {
             ColorUtility.TryParseHtmlString(hex, out Color c);
             return c;
+        }
+
+        private static Color GetRelicRarityColor(RelicRarity r)
+        {
+            switch (r)
+            {
+                case RelicRarity.Starting: return new Color(1f, 0.6f, 0.2f);
+                case RelicRarity.Common: return new Color(0.9f, 0.9f, 0.9f);
+                case RelicRarity.Rare: return new Color(0.4f, 0.7f, 1f);
+                case RelicRarity.Legendary: return new Color(1f, 0.5f, 0.1f);
+                case RelicRarity.Special: return new Color(1f, 0.25f, 0.25f);
+                default: return Color.white;
+            }
+        }
+
+        private static string GetRelicRarityName(RelicRarity r)
+        {
+            switch (r)
+            {
+                case RelicRarity.Starting: return "初始";
+                case RelicRarity.Common: return "普通";
+                case RelicRarity.Rare: return "稀有";
+                case RelicRarity.Legendary: return "传说";
+                case RelicRarity.Special: return "Boss";
+                default: return r.ToString();
+            }
+        }
+
+        private static Color GetPotionRarityColor(PotionRarity r)
+        {
+            switch (r)
+            {
+                case PotionRarity.Common: return new Color(0.9f, 0.9f, 0.9f);
+                case PotionRarity.Uncommon: return new Color(0.4f, 0.7f, 1f);
+                case PotionRarity.Rare: return new Color(1f, 0.5f, 0.1f);
+                default: return Color.white;
+            }
+        }
+
+        private static string GetPotionRarityName(PotionRarity r)
+        {
+            switch (r)
+            {
+                case PotionRarity.Common: return "普通";
+                case PotionRarity.Uncommon: return "罕见";
+                case PotionRarity.Rare: return "稀有";
+                default: return r.ToString();
+            }
         }
 
         private static Sprite LoadUISprite(string name)

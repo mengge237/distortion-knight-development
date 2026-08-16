@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Shop_TreasureNeedle
   relicName: 寻宝针
+  codexId: 1007
   rarity: 1
   faction: 0
   description: 识宝：商店全部商品九折。迷雾诅咒时：看穿迷雾中的宝箱节点

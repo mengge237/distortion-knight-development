@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: "\u8840\u7011"
   m_EditorClassIdentifier: 
   cardName: "\u8840\u7011"
+  codexId: 50
   cardType: 0
   rarity: 1
   faction: 3

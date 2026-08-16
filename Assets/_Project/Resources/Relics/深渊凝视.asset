@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Shadow_AbyssGaze
   relicName: 深渊凝视
+  codexId: 1059
   rarity: 3
   faction: 5
   description: 打出4张攻击牌后→下一张攻击牌伤害翻倍（隐藏：3张触发）

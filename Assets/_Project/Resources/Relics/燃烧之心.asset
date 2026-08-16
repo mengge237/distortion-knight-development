@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Starter_BurningHeart
   relicName: "\u71C3\u70E7\u4E4B\u5FC3"
+  codexId: 1001
   rarity: 0
   faction: 0
   baseEffectIds:

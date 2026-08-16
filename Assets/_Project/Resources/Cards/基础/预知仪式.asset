@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: "\u9884\u77E5\u4EEA\u5F0F"
   m_EditorClassIdentifier: 
   cardName: "\u9884\u77E5\u4EEA\u5F0F"
+  codexId: 19
   cardType: 2
   rarity: 1
   faction: 0

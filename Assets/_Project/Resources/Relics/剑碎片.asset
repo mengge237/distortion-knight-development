@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Synth_SwordShard
   relicName: "\u5251\u788E\u7247"
+  codexId: 1004
   rarity: 1
   faction: 0
   effectType: 1

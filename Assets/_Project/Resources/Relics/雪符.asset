@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Frost_Snowflake
   relicName: 雪符
+  codexId: 1023
   rarity: 1
   faction: 4
   description: 战斗开始获得10格挡（隐藏：战斗开始+1敏捷）

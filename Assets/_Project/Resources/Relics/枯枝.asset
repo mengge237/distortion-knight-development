@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Corrupt_DeadBranch
   relicName: 枯枝
+  codexId: 1043
   rarity: 2
   faction: 6
   description: 卡牌消耗时往牌堆添加1张腐化卡（隐藏：添加+1）

@@ -107,6 +107,10 @@ namespace MutationChess.UI
         {
             cardData = card;
 
+            // 图鉴"见过才解锁"：卡面展示即记录
+            if (card != null)
+                MutationChess.Core.CodexProgress.MarkCardSeenByName(card.cardName);
+
             if (cardNameText == null)
                 GameLogger.LogError("CardUI: cardNameText ");
             if (costText == null)

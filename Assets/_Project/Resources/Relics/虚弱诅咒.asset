@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Curse_Weakness
   relicName: 虚弱诅咒
+  codexId: 1012
   rarity: 1
   faction: 0
   description: 虚弱缠身：每场战斗开始时能量-1

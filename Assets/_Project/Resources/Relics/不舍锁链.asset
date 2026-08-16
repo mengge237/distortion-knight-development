@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Boss_ReluctantChain
   relicName: 不舍锁链
+  codexId: 1063
   rarity: 4
   faction: 2
   description: 打出不舍牌抽牌+1；消耗牌回1HP（Boss·激活不舍隐藏）

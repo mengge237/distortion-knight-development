@@ -52,6 +52,10 @@ namespace MutationChess.Core
 
         [Header("资源路径")]
         public string cardArtPath;
+
+        [Header("图鉴")]
+        [Tooltip("图鉴稳定编号（1-999），由 Tools/分配图鉴ID 自动分配，勿手动修改")]
+        public int codexId;
     }
 }
 

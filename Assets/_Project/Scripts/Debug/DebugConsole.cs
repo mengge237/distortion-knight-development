@@ -91,6 +91,7 @@ namespace MutationChess.Debug
         private const int MaxLogLines = 200;
         private Font chineseFont; // 调试台中文显示用（IMGUI 默认字体无中文字形，运行时挂系统雅黑）
         private int logLineCount;
+        private string commandInput = ""; // 图鉴命令输入框（以撒式 give/see/list）
 
         #endregion
 
@@ -136,6 +137,7 @@ namespace MutationChess.Debug
 
             GUILayout.BeginArea(new Rect(10, 10, Screen.width - 20, Screen.height - 20));
             DrawHeader();
+            DrawCommandLine();
             DrawTabs();
             GUILayout.Space(4);
             switch (tabIndex)
@@ -806,8 +808,13 @@ namespace MutationChess.Debug
                 _ => "white"
             };
 
-            string time = DateTime.Now.ToString("HH:mm:ss");
-            logBuffer += $"<color={color}>[{time}] {condition}</color>\n";
+            AppendLogLine($"<color={color}>[{DateTime.Now:HH:mm:ss}] {condition}</color>");
+        }
+
+        /// <summary>追加一行日志并裁剪行数上限。</summary>
+        private void AppendLogLine(string line)
+        {
+            logBuffer += line + "\n";
             logLineCount++;
 
             while (logLineCount > MaxLogLines)
@@ -817,6 +824,228 @@ namespace MutationChess.Debug
                 logBuffer = logBuffer.Substring(idx + 1);
                 logLineCount--;
             }
+        }
+
+        #endregion
+
+        #region 图鉴命令（以撒式 give/see/list）
+
+        private const string CommandInputName = "DebugCommandInput";
+
+        private void DrawCommandLine()
+        {
+            GUILayout.Space(2);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("命令:", GUILayout.Width(45));
+            GUI.SetNextControlName(CommandInputName);
+            commandInput = GUILayout.TextField(commandInput, GUILayout.Height(26));
+            bool submitted = GUILayout.Button("执行", GUILayout.Width(60), GUILayout.Height(26));
+            // 输入框内回车提交
+            if (!submitted && Event.current != null && Event.current.type == EventType.KeyDown &&
+                Event.current.keyCode == KeyCode.Return &&
+                GUI.GetNameOfFocusedControl() == CommandInputName)
+            {
+                submitted = true;
+                Event.current.Use();
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.Label("<color=gray>输入 help 查看用法（give/see/list，编号即指向性结果）</color>", RichLabel);
+            GUILayout.Space(4);
+
+            if (submitted && !string.IsNullOrWhiteSpace(commandInput))
+                ExecuteCommand(commandInput);
+        }
+
+        private void ExecuteCommand(string cmdLine)
+        {
+            string cmd = cmdLine.Trim();
+            commandInput = "";
+            if (string.IsNullOrEmpty(cmd))
+            {
+                PrintCommandHelp();
+                return;
+            }
+
+            string[] parts = cmd.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string verb = parts[0].ToLowerInvariant();
+            string arg = parts.Length > 1 ? string.Join(" ", parts, 1, parts.Length - 1) : "";
+
+            // 裸数字 → 直接获得（以撒式：输入编号即产出指向性结果）
+            if (parts.Length == 1 && int.TryParse(parts[0], out _))
+            {
+                CmdGive(parts[0]);
+                return;
+            }
+
+            switch (verb)
+            {
+                case "help":
+                case "帮助":
+                    PrintCommandHelp();
+                    break;
+                case "give":
+                case "给":
+                    CmdGive(arg);
+                    break;
+                case "see":
+                case "见":
+                    CmdSee(arg);
+                    break;
+                case "seeall":
+                    CmdSeeAll();
+                    break;
+                case "list":
+                case "列表":
+                    CmdList(arg);
+                    break;
+                default:
+                    // 未知动词 → 若整体可解析为物品名称则按 give 处理（如直接输入"回春"）
+                    if (CodexIdRegistry.TryResolve(cmd, out _, out _))
+                        CmdGive(cmd);
+                    else
+                        CmdLog($"未知命令：\"{cmd}\"（输入 help 查看用法）");
+                    break;
+            }
+        }
+
+        private void CmdGive(string arg)
+        {
+            if (!CodexIdRegistry.TryResolve(arg, out CodexCategory cat, out int id))
+            {
+                CmdLog($"无法解析：\"{arg}\"（list 查看编号，help 查看用法）");
+                return;
+            }
+
+            switch (cat)
+            {
+                case CodexCategory.Card: GiveCardById(id); break;
+                case CodexCategory.Relic: GiveRelicById(id); break;
+                case CodexCategory.Potion: GivePotionById(id); break;
+            }
+        }
+
+        private void GiveCardById(int id)
+        {
+            var asset = CodexIdRegistry.GetCard(id);
+            if (asset == null) { CmdLog($"卡牌编号 {id} 无对应资产"); return; }
+            var hm = HandManager.Instance;
+            if (hm == null || !hm.IsInBattle()) { CmdLog("需进入战斗后使用（首页无法获得卡牌）"); return; }
+            var card = CardData.CreateCardFromAsset(asset);
+            if (card == null) { CmdLog($"创建卡牌失败：{asset.cardName}"); return; }
+            hm.AddCardToHand(card);
+            hm.UpdateHandUI();
+            CmdLog($"已获得卡牌 No.{id} 「{asset.cardName}」");
+        }
+
+        private void GiveRelicById(int id)
+        {
+            var asset = CodexIdRegistry.GetRelic(id);
+            if (asset == null) { CmdLog($"遗物编号 {id} 无对应资产"); return; }
+            var rm = RelicManager.Instance;
+            if (rm == null) { CmdLog("需进入战斗后使用（首页无法获得遗物）"); return; }
+            var relic = rm.CreateRelicFromAsset(asset);
+            if (relic == null) { CmdLog($"创建遗物失败：{asset.relicName}"); return; }
+            rm.AddRelic(relic);
+            CmdLog($"已获得遗物 No.{id} 「{asset.relicName}」");
+        }
+
+        private void GivePotionById(int id)
+        {
+            var asset = CodexIdRegistry.GetPotion(id);
+            if (asset == null) { CmdLog($"药水编号 {id} 无对应资产"); return; }
+            var pdm = PlayerDataManager.Instance;
+            var pd = pdm?.GetPlayerData();
+            if (pd == null) { CmdLog("需进入战斗后使用（首页无法获得药水）"); return; }
+            var potion = new Potion(asset.potionId, asset.potionName, asset.rarity, asset.description, asset.price);
+            if (!pd.AddPotion(potion)) { CmdLog($"药水已满（{pd.maxPotions}），无法添加"); return; }
+            CmdLog($"已获得药水 No.{id} 「{asset.potionName}」");
+        }
+
+        private void CmdSee(string arg)
+        {
+            if (string.IsNullOrWhiteSpace(arg)) { CmdLog("用法：see <编号|名称>（如 see 1003 / see 不舍锁链）"); return; }
+            if (!CodexIdRegistry.TryResolve(arg, out _, out int id))
+            {
+                CmdLog($"无法解析：\"{arg}\"");
+                return;
+            }
+            if (CodexProgress.UnlockOne(id))
+                CmdLog($"已解锁图鉴 No.{id}");
+        }
+
+        private void CmdSeeAll()
+        {
+            CodexProgress.Instance.UnlockAll();
+        }
+
+        private void CmdList(string arg)
+        {
+            string[] parts = (arg ?? "").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            CodexCategory? cat = parts.Length > 0
+                ? parts[0].ToLowerInvariant() switch
+                {
+                    "card" or "卡牌" => CodexCategory.Card,
+                    "relic" or "遗物" => CodexCategory.Relic,
+                    "potion" or "药水" => CodexCategory.Potion,
+                    _ => (CodexCategory?)null
+                }
+                : null;
+
+            if (cat == null)
+            {
+                CmdLog("用法：list card|relic|potion [关键词]（✓=图鉴已见）");
+                return;
+            }
+
+            string filter = parts.Length > 1 ? string.Join(" ", parts, 1, parts.Length - 1) : "";
+            var cp = CodexProgress.Instance;
+            int shown = 0;
+            switch (cat.Value)
+            {
+                case CodexCategory.Card:
+                    foreach (var a in CodexIdRegistry.GetCardsByIdOrdered())
+                    {
+                        if (!string.IsNullOrEmpty(filter) && a.cardName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                        CmdLog($"No.{a.codexId} {(cp.IsCardSeen(a.codexId) ? "✓" : "✗")} {a.cardName}");
+                        shown++;
+                    }
+                    break;
+                case CodexCategory.Relic:
+                    foreach (var a in CodexIdRegistry.GetRelicsByIdOrdered())
+                    {
+                        if (!string.IsNullOrEmpty(filter) && a.relicName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                        CmdLog($"No.{a.codexId} {(cp.IsRelicSeen(a.codexId) ? "✓" : "✗")} {a.relicName}");
+                        shown++;
+                    }
+                    break;
+                case CodexCategory.Potion:
+                    foreach (var a in CodexIdRegistry.GetPotionsByIdOrdered())
+                    {
+                        if (!string.IsNullOrEmpty(filter) && a.potionName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                        CmdLog($"No.{a.codexId} {(cp.IsPotionSeen(a.codexId) ? "✓" : "✗")} {a.potionName}");
+                        shown++;
+                    }
+                    break;
+            }
+            CmdLog($"共 {shown} 条");
+        }
+
+        private void PrintCommandHelp()
+        {
+            CmdLog("=== 图鉴命令（以撒式）===");
+            CmdLog("<数字>          直接获得对应编号物品（卡牌 1-999 / 遗物 1001-1999 / 药水 2001-2999）");
+            CmdLog("give <编号|名称>  获得物品，如 give 5 / give card 5 / give 遗物 不舍锁链");
+            CmdLog("see <编号|名称>   仅解锁图鉴条目（不获得）");
+            CmdLog("seeall          解锁全部图鉴条目");
+            CmdLog("list card|relic|potion [关键词]  列出编号（✓=已见）");
+            CmdLog("help            显示本帮助");
+        }
+
+        /// <summary>命令结果输出到日志缓冲并自动切到日志页签。</summary>
+        private void CmdLog(string msg)
+        {
+            AppendLogLine($"<color=#8affa0>[{DateTime.Now:HH:mm:ss}] {msg}</color>");
+            tabIndex = 5; // 日志页签
         }
 
         #endregion

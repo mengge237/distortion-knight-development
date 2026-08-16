@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_WarriorBelt
   relicName: "\u6218\u58EB\u8170\u5E26"
+  codexId: 1009
   rarity: 1
   faction: 0
   baseEffectIds:

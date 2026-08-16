@@ -116,8 +116,8 @@ namespace MutationChess.UI
             continueHintTmp = CreateHomeButton("继续游戏", "", -540f, ContinueGame);
             RefreshContinueHint();
 
-            // 牌库档案
-            CreateHomeButton("牌库档案", "图鉴 · 卡组 · 弃牌堆", -680f, OpenArchive);
+            // 图鉴（全屏，见过才解锁）
+            CreateHomeButton("图鉴", "卡牌 · 遗物 · 药水", -680f, OpenArchive);
 
             // 设置
             CreateHomeButton("设置", "音量 · 全屏 · 音效开关", -820f, OpenSettings);
@@ -129,7 +129,7 @@ namespace MutationChess.UI
             footerRt.pivot = new Vector2(0.5f, 0f);
             footerRt.anchoredPosition = new Vector2(0f, 34f);
             footerRt.sizeDelta = new Vector2(1200f, 34f);
-            footer.text = "分支 8.16.2 · F2 牌库档案 · ESC 关闭面板";
+            footer.text = "分支 8.16.3 · F2 图鉴 · ESC 关闭面板";
         }
 
         private TMP_Text CreateHomeButton(string label, string hint, float y, UnityAction onClick)
@@ -266,7 +266,7 @@ namespace MutationChess.UI
 
         private void OpenArchive()
         {
-            CardArchivePanel.Instance.Open(CardArchivePanel.ArchiveTab.Codex);
+            CardArchivePanel.Instance.Open(CardArchivePanel.ArchiveTab.Cards);
         }
 
         private void OpenSettings()

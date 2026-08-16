@@ -26,6 +26,7 @@ namespace MutationChess.EditorTools
         private const string MainScenePath = "Assets/_Project/Scenes/MainScene.unity";
         private const string ArtDir = "Assets/_Project/Resources/UI/Home";
         private const string FontAssetPath = "Assets/_Project/Resources/Fonts & Materials/LXGW WenKai SDF.asset";
+        private const string MarkerScriptPath = "Assets/_Project/Scripts/UI/HomeSceneMarker.cs";
 
         static HomeSceneSetup()
         {
@@ -284,29 +285,57 @@ namespace MutationChess.EditorTools
         private static void EnsureHomeScene()
         {
             bool exists = File.Exists(HomeScenePath);
-            bool hasCanvas = exists && File.ReadAllText(HomeScenePath).Contains("HomeCanvas");
-            if (exists && hasCanvas) return;
+            if (exists && SceneFileHasMarker(HomeScenePath)) return;
 
-            // 旧版场景（无画布）可能正被用户打开：先关闭，重建后重新打开，让用户立刻在编辑器看到新场景
+            // 旧版场景（无画布）可能正被用户打开：不能关闭"最后一个打开的场景"（CloseScene 会静默失败），
+            // 也不能把新建场景保存到仍被旧场景占用的同路径 → 改为原地清空重建并保存回自身路径
             Scene openScene = EditorSceneManager.GetSceneByPath(HomeScenePath);
-            bool wasOpen = openScene.isLoaded;
-            if (wasOpen)
+            if (openScene.isLoaded)
             {
-                UnityEngine.Debug.Log("[HomeSceneSetup] HomeScene 正打开且缺少画布，关闭旧版后重建");
-                EditorSceneManager.CloseScene(openScene, true);
+                // 打开态以内存为准：已含画布或标记（含未保存的手动修改）→ 不再重建
+                if (SceneHasCanvas(openScene) || SceneHasMarker(openScene)) return;
+
+                UnityEngine.Debug.Log("[HomeSceneSetup] HomeScene 正打开且缺少标记，原地清空重建（场景保持打开，用户可立即看到）");
+                foreach (GameObject root in openScene.GetRootGameObjects())
+                    UnityEngine.Object.DestroyImmediate(root);
+                BuildHomeScene(openScene);
+                EditorSceneManager.SaveScene(openScene);
+                UnityEngine.Debug.Log("[HomeSceneSetup] 已原地重建首页场景（画布+面板+美术）：" + HomeScenePath);
+                return;
             }
 
+            // 场景未打开：新建空场景构建后保存；此时编辑器至少有一个其他场景打开，新建场景可安全关闭
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             BuildHomeScene(scene);
             EditorSceneManager.SaveScene(scene, HomeScenePath);
             EditorSceneManager.CloseScene(scene, true);
             UnityEngine.Debug.Log("[HomeSceneSetup] 已重建首页场景（画布+面板+美术）：" + HomeScenePath);
+        }
 
-            if (wasOpen)
-            {
-                var reopened = EditorSceneManager.OpenScene(HomeScenePath, OpenSceneMode.Additive);
-                EditorSceneManager.SetActiveScene(reopened);
-            }
+        /// <summary>
+        /// 场景文件内是否含 HomeSceneMarker 组件（按脚本 GUID 精确匹配）。
+        /// 手动编辑改名/重排节点不会误触发重建，只有删掉标记组件才会（场景缺标记＝旧版场景）。
+        /// </summary>
+        private static bool SceneFileHasMarker(string scenePath)
+        {
+            string markerGuid = AssetDatabase.AssetPathToGUID(MarkerScriptPath);
+            string text = File.ReadAllText(scenePath);
+            if (!string.IsNullOrEmpty(markerGuid)) return text.Contains("guid: " + markerGuid);
+            return text.Contains("HomeCanvas"); // 标记脚本尚未导入等罕见情况：回退旧画布字符串判定
+        }
+
+        private static bool SceneHasMarker(Scene scene)
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+                if (root.GetComponentInChildren<HomeSceneMarker>(true) != null) return true;
+            return false;
+        }
+
+        private static bool SceneHasCanvas(Scene scene)
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+                if (root.GetComponent<Canvas>() != null) return true;
+            return false;
         }
 
         private static void BuildHomeScene(Scene scene)
@@ -326,6 +355,7 @@ namespace MutationChess.EditorTools
             // 首页启动器（绑定画布控件；缺接线时回退运行时自建）
             var homeGo = new GameObject("HomeScreen");
             homeGo.AddComponent<HomeScreen>();
+            homeGo.AddComponent<HomeSceneMarker>(); // 生成哨兵：EnsureHomeScene 据此识别已生成场景，不再自动重建
 
             // 画布：1920×1080 参考分辨率，全屏适配
             var canvasGo = new GameObject("HomeCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -368,11 +398,11 @@ namespace MutationChess.EditorTools
 
             CreateHomeButton(btnPanel.transform, font, "Btn_开始游戏", "开始游戏", "选择难度，踏入深渊", -400f);
             CreateHomeButton(btnPanel.transform, font, "Btn_继续游戏", "继续游戏", "", -540f);
-            CreateHomeButton(btnPanel.transform, font, "Btn_牌库档案", "牌库档案", "图鉴 · 卡组 · 弃牌堆", -680f);
+            CreateHomeButton(btnPanel.transform, font, "Btn_牌库档案", "图鉴", "卡牌 · 遗物 · 药水", -680f);
             CreateHomeButton(btnPanel.transform, font, "Btn_设置", "设置", "音量 · 全屏 · 音效开关", -820f);
 
             // 底部提示
-            CreateTmpText(canvasGo.transform, "Footer", font, 18, "分支 8.16.2 · F2 牌库档案 · ESC 关闭面板", TextAlignmentOptions.Center,
+            CreateTmpText(canvasGo.transform, "Footer", font, 18, "分支 8.16.3 · F2 图鉴 · ESC 关闭面板", TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(1200f, 34f),
                 new Color(0.45f, 0.43f, 0.4f), FontStyles.Normal);
 
@@ -522,7 +552,8 @@ namespace MutationChess.EditorTools
 
         private static Sprite LoadSprite(string resourcePath)
         {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(ArtDir + "/" + Path.GetFileName(resourcePath));
+            // 必须带扩展名：LoadAssetAtPath 不带 .png 时找不到资产返回 null，场景里所有 Image 会存成空 Sprite
+            return AssetDatabase.LoadAssetAtPath<Sprite>(ArtDir + "/" + Path.GetFileName(resourcePath) + ".png");
         }
 
         private static Image CreateImage(Transform parent, string name, Sprite sprite)

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Combo_ChessMaster
   relicName: "\u68CB\u738B\u51A0"
+  codexId: 1048
   rarity: 3
   faction: 0
   baseEffectIds:

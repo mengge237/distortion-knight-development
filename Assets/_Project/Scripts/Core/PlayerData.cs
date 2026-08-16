@@ -224,6 +224,8 @@ namespace MutationChess.Core
                 return false;
             }
             potions.Add(potion);
+            // 图鉴"见过才解锁"：获得药水即记录
+            CodexProgress.MarkPotionSeenByName(potion.potionName);
             return true;
         }
 

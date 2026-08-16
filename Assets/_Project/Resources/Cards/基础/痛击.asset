@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: "\u75DB\u51FB"
   m_EditorClassIdentifier: 
   cardName: "\u75DB\u51FB"
+  codexId: 31
   cardType: 0
   rarity: 0
   faction: 0

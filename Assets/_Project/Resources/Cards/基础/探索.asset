@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: "\u63A2\u7D22"
   m_EditorClassIdentifier: 
   cardName: "\u63A2\u7D22"
+  codexId: 22
   cardType: 2
   rarity: 1
   faction: 0

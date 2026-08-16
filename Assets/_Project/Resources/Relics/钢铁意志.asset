@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_IronWill
   relicName: "\u94A2\u94C1\u610F\u5FD7"
+  codexId: 1035
   rarity: 2
   faction: 0
   baseEffectIds:

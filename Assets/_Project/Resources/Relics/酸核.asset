@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Slime_AcidicCore
   relicName: 酸核
+  codexId: 1056
   rarity: 3
   faction: 1
   description: 战斗开始施加3层虚弱+3层脆弱+3层易伤（隐藏：各4层）

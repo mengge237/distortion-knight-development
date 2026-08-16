@@ -89,6 +89,8 @@ namespace MutationChess.Core
             TryDeduplicateRelics(relic);
 
             ownedRelics.Add(relic);
+            // 图鉴"见过才解锁"：获得遗物即记录
+            CodexProgress.MarkRelicSeenByAssetId(relic.relicId);
             RegisterRelicEffects(relic);
             GameLogger.Log($"[RelicManager] 获得遗物：{relic.relicName} ({relic.GetRarityName()})");
             OnRelicsChanged?.Invoke();

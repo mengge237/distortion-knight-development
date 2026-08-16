@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Blood_BloodCharm
   relicName: "\u8840\u62A4\u7B26"
+  codexId: 1039
   rarity: 2
   faction: 3
   hiddenActivatorRelicId: Boss_BloodVein

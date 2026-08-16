@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_LeatherArmor
   relicName: "\u76AE\u7532"
+  codexId: 1010
   rarity: 1
   faction: 0
   baseEffectIds:

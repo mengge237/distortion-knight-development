@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Curse_Greed
   relicName: 贪婪诅咒
+  codexId: 1014
   rarity: 1
   faction: 0
   description: 贪婪缠身：商店全部商品价格+25%

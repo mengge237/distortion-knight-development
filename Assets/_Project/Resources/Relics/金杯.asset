@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_GoldenChalice
   relicName: "\u91D1\u676F"
+  codexId: 1034
   rarity: 2
   faction: 0
   baseEffectIds:

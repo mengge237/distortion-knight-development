@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_IronRing
   relicName: "\u94C1\u6212\u6307"
+  codexId: 1016
   rarity: 1
   faction: 0
   effectType: 12

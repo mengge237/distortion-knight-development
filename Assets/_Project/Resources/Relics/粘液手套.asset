@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Slime_StickyGlove
   relicName: 粘液手套
+  codexId: 1019
   rarity: 1
   faction: 1
   description: 打出粘液牌时施加1层虚弱（隐藏：虚弱+1）
