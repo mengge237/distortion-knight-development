@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Curse_PhantomPain
   relicName: 幻痛诅咒
-  codexId: 1008
+  codexId: 8
   rarity: 1
   faction: 0
   description: 幻痛如影：每场战斗开始受到 3 点伤害

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Curse_Drowsy
   relicName: 困倦诅咒
-  codexId: 1006
+  codexId: 6
   rarity: 1
   faction: 0
   description: 困倦缠身：每场战斗初始少抽 1 张牌

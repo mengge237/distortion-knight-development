@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Corrupt_Necronomicon
   relicName: 死灵之书
-  codexId: 1060
+  codexId: 60
   rarity: 3
   faction: 6
   description: 卡牌消耗时抽1张牌（隐藏：抽牌+1）

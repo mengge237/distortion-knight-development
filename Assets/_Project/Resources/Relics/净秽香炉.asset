@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Shop_CleansingCenser
   relicName: 净秽香炉
-  codexId: 1026
+  codexId: 26
   rarity: 2
   faction: 0
   description: 焚香净秽：每层诅咒降临概率减半

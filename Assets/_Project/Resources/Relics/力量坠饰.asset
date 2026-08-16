@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_PowerPendant
   relicName: "\u529B\u91CF\u5760\u9970"
-  codexId: 1028
+  codexId: 28
   rarity: 2
   faction: 0
   baseEffectIds:

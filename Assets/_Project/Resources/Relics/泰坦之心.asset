@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_TitanHeart
   relicName: "\u6CF0\u5766\u4E4B\u5FC3"
-  codexId: 1050
+  codexId: 50
   rarity: 3
   faction: 0
   baseEffectIds:

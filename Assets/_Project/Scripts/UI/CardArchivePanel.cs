@@ -9,8 +9,9 @@ using MutationChess.Core;
 namespace MutationChess.UI
 {
     /// <summary>
-    /// 全屏图鉴面板（以撒式"见过才解锁"）：卡牌图鉴/遗物图鉴/药水图鉴（仅显示已见过条目，
-    /// 按 codexId 排序，未见过完全隐藏）、卡组（运行时牌组统计）、弃牌堆（本场战斗弃牌堆+消耗堆）。
+    /// 全屏图鉴面板（以撒式"见过才解锁"）：卡牌图鉴/遗物图鉴/药水图鉴（按 codexId 排序，
+    /// 未见过条目在正式模式完全隐藏、开发者模式（DevConfig.DevMode）显示全部并标"未发现"），
+    /// 卡组（运行时牌组统计）、弃牌堆（本场战斗弃牌堆+消耗堆）。
     /// 战斗中点击"抽牌/弃牌"计数或按 F2 打开，点击条目弹出大卡/遗物预览，
     /// 卡牌可切换"升级前后对比"查看绿色数值增量（翻面动画）。
     /// 场景可接线（panelRoot/openButton），缺失时运行时自动构建，视觉复用获胜奖励图集。
@@ -182,9 +183,10 @@ namespace MutationChess.UI
             var seen = CodexProgress.Instance;
             var assets = CodexIdRegistry.GetCardsByIdOrdered();
             int seenCount = assets.Count(a => seen.IsCardSeen(a.codexId));
+            bool devMode = DevConfig.DevMode; // 开发者模式：显示全部条目（不隐藏未见过）
 
-            CreateHeaderRow($"卡牌图鉴 · 已发现 {seenCount} / {assets.Count}", new Color(0.9f, 0.82f, 0.5f));
-            if (seenCount == 0)
+            CreateHeaderRow($"卡牌图鉴 · 已发现 {seenCount} / {assets.Count}{(devMode ? " · 开发者模式" : "")}", new Color(0.9f, 0.82f, 0.5f));
+            if (!devMode && seenCount == 0)
             {
                 CreateEmptyHint("尚未发现任何卡牌——获得或见过卡牌后将自动收录于此（调试命令 seeall 可解锁全部）");
                 return;
@@ -208,7 +210,8 @@ namespace MutationChess.UI
             foreach (var asset in assets)
             {
                 if (asset == null) continue;
-                if (!seen.IsCardSeen(asset.codexId)) continue; // 未见过：完全隐藏
+                bool isSeen = seen.IsCardSeen(asset.codexId);
+                if (!devMode && !isSeen) continue; // 未见过：正式模式完全隐藏，开发者模式显示全部
 
                 if (first || asset.faction != lastFaction)
                 {
@@ -219,12 +222,14 @@ namespace MutationChess.UI
                 }
 
                 owned.TryGetValue(asset.cardName, out var o);
-                string badge = $"No.{asset.codexId}";
+                string badge = CodexIds.Format(CodexCategory.Card, asset.codexId);
                 if (o.count > 0) badge += $" ✓x{o.count}";
                 if (o.upgraded) badge += " ★";
+                else if (devMode && !isSeen) badge += " · 未发现";
                 Color badgeColor = o.upgraded ? new Color(1f, 0.82f, 0.3f)
                     : o.count > 0 ? new Color(0.5f, 1f, 0.5f)
-                    : new Color(0.8f, 0.8f, 0.8f);
+                    : isSeen ? new Color(0.8f, 0.8f, 0.8f)
+                    : new Color(0.55f, 0.55f, 0.6f);
                 CreateCardTile(CardData.CreateCardFromAsset(asset), asset, badge, badgeColor);
             }
         }
@@ -235,9 +240,10 @@ namespace MutationChess.UI
             var seen = CodexProgress.Instance;
             var assets = CodexIdRegistry.GetRelicsByIdOrdered();
             int seenCount = assets.Count(a => seen.IsRelicSeen(a.codexId));
+            bool devMode = DevConfig.DevMode; // 开发者模式：显示全部条目（不隐藏未见过）
 
-            CreateHeaderRow($"遗物图鉴 · 已发现 {seenCount} / {assets.Count}", new Color(0.9f, 0.82f, 0.5f));
-            if (seenCount == 0)
+            CreateHeaderRow($"遗物图鉴 · 已发现 {seenCount} / {assets.Count}{(devMode ? " · 开发者模式" : "")}", new Color(0.9f, 0.82f, 0.5f));
+            if (!devMode && seenCount == 0)
             {
                 CreateEmptyHint("尚未发现任何遗物——获得遗物后将自动收录于此");
                 return;
@@ -246,7 +252,8 @@ namespace MutationChess.UI
             BeginRelicGrid();
             foreach (var asset in assets)
             {
-                if (asset == null || !seen.IsRelicSeen(asset.codexId)) continue;
+                if (asset == null) continue;
+                if (!devMode && !seen.IsRelicSeen(asset.codexId)) continue; // 未见过：正式模式隐藏
                 CreateRelicTile(asset);
             }
         }
@@ -257,14 +264,15 @@ namespace MutationChess.UI
             var seen = CodexProgress.Instance;
             var assets = CodexIdRegistry.GetPotionsByIdOrdered();
             int seenCount = assets.Count(a => seen.IsPotionSeen(a.codexId));
+            bool devMode = DevConfig.DevMode; // 开发者模式：显示全部条目（不隐藏未见过）
 
-            CreateHeaderRow($"药水图鉴 · 已发现 {seenCount} / {assets.Count}", new Color(0.9f, 0.82f, 0.5f));
+            CreateHeaderRow($"药水图鉴 · 已发现 {seenCount} / {assets.Count}{(devMode ? " · 开发者模式" : "")}", new Color(0.9f, 0.82f, 0.5f));
             if (assets.Count == 0)
             {
                 CreateEmptyHint("暂无药水资产（药水系统待实装，获得后自动收录）");
                 return;
             }
-            if (seenCount == 0)
+            if (!devMode && seenCount == 0)
             {
                 CreateEmptyHint("尚未发现任何药水——获得药水后将自动收录于此");
                 return;
@@ -273,7 +281,8 @@ namespace MutationChess.UI
             BeginRelicGrid();
             foreach (var asset in assets)
             {
-                if (asset == null || !seen.IsPotionSeen(asset.codexId)) continue;
+                if (asset == null) continue;
+                if (!devMode && !seen.IsPotionSeen(asset.codexId)) continue; // 未见过：正式模式隐藏
                 CreatePotionTile(asset);
             }
         }
@@ -636,7 +645,7 @@ namespace MutationChess.UI
             idRt.pivot = new Vector2(0f, 1f);
             idRt.anchoredPosition = new Vector2(6f, -4f);
             idRt.sizeDelta = new Vector2(72f, 20f);
-            idTmp.text = $"No.{asset.codexId}";
+            idTmp.text = CodexIds.Format(CodexCategory.Relic, asset.codexId);
             idTmp.raycastTarget = false;
 
             var btn = go.GetComponent<Button>();
@@ -691,7 +700,7 @@ namespace MutationChess.UI
             idRt.pivot = new Vector2(0f, 1f);
             idRt.anchoredPosition = new Vector2(6f, -4f);
             idRt.sizeDelta = new Vector2(72f, 20f);
-            idTmp.text = $"No.{asset.codexId}";
+            idTmp.text = CodexIds.Format(CodexCategory.Potion, asset.codexId);
             idTmp.raycastTarget = false;
 
             var btn = go.GetComponent<Button>();
@@ -805,7 +814,7 @@ namespace MutationChess.UI
             metaRt.sizeDelta = new Vector2(280f, 34f);
             string metaText = $"{GetCardTypeName(shown.cardType)} · {shown.GetFactionName()} · {shown.GetRarityName()}";
             if (currentAsset != null && currentAsset.codexId > 0)
-                metaText += $" · No.{currentAsset.codexId}";
+                metaText += $" · {CodexIds.Format(CodexCategory.Card, currentAsset.codexId)}";
             metaTmp.text = metaText;
 
             // 属性行
@@ -864,11 +873,11 @@ namespace MutationChess.UI
                 Destroy(previewCardArea.GetChild(i).gameObject);
         }
 
-        /// <summary>遗物详情预览：图标 + 名称 + No./稀有度 + 描述。</summary>
+        /// <summary>遗物详情预览：图标 + 名称 + R编号/稀有度 + 描述。</summary>
         private void ShowRelicPreview(RelicDataAsset asset)
         {
             if (asset == null) return;
-            ShowIconPreview(asset.relicName, asset.codexId, asset.description, asset.iconPath,
+            ShowIconPreview(CodexCategory.Relic, asset.relicName, asset.codexId, asset.description, asset.iconPath,
                 GetRelicRarityColor(asset.rarity), GetRelicRarityName(asset.rarity), asset.relicId);
         }
 
@@ -876,12 +885,12 @@ namespace MutationChess.UI
         private void ShowRelicPreviewForPotion(PotionDataAsset asset)
         {
             if (asset == null) return;
-            ShowIconPreview(asset.potionName, asset.codexId, asset.description, asset.iconPath,
+            ShowIconPreview(CodexCategory.Potion, asset.potionName, asset.codexId, asset.description, asset.iconPath,
                 GetPotionRarityColor(asset.rarity), GetPotionRarityName(asset.rarity), asset.potionId);
         }
 
         /// <summary>通用图标预览（遗物/药水）：无升级对比，卡牌专属控件隐藏。</summary>
-        private void ShowIconPreview(string name, int codexId, string description, string iconPath,
+        private void ShowIconPreview(CodexCategory cat, string name, int codexId, string description, string iconPath,
                                      Color rarity, string rarityName, string assetId)
         {
             currentAsset = null; // 清除卡牌预览状态
@@ -923,14 +932,14 @@ namespace MutationChess.UI
             nameRt.sizeDelta = new Vector2(272f, 42f);
             nameTmp.text = name;
 
-            // 元信息（No. 编号 · 稀有度 · 资产ID）
+            // 元信息（前缀编号 · 稀有度 · 资产ID）
             var metaTmp = CreateText(previewCardArea, "Meta", 18, TextAlignmentOptions.Center, new Color(0.78f, 0.78f, 0.82f));
             var metaRt = metaTmp.rectTransform;
             metaRt.anchorMin = metaRt.anchorMax = new Vector2(0.5f, 0f);
             metaRt.pivot = new Vector2(0.5f, 0f);
             metaRt.anchoredPosition = new Vector2(0f, 14f);
             metaRt.sizeDelta = new Vector2(280f, 64f);
-            metaTmp.text = $"No.{codexId} · {rarityName}\n{assetId}";
+            metaTmp.text = $"{CodexIds.Format(cat, codexId)} · {rarityName}\n{assetId}";
 
             previewDescText.text = description;
             previewDeltaText.text = "";

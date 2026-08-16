@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_PiggyBank
   relicName: "\u50A8\u84C4\u7F50"
-  codexId: 1002
+  codexId: 2
   rarity: 1
   faction: 0
   effectType: 3

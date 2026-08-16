@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Shop_RestockTalisman
   relicName: "\u8865\u8D27\u7B26"
-  codexId: 1033
+  codexId: 33
   rarity: 2
   faction: 0
   baseEffectIds:

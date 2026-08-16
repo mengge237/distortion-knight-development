@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Synth_HiltShard
   relicName: "\u5251\u67C4\u788E\u7247"
-  codexId: 1003
+  codexId: 3
   rarity: 1
   faction: 0
   effectType: 12

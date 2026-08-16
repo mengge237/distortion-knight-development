@@ -7,10 +7,10 @@ using MutationChess.Core;
 namespace MutationChess.EditorTools
 {
     /// <summary>
-    /// 图鉴 ID 分配器（参照《以撒的结合》道具编号）：
-    /// 卡牌 1-999 / 遗物 1001-1999 / 药水 2001-2999。
+    /// 图鉴 ID 分配器（参照《以撒的结合》道具编号，前缀体系）：
+    /// k=卡牌 / r=遗物 / p=药水，各自从 1 独立递增，类别间编号互不占用、无上限。
     /// 仅在资产 codexId &lt;= 0（未分配）时写入：首次批量分配后 ID 永久固化，
-    /// 之后新增资产取同段内下一个空闲号，老 ID 不漂移（存档中的 seen 记录不会失效）。
+    /// 之后新增资产取同类别内下一个空闲号，老 ID 不漂移（存档中的 seen 记录不会失效）。
     /// 域重载后自动检查（幂等，无未分配资产时不写盘），也可用菜单 Tools/分配图鉴ID 手动触发。
     /// </summary>
     [InitializeOnLoad]
@@ -83,22 +83,17 @@ namespace MutationChess.EditorTools
             });
 
             var used = new HashSet<int>(cards.Where(c => c.codexId > 0).Select(c => c.codexId));
-            int next = CodexIds.CardMin;
+            int next = 1;
             int assigned = 0;
             foreach (var c in unassigned)
             {
-                while (next <= CodexIds.CardMax && used.Contains(next)) next++;
-                if (next > CodexIds.CardMax)
-                {
-                    UnityEngine.Debug.LogError("[CodexIdAssigner] 卡牌图鉴 ID 已用尽（>999），请扩容 CodexIds");
-                    break;
-                }
+                while (used.Contains(next)) next++;
                 c.codexId = next++;
                 EditorUtility.SetDirty(c);
                 assigned++;
             }
             if (assigned > 0)
-                UnityEngine.Debug.Log($"[CodexIdAssigner] 卡牌：分配 {assigned} 个 ID（{CodexIds.CardMin}-{next - 1}）");
+                UnityEngine.Debug.Log($"[CodexIdAssigner] 卡牌：分配 {assigned} 个 ID（1-{next - 1}）");
             return assigned;
         }
 
@@ -119,22 +114,17 @@ namespace MutationChess.EditorTools
             });
 
             var used = new HashSet<int>(relics.Where(r => r.codexId > 0).Select(r => r.codexId));
-            int next = CodexIds.RelicMin;
+            int next = 1;
             int assigned = 0;
             foreach (var r in unassigned)
             {
-                while (next <= CodexIds.RelicMax && used.Contains(next)) next++;
-                if (next > CodexIds.RelicMax)
-                {
-                    UnityEngine.Debug.LogError("[CodexIdAssigner] 遗物图鉴 ID 已用尽（>1999），请扩容 CodexIds");
-                    break;
-                }
+                while (used.Contains(next)) next++;
                 r.codexId = next++;
                 EditorUtility.SetDirty(r);
                 assigned++;
             }
             if (assigned > 0)
-                UnityEngine.Debug.Log($"[CodexIdAssigner] 遗物：分配 {assigned} 个 ID（{CodexIds.RelicMin}-{next - 1}）");
+                UnityEngine.Debug.Log($"[CodexIdAssigner] 遗物：分配 {assigned} 个 ID（1-{next - 1}）");
             return assigned;
         }
 
@@ -153,22 +143,17 @@ namespace MutationChess.EditorTools
             });
 
             var used = new HashSet<int>(potions.Where(p => p.codexId > 0).Select(p => p.codexId));
-            int next = CodexIds.PotionMin;
+            int next = 1;
             int assigned = 0;
             foreach (var p in unassigned)
             {
-                while (next <= CodexIds.PotionMax && used.Contains(next)) next++;
-                if (next > CodexIds.PotionMax)
-                {
-                    UnityEngine.Debug.LogError("[CodexIdAssigner] 药水图鉴 ID 已用尽（>2999），请扩容 CodexIds");
-                    break;
-                }
+                while (used.Contains(next)) next++;
                 p.codexId = next++;
                 EditorUtility.SetDirty(p);
                 assigned++;
             }
             if (assigned > 0)
-                UnityEngine.Debug.Log($"[CodexIdAssigner] 药水：分配 {assigned} 个 ID（{CodexIds.PotionMin}-{next - 1}）");
+                UnityEngine.Debug.Log($"[CodexIdAssigner] 药水：分配 {assigned} 个 ID（1-{next - 1}）");
             return assigned;
         }
 

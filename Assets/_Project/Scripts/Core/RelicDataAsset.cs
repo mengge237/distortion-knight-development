@@ -92,7 +92,7 @@ namespace MutationChess.Core
         public string iconPath;
 
         [Header("图鉴")]
-        [Tooltip("图鉴稳定编号（1001-1999），由 Tools/分配图鉴ID 自动分配，勿手动修改")]
+        [Tooltip("图鉴编号（遗物类别内从1递增，命令形式 r1+，如 r7=本遗物），由 Tools/分配图鉴ID 自动分配，勿手动修改")]
         public int codexId;
 
         /// <summary>

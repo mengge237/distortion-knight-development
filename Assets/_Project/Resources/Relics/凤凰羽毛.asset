@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_PhoenixFeather
   relicName: "\u51E4\u51F0\u7FBD\u6BDB"
-  codexId: 1045
+  codexId: 45
   rarity: 3
   faction: 0
   baseEffectIds:

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Slime_SlimeHeart
   relicName: "\u7C98\u6DB2\u4E4B\u5FC3"
-  codexId: 1037
+  codexId: 37
   rarity: 2
   faction: 1
   baseEffectIds:

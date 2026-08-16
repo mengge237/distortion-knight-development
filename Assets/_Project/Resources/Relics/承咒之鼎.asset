@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Shop_CurseVessel
   relicName: 承咒之鼎
-  codexId: 1030
+  codexId: 30
   rarity: 2
   faction: 0
   description: 承咒纳福：每持有 1 个诅咒，最大生命 +6

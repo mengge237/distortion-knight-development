@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Frost_Permafrost
   relicName: 永冻土
-  codexId: 1041
+  codexId: 41
   rarity: 2
   faction: 4
   description: 战斗开始获得15格挡（隐藏：额外+10格挡）

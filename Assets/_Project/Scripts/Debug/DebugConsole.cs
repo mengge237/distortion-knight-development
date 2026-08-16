@@ -16,9 +16,11 @@ namespace MutationChess.Debug
         /// <summary>Called by GameManager.Start to ensure debug console exists</summary>
         public static void EnsureExists()
         {
-            if (!IsAllowedByFile())
+            // 控制台开关统一由 DevConfig 判定（debug_config.json 的 consoleEnabled，
+            // 上架包在文件中置 true 即可开启控制台继续调试；兼容旧 debug_enable 标记文件）
+            if (!DevConfig.ConsoleEnabled)
             {
-                UnityEngine.Debug.Log("[DebugConsole] 调试台未启用（正式包需 debug_enable 标记文件）");
+                UnityEngine.Debug.Log($"[DebugConsole] 调试台未启用（编辑 {DevConfig.FilePath} 将 consoleEnabled 置 true 可开启）");
                 return;
             }
             if (FindObjectOfType<DebugConsole>() != null) return;
@@ -27,47 +29,6 @@ namespace MutationChess.Debug
             go.AddComponent<DebugConsole>();
             UnityEngine.Debug.Log("[DebugConsole] Debug console created, press ~ or F1 to open");
         }
-
-        /// <summary>
-        /// 调试台开关文件化（像其他游戏一样通过文件控制）：
-        /// 开发构建/编辑器内始终可用；正式包仅当存在 debug_enable 标记文件时才可用。
-        /// 标记文件位置：exe 同级目录，或 StreamingAssets 下的 debug_enable / debug_enable.txt。
-        /// 结果缓存 2 秒，避免每帧磁盘 IO；运行中放入文件后最多 2 秒即可生效。
-        /// </summary>
-        public static bool IsAllowedByFile()
-        {
-            if (UnityEngine.Debug.isDebugBuild || Application.isEditor) return true;
-
-            float now = Time.realtimeSinceStartup;
-            if (now - _allowedCheckTime < 2f) return _allowedCached;
-
-            _allowedCheckTime = now;
-            _allowedCached = false;
-
-            string[] candidates =
-            {
-                Application.dataPath + "/../debug_enable",
-                Application.dataPath + "/../debug_enable.txt",
-                Application.streamingAssetsPath + "/debug_enable",
-                Application.streamingAssetsPath + "/debug_enable.txt"
-            };
-            foreach (string path in candidates)
-            {
-                try
-                {
-                    if (System.IO.File.Exists(path))
-                    {
-                        _allowedCached = true;
-                        break;
-                    }
-                }
-                catch (System.Exception) { /* 路径不可访问时忽略，继续检查下一个 */ }
-            }
-            return _allowedCached;
-        }
-
-        private static bool _allowedCached;
-        private static float _allowedCheckTime = -99f;
 
         private void Awake()
         {
@@ -109,22 +70,26 @@ namespace MutationChess.Debug
 
         private void OnGUI()
         {
+            // 控制台总开关（debug_config.json consoleEnabled；上架包默认可关）
+            if (!DevConfig.ConsoleEnabled)
+            {
+                visible = false;
+                return;
+            }
+
             // Use OnGUI for key detection to bypass EventSystem
             Event e = Event.current;
             if (e != null && e.type == EventType.KeyDown &&
                 (e.keyCode == KeyCode.BackQuote || e.keyCode == KeyCode.F1))
             {
-                if (IsAllowedByFile())
-                {
-                    visible = !visible;
-                    e.Use();
-                }
+                visible = !visible;
+                e.Use();
             }
 
             if (!visible)
             {
-                // Small button in bottom-right when hidden（文件开关关闭时同样隐藏）
-                if (IsAllowedByFile() && GUI.Button(new Rect(Screen.width - 110, Screen.height - 30, 110, 25), "调试 (F1/~)"))
+                // Small button in bottom-right when hidden
+                if (GUI.Button(new Rect(Screen.width - 110, Screen.height - 30, 110, 25), "调试 (F1/~)"))
                     visible = true;
                 return;
             }
@@ -849,7 +814,7 @@ namespace MutationChess.Debug
                 Event.current.Use();
             }
             GUILayout.EndHorizontal();
-            GUILayout.Label("<color=gray>输入 help 查看用法（give/see/list，编号即指向性结果）</color>", RichLabel);
+            GUILayout.Label("<color=gray>k5 / r7 / p3 直接获得物品（k=卡牌 r=遗物 p=药水）· 输入 help 查看全部命令</color>", RichLabel);
             GUILayout.Space(4);
 
             if (submitted && !string.IsNullOrWhiteSpace(commandInput))
@@ -870,10 +835,10 @@ namespace MutationChess.Debug
             string verb = parts[0].ToLowerInvariant();
             string arg = parts.Length > 1 ? string.Join(" ", parts, 1, parts.Length - 1) : "";
 
-            // 裸数字 → 直接获得（以撒式：输入编号即产出指向性结果）
+            // 裸数字 → 类别歧义已停用，提示前缀形式
             if (parts.Length == 1 && int.TryParse(parts[0], out _))
             {
-                CmdGive(parts[0]);
+                CmdLog($"裸数字无法判断类别，请用前缀形式：k{parts[0]}（卡牌）/ r{parts[0]}（遗物）/ p{parts[0]}（药水）");
                 return;
             }
 
@@ -898,8 +863,12 @@ namespace MutationChess.Debug
                 case "列表":
                     CmdList(arg);
                     break;
+                case "devmode":
+                case "开发者":
+                    CmdDevMode(arg);
+                    break;
                 default:
-                    // 未知动词 → 若整体可解析为物品名称则按 give 处理（如直接输入"回春"）
+                    // 未知动词 → 若整体可解析为前缀编号/物品名称则按 give 处理（如直接输入 k5 或"回春"）
                     if (CodexIdRegistry.TryResolve(cmd, out _, out _))
                         CmdGive(cmd);
                     else
@@ -927,50 +896,68 @@ namespace MutationChess.Debug
         private void GiveCardById(int id)
         {
             var asset = CodexIdRegistry.GetCard(id);
-            if (asset == null) { CmdLog($"卡牌编号 {id} 无对应资产"); return; }
+            if (asset == null) { CmdLog($"卡牌 {CodexIds.Format(CodexCategory.Card, id)} 无对应资产"); return; }
             var hm = HandManager.Instance;
             if (hm == null || !hm.IsInBattle()) { CmdLog("需进入战斗后使用（首页无法获得卡牌）"); return; }
             var card = CardData.CreateCardFromAsset(asset);
             if (card == null) { CmdLog($"创建卡牌失败：{asset.cardName}"); return; }
             hm.AddCardToHand(card);
             hm.UpdateHandUI();
-            CmdLog($"已获得卡牌 No.{id} 「{asset.cardName}」");
+            CmdLog($"已获得卡牌 {CodexIds.Format(CodexCategory.Card, id)} 「{asset.cardName}」");
         }
 
         private void GiveRelicById(int id)
         {
             var asset = CodexIdRegistry.GetRelic(id);
-            if (asset == null) { CmdLog($"遗物编号 {id} 无对应资产"); return; }
+            if (asset == null) { CmdLog($"遗物 {CodexIds.Format(CodexCategory.Relic, id)} 无对应资产"); return; }
             var rm = RelicManager.Instance;
             if (rm == null) { CmdLog("需进入战斗后使用（首页无法获得遗物）"); return; }
             var relic = rm.CreateRelicFromAsset(asset);
             if (relic == null) { CmdLog($"创建遗物失败：{asset.relicName}"); return; }
             rm.AddRelic(relic);
-            CmdLog($"已获得遗物 No.{id} 「{asset.relicName}」");
+            CmdLog($"已获得遗物 {CodexIds.Format(CodexCategory.Relic, id)} 「{asset.relicName}」");
         }
 
         private void GivePotionById(int id)
         {
             var asset = CodexIdRegistry.GetPotion(id);
-            if (asset == null) { CmdLog($"药水编号 {id} 无对应资产"); return; }
+            if (asset == null) { CmdLog($"药水 {CodexIds.Format(CodexCategory.Potion, id)} 无对应资产"); return; }
             var pdm = PlayerDataManager.Instance;
             var pd = pdm?.GetPlayerData();
             if (pd == null) { CmdLog("需进入战斗后使用（首页无法获得药水）"); return; }
             var potion = new Potion(asset.potionId, asset.potionName, asset.rarity, asset.description, asset.price);
             if (!pd.AddPotion(potion)) { CmdLog($"药水已满（{pd.maxPotions}），无法添加"); return; }
-            CmdLog($"已获得药水 No.{id} 「{asset.potionName}」");
+            CmdLog($"已获得药水 {CodexIds.Format(CodexCategory.Potion, id)} 「{asset.potionName}」");
         }
 
         private void CmdSee(string arg)
         {
-            if (string.IsNullOrWhiteSpace(arg)) { CmdLog("用法：see <编号|名称>（如 see 1003 / see 不舍锁链）"); return; }
-            if (!CodexIdRegistry.TryResolve(arg, out _, out int id))
+            if (string.IsNullOrWhiteSpace(arg)) { CmdLog("用法：see <前缀编号|名称>（如 see r7 / see 不舍锁链）"); return; }
+            if (!CodexIdRegistry.TryResolve(arg, out CodexCategory cat, out int id))
             {
                 CmdLog($"无法解析：\"{arg}\"");
                 return;
             }
-            if (CodexProgress.UnlockOne(id))
-                CmdLog($"已解锁图鉴 No.{id}");
+            if (CodexProgress.UnlockOne(cat, id))
+                CmdLog($"已解锁图鉴 {CodexIds.Format(cat, id)}");
+        }
+
+        /// <summary>开发者模式开关：图鉴是否隐藏未见过条目，写入 debug_config.json 持久化。</summary>
+        private void CmdDevMode(string arg)
+        {
+            bool? on = arg.Trim().ToLowerInvariant() switch
+            {
+                "1" or "on" or "true" or "开" => true,
+                "0" or "off" or "false" or "关" => false,
+                _ => (bool?)null
+            };
+            if (on == null)
+            {
+                CmdLog("用法：devmode 1|0（开发者模式=图鉴显示全部条目，不隐藏未见过内容）");
+                return;
+            }
+            DevConfig.SetDevMode(on.Value);
+            CmdLog($"开发者模式已{(on.Value ? "开启" : "关闭")}（已写入 {DevConfig.FilePath}）");
         }
 
         private void CmdSeeAll()
@@ -1006,7 +993,7 @@ namespace MutationChess.Debug
                     foreach (var a in CodexIdRegistry.GetCardsByIdOrdered())
                     {
                         if (!string.IsNullOrEmpty(filter) && a.cardName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
-                        CmdLog($"No.{a.codexId} {(cp.IsCardSeen(a.codexId) ? "✓" : "✗")} {a.cardName}");
+                        CmdLog($"{CodexIds.Format(CodexCategory.Card, a.codexId)} {(cp.IsCardSeen(a.codexId) ? "✓" : "✗")} {a.cardName}");
                         shown++;
                     }
                     break;
@@ -1014,7 +1001,7 @@ namespace MutationChess.Debug
                     foreach (var a in CodexIdRegistry.GetRelicsByIdOrdered())
                     {
                         if (!string.IsNullOrEmpty(filter) && a.relicName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
-                        CmdLog($"No.{a.codexId} {(cp.IsRelicSeen(a.codexId) ? "✓" : "✗")} {a.relicName}");
+                        CmdLog($"{CodexIds.Format(CodexCategory.Relic, a.codexId)} {(cp.IsRelicSeen(a.codexId) ? "✓" : "✗")} {a.relicName}");
                         shown++;
                     }
                     break;
@@ -1022,7 +1009,7 @@ namespace MutationChess.Debug
                     foreach (var a in CodexIdRegistry.GetPotionsByIdOrdered())
                     {
                         if (!string.IsNullOrEmpty(filter) && a.potionName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
-                        CmdLog($"No.{a.codexId} {(cp.IsPotionSeen(a.codexId) ? "✓" : "✗")} {a.potionName}");
+                        CmdLog($"{CodexIds.Format(CodexCategory.Potion, a.codexId)} {(cp.IsPotionSeen(a.codexId) ? "✓" : "✗")} {a.potionName}");
                         shown++;
                     }
                     break;
@@ -1032,13 +1019,15 @@ namespace MutationChess.Debug
 
         private void PrintCommandHelp()
         {
-            CmdLog("=== 图鉴命令（以撒式）===");
-            CmdLog("<数字>          直接获得对应编号物品（卡牌 1-999 / 遗物 1001-1999 / 药水 2001-2999）");
-            CmdLog("give <编号|名称>  获得物品，如 give 5 / give card 5 / give 遗物 不舍锁链");
-            CmdLog("see <编号|名称>   仅解锁图鉴条目（不获得）");
-            CmdLog("seeall          解锁全部图鉴条目");
+            CmdLog("=== 图鉴命令（以撒式前缀编号）===");
+            CmdLog("k5 / r7 / p3      直接获得对应编号物品（k=卡牌 r=遗物 p=药水）");
+            CmdLog("give <编号|名称>  获得物品，如 give k5 / give r7 / give 遗物 不舍锁链");
+            CmdLog("see <编号|名称>   仅解锁图鉴条目（不获得），如 see r7");
+            CmdLog("seeall           解锁全部图鉴条目");
             CmdLog("list card|relic|potion [关键词]  列出编号（✓=已见）");
-            CmdLog("help            显示本帮助");
+            CmdLog("devmode 1|0      开发者模式开关（图鉴显示全部/隐藏未见过，写入配置文件）");
+            CmdLog("help             显示本帮助");
+            CmdLog($"调试配置文件：{DevConfig.FilePath}");
         }
 
         /// <summary>命令结果输出到日志缓冲并自动切到日志页签。</summary>

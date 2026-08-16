@@ -69,9 +69,9 @@ namespace MutationChess.Core
 
         public static void MarkCardSeen(int codexId)
         {
-            if (!CodexIds.IsCardId(codexId)) return;
+            if (codexId <= 0) return;
             if (Instance.seenCards.Add(codexId))
-                GameLogger.Log($"[图鉴] 解锁卡牌 No.{codexId}");
+                GameLogger.Log($"[图鉴] 解锁卡牌 {CodexIds.Format(CodexCategory.Card, codexId)}");
         }
 
         public static void MarkCardSeenByName(string cardName)
@@ -87,9 +87,9 @@ namespace MutationChess.Core
 
         public static void MarkRelicSeen(int codexId)
         {
-            if (!CodexIds.IsRelicId(codexId)) return;
+            if (codexId <= 0) return;
             if (Instance.seenRelics.Add(codexId))
-                GameLogger.Log($"[图鉴] 解锁遗物 No.{codexId}");
+                GameLogger.Log($"[图鉴] 解锁遗物 {CodexIds.Format(CodexCategory.Relic, codexId)}");
         }
 
         public static void MarkRelicSeenByAssetId(string relicId)
@@ -105,9 +105,9 @@ namespace MutationChess.Core
 
         public static void MarkPotionSeen(int codexId)
         {
-            if (!CodexIds.IsPotionId(codexId)) return;
+            if (codexId <= 0) return;
             if (Instance.seenPotions.Add(codexId))
-                GameLogger.Log($"[图鉴] 解锁药水 No.{codexId}");
+                GameLogger.Log($"[图鉴] 解锁药水 {CodexIds.Format(CodexCategory.Potion, codexId)}");
         }
 
         public static void MarkPotionSeenByName(string potionName)
@@ -116,26 +116,20 @@ namespace MutationChess.Core
         }
 
         /// <summary>按命令解锁单个图鉴条目（只解锁不发放）。</summary>
-        public static bool UnlockOne(int codexId)
+        public static bool UnlockOne(CodexCategory cat, int codexId)
         {
-            CodexCategory? cat = CodexIds.CategoryOf(codexId);
-            if (cat == null)
-            {
-                GameLogger.LogWarning($"[图鉴] 无效图鉴 ID：{codexId}");
-                return false;
-            }
-            switch (cat.Value)
+            switch (cat)
             {
                 case CodexCategory.Card:
-                    if (CodexIdRegistry.GetCard(codexId) == null) return UnlockFail(cat.Value, codexId);
+                    if (CodexIdRegistry.GetCard(codexId) == null) return UnlockFail(cat, codexId);
                     MarkCardSeen(codexId);
                     return true;
                 case CodexCategory.Relic:
-                    if (CodexIdRegistry.GetRelic(codexId) == null) return UnlockFail(cat.Value, codexId);
+                    if (CodexIdRegistry.GetRelic(codexId) == null) return UnlockFail(cat, codexId);
                     MarkRelicSeen(codexId);
                     return true;
                 case CodexCategory.Potion:
-                    if (CodexIdRegistry.GetPotion(codexId) == null) return UnlockFail(cat.Value, codexId);
+                    if (CodexIdRegistry.GetPotion(codexId) == null) return UnlockFail(cat, codexId);
                     MarkPotionSeen(codexId);
                     return true;
             }
@@ -215,9 +209,18 @@ namespace MutationChess.Core
                 seenCards.Clear();
                 seenRelics.Clear();
                 seenPotions.Clear();
-                if (d.cards != null) foreach (int id in d.cards) if (CodexIds.IsCardId(id)) seenCards.Add(id);
-                if (d.relics != null) foreach (int id in d.relics) if (CodexIds.IsRelicId(id)) seenRelics.Add(id);
-                if (d.potions != null) foreach (int id in d.potions) if (CodexIds.IsPotionId(id)) seenPotions.Add(id);
+                if (d.cards != null) foreach (int id in d.cards)
+                        if (CodexIds.MigrateLegacyId(CodexCategory.Card, id) > 0) seenCards.Add(id);
+                if (d.relics != null) foreach (int id in d.relics)
+                    {
+                        int mid = CodexIds.MigrateLegacyId(CodexCategory.Relic, id); // 旧段 1001+ → 新前缀体系 1+
+                        if (mid > 0) seenRelics.Add(mid);
+                    }
+                if (d.potions != null) foreach (int id in d.potions)
+                    {
+                        int mid = CodexIds.MigrateLegacyId(CodexCategory.Potion, id); // 旧段 2001+ → 新前缀体系 1+
+                        if (mid > 0) seenPotions.Add(mid);
+                    }
                 GameLogger.Log($"[图鉴] 恢复图鉴进度：卡牌 {seenCards.Count} · 遗物 {seenRelics.Count} · 药水 {seenPotions.Count}");
             }
             catch (Exception e)

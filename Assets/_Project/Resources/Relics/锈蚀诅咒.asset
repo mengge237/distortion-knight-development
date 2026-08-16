@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Curse_Rust
   relicName: 锈蚀诅咒
-  codexId: 1018
+  codexId: 18
   rarity: 1
   faction: 0
   description: 锈蚀缠身：战斗胜利金币收益-20%

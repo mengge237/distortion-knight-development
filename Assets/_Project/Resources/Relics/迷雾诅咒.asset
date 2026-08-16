@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Curse_FogOfWar
   relicName: 迷雾诅咒
-  codexId: 1015
+  codexId: 15
   rarity: 1
   faction: 0
   description: 大雾遮天：大地图未到达的节点类型隐匿为问号，仅情报遗物可以看穿

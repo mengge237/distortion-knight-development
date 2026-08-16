@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Boss_CorruptLiver
   relicName: 腐化肝脏
-  codexId: 1067
+  codexId: 67
   rarity: 4
   faction: 6
   description: 消耗卡牌时回复能量+1；消耗时抽牌+1

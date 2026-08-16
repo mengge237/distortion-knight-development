@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Boss_MemoryLens
   relicName: 记忆晶状体
-  codexId: 1066
+  codexId: 66
   rarity: 4
   faction: 5
   description: 战斗开始+15格挡；暗影牌+3伤害；每4回合结束-1敏捷（负面）

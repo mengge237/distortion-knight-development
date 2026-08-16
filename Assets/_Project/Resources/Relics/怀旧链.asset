@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Reluctant_Nostalgia
   relicName: 怀旧链
-  codexId: 1020
+  codexId: 20
   rarity: 1
   faction: 2
   description: 打出不舍牌时获得2格挡（隐藏：格挡+2）

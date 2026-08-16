@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Blood_BloodPact
   relicName: 血契
-  codexId: 1057
+  codexId: 57
   rarity: 3
   faction: 3
   description: 战斗开始永久+2力量（隐藏：+3力量但-5最大生命）

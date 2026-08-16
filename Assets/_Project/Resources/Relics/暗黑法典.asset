@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Corrupt_DarkTome
   relicName: 暗黑法典
-  codexId: 1025
+  codexId: 25
   rarity: 1
   faction: 6
   description: 卡牌消耗时回复1点能量（隐藏：回复+1）

@@ -13,31 +13,55 @@ namespace MutationChess.Core
     }
 
     /// <summary>
-    /// 图鉴稳定数字 ID 段（参照《以撒的结合》道具编号）：
-    /// 卡牌 1-999 / 遗物 1001-1999 / 药水 2001-2999。
+    /// 图鉴 ID 前缀体系（参照《以撒的结合》道具编号）：
+    /// k=卡牌 / r=遗物 / p=药水，各自从 1 独立递增（k5=5号卡牌、r7=7号遗物、p3=3号药水），
+    /// 类别间编号互不占用、无上限，不再受固定段宽限制。
     /// ID 由编辑器脚本 CodexIdAssigner 一次性分配并写入资产（codexId 字段），
-    /// 之后永不变化；新增资产取同段内下一个空闲号，老 ID 不漂移。
+    /// 之后永不变化；新增资产取同类别内下一个空闲号，老 ID 不漂移。
     /// </summary>
     public static class CodexIds
     {
-        public const int CardMin = 1, CardMax = 999;
-        public const int RelicMin = 1001, RelicMax = 1999;
-        public const int PotionMin = 2001, PotionMax = 2999;
+        public const char CardPrefix = 'k';
+        public const char RelicPrefix = 'r';
+        public const char PotionPrefix = 'p';
 
-        public static bool IsCardId(int id) => id >= CardMin && id <= CardMax;
-        public static bool IsRelicId(int id) => id >= RelicMin && id <= RelicMax;
-        public static bool IsPotionId(int id) => id >= PotionMin && id <= PotionMax;
-
-        /// <summary>按数字段推断类别；不在任何段内返回 null。</summary>
-        public static CodexCategory? CategoryOf(int id)
+        public static char PrefixOf(CodexCategory c)
         {
-            if (IsCardId(id)) return CodexCategory.Card;
-            if (IsRelicId(id)) return CodexCategory.Relic;
-            if (IsPotionId(id)) return CodexCategory.Potion;
-            return null;
+            switch (c)
+            {
+                case CodexCategory.Card: return CardPrefix;
+                case CodexCategory.Relic: return RelicPrefix;
+                case CodexCategory.Potion: return PotionPrefix;
+                default: return '?';
+            }
         }
 
-        /// <summary>类别段的中文名（控制台帮助用）。</summary>
+        /// <summary>展示形式：K5 / R7 / P3（大写前缀+类别内编号，图鉴徽标与命令日志统一用）。</summary>
+        public static string Format(CodexCategory c, int id) => char.ToUpperInvariant(PrefixOf(c)) + id.ToString();
+
+        /// <summary>解析前缀形式 k5 / r7 / p3（不区分大小写）→ 类别+编号；非前缀形式返回 false。</summary>
+        public static bool TryParse(string token, out CodexCategory category, out int id)
+        {
+            category = CodexCategory.Card;
+            id = 0;
+            if (string.IsNullOrEmpty(token)) return false;
+            string t = token.Trim();
+            if (t.Length < 2) return false;
+            CodexCategory cat;
+            switch (char.ToLowerInvariant(t[0]))
+            {
+                case CardPrefix: cat = CodexCategory.Card; break;
+                case RelicPrefix: cat = CodexCategory.Relic; break;
+                case PotionPrefix: cat = CodexCategory.Potion; break;
+                default: return false;
+            }
+            if (!int.TryParse(t.Substring(1), out int n) || n <= 0) return false;
+            category = cat;
+            id = n;
+            return true;
+        }
+
+        /// <summary>类别中文名（控制台帮助/日志用）。</summary>
         public static string CategoryName(CodexCategory c)
         {
             switch (c)
@@ -46,6 +70,21 @@ namespace MutationChess.Core
                 case CodexCategory.Relic: return "遗物";
                 case CodexCategory.Potion: return "药水";
                 default: return c.ToString();
+            }
+        }
+
+        /// <summary>
+        /// 旧段式 ID 迁移（8.16.3 早期存档兼容）：遗物 1001-1999 → 1-999、药水 2001-2999 → 1-999；
+        /// 卡牌旧段本就是 1-999 原样保留。前缀体系新 ID 原样返回。
+        /// </summary>
+        public static int MigrateLegacyId(CodexCategory cat, int id)
+        {
+            if (id <= 0) return 0;
+            switch (cat)
+            {
+                case CodexCategory.Relic: return id >= 1001 && id <= 1999 ? id - 1000 : id;
+                case CodexCategory.Potion: return id >= 2001 && id <= 2999 ? id - 2000 : id;
+                default: return id;
             }
         }
     }
@@ -215,8 +254,10 @@ namespace MutationChess.Core
 
         /// <summary>
         /// 解析命令参数为图鉴类别+ID。支持：
-        ///   裸数字（按段推断类别）、"card 5" / "relic 1003" / "potion 2001"、
+        ///   前缀形式（以撒式）："k5" / "r7" / "p3"（不区分大小写）、
+        ///   "card 5" / "relic 7" / "potion 3"、
         ///   名称（"card 攻击" 或直接中文名，跨类别模糊匹配）。
+        /// 裸数字不再支持（类别歧义，由控制台给出前缀提示）。
         /// </summary>
         public static bool TryResolve(string arg, out CodexCategory category, out int codexId)
         {
@@ -227,12 +268,10 @@ namespace MutationChess.Core
             string[] parts = arg.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 1)
             {
-                // 裸数字 → 按段推断
-                if (int.TryParse(parts[0], out int id))
+                // 前缀形式 k5 / r7 / p3 → 直接定位
+                if (CodexIds.TryParse(parts[0], out CodexCategory cat, out int id))
                 {
-                    CodexCategory? cat = CodexIds.CategoryOf(id);
-                    if (cat == null) return false;
-                    category = cat.Value;
+                    category = cat;
                     codexId = id;
                     return true;
                 }

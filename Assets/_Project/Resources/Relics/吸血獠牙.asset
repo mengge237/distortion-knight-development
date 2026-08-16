@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Blood_VampireFang
   relicName: 吸血獠牙
-  codexId: 1021
+  codexId: 21
   rarity: 1
   faction: 3
   description: 打出攻击牌时回复1HP（隐藏：回复+1）

@@ -54,7 +54,7 @@ namespace MutationChess.Core
         public string cardArtPath;
 
         [Header("图鉴")]
-        [Tooltip("图鉴稳定编号（1-999），由 Tools/分配图鉴ID 自动分配，勿手动修改")]
+        [Tooltip("图鉴编号（卡牌类别内从1递增，命令形式 k1+，如 k5=本卡），由 Tools/分配图鉴ID 自动分配，勿手动修改")]
         public int codexId;
     }
 }

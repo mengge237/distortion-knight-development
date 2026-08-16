@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Frost_IceCrystal
   relicName: 冰晶符
-  codexId: 1022
+  codexId: 22
   rarity: 1
   faction: 4
   description: 战斗开始+5格挡（隐藏：格挡卡牌费用-1）

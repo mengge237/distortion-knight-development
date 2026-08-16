@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Reluctant_EchoRing
   relicName: 回响戒
-  codexId: 1038
+  codexId: 38
   rarity: 2
   faction: 2
   description: 打出不舍牌时抽1张牌（隐藏：抽牌+1）

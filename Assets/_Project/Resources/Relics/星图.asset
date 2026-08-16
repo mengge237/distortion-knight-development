@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Shop_StarChart
   relicName: 星图
-  codexId: 1031
+  codexId: 31
   rarity: 2
   faction: 0
   description: 星河巡礼：每场战斗胜利额外+15金币。迷雾诅咒时：全图迷雾散尽

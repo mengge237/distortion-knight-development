@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Boss_FrostHeart
   relicName: 寒霜之心
-  codexId: 1065
+  codexId: 65
   rarity: 4
   faction: 4
   description: 战斗开始+1敏捷；寒霜牌额外+1格挡（Boss·激活寒霜隐藏）

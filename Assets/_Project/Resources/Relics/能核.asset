@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Shop_EnergyCore
   relicName: "\u80FD\u6838"
-  codexId: 1052
+  codexId: 52
   rarity: 3
   faction: 0
   baseEffectIds:

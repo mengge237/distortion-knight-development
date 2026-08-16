@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Shadow_PhantomMask
   relicName: 幻影面具
-  codexId: 1042
+  codexId: 42
   rarity: 2
   faction: 5
   description: 打出5张牌后→本回合受到伤害-5（隐藏：再减3）

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Shop_BlackCandle
   relicName: 黑烛
-  codexId: 1036
+  codexId: 36
   rarity: 2
   faction: 0
   description: 烛火驱邪：免疫一切诅咒。诅咒无法降临，拾取时驱散身上所有诅咒

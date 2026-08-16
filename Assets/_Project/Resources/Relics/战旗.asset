@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_BattleStandard
   relicName: "\u6218\u65D7"
-  codexId: 1047
+  codexId: 47
   rarity: 3
   faction: 0
   baseEffectIds:

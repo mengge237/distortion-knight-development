@@ -26,7 +26,7 @@ namespace MutationChess.Core
         public string iconPath;
 
         [Header("图鉴")]
-        [Tooltip("图鉴稳定编号（2001-2999），由 Tools/分配图鉴ID 自动分配，勿手动修改")]
+        [Tooltip("图鉴编号（药水类别内从1递增，命令形式 p1+，如 p3=本药水），由 Tools/分配图鉴ID 自动分配，勿手动修改")]
         public int codexId;
     }
 }

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Gold_GoldenKingdom_Silver
   relicName: 黄金王国·银
-  codexId: 1055
+  codexId: 55
   rarity: 3
   faction: 0
   powerTier: 0

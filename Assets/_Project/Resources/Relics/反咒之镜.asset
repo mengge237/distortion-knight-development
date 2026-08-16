@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Shop_CurseMirror
   relicName: 反咒之镜
-  codexId: 1046
+  codexId: 46
   rarity: 3
   faction: 0
   powerTier: 1

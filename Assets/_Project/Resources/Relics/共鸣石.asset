@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Combo_ResonanceStone
   relicName: "\u5171\u9E23\u77F3"
-  codexId: 1044
+  codexId: 44
   rarity: 3
   faction: 0
   baseEffectIds:

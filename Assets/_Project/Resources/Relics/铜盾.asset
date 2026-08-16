@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_BronzeShield
   relicName: "\u94DC\u76FE"
-  codexId: 1017
+  codexId: 17
   rarity: 1
   faction: 0
   baseEffectIds:

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_SwiftBoots
   relicName: "\u75BE\u884C\u9774"
-  codexId: 1032
+  codexId: 32
   rarity: 2
   faction: 0
   baseEffectIds:

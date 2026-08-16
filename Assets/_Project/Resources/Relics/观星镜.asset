@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Shop_Astrolabe
   relicName: 观星镜
-  codexId: 1013
+  codexId: 13
   rarity: 1
   faction: 0
   description: 观天象预知战局：可查看抽牌堆下一张卡牌。迷雾诅咒时：看穿迷雾中的精英节点

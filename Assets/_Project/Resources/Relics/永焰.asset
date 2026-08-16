@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Generic_EternalFlame
   relicName: "\u6C38\u7130"
-  codexId: 1049
+  codexId: 49
   rarity: 3
   faction: 0
   baseEffectIds:

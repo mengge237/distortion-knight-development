@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   relicId: Curse_Bloodthirst
   relicName: 嗜血诅咒
-  codexId: 1005
+  codexId: 5
   rarity: 1
   faction: 0
   description: 血债缠身：每场战斗开始时损失2点生命

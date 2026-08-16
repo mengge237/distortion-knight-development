@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Shop_TreasureChest
   relicName: "\u5B9D\u7BB1"
-  codexId: 1029
+  codexId: 29
   rarity: 2
   faction: 0
   baseEffectIds:

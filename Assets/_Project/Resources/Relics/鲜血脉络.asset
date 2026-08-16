@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relicId: Boss_BloodVein
   relicName: 鲜血脉络
-  codexId: 1064
+  codexId: 64
   rarity: 4
   faction: 3
   description: 最大生命-5；每2点最大生命+1力量（Boss·激活鲜血隐藏）
