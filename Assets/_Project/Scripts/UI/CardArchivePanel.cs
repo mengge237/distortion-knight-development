@@ -230,7 +230,7 @@ namespace MutationChess.UI
                     : o.count > 0 ? new Color(0.5f, 1f, 0.5f)
                     : isSeen ? new Color(0.8f, 0.8f, 0.8f)
                     : new Color(0.55f, 0.55f, 0.6f);
-                CreateCardTile(CardData.CreateCardFromAsset(asset), asset, badge, badgeColor);
+                CreateCardTile(CardData.CreateCardFromAsset(asset), asset, badge, badgeColor, devMode && !isSeen);
             }
         }
 
@@ -377,6 +377,10 @@ namespace MutationChess.UI
             var go = new GameObject("Header_" + title, typeof(RectTransform), typeof(LayoutElement));
             go.transform.SetParent(listContent, false);
             go.GetComponent<LayoutElement>().preferredHeight = 42f;
+            // VLG childControlHeight=false 不会改子物体高度：容器默认 100 高时，文字盒
+            // 垂直居中会把标题字形压进下一个元素（叠到卡面上）——容器高度对齐布局槽位
+            var goRt = go.GetComponent<RectTransform>();
+            goRt.sizeDelta = new Vector2(goRt.sizeDelta.x, 42f);
             var tmp = CreateText(go.transform, "Label", 25, TextAlignmentOptions.MidlineLeft, color);
             var rt = tmp.rectTransform;
             rt.anchorMin = Vector2.zero;
@@ -392,6 +396,9 @@ namespace MutationChess.UI
             var go = new GameObject("Hint", typeof(RectTransform), typeof(LayoutElement));
             go.transform.SetParent(listContent, false);
             go.GetComponent<LayoutElement>().preferredHeight = 60f;
+            // 同标题行：容器高度对齐布局槽位，避免文字盒溢出叠到后续元素
+            var goRt = go.GetComponent<RectTransform>();
+            goRt.sizeDelta = new Vector2(goRt.sizeDelta.x, 60f);
             var tmp = CreateText(go.transform, "Label", 22, TextAlignmentOptions.MidlineLeft, new Color(0.65f, 0.62f, 0.55f));
             var rt = tmp.rectTransform;
             rt.anchorMin = Vector2.zero;
@@ -407,11 +414,17 @@ namespace MutationChess.UI
             var gridGo = new GameObject("CardGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
             gridGo.transform.SetParent(listContent, false);
             var grid = gridGo.GetComponent<GridLayoutGroup>();
-            // GridLayoutGroup 会把子物体压成 cellSize，且没有 childControl/childForceExpand
-            // 开关（那是 Horizontal/VerticalLayoutGroup 的成员）——cellSize 直接取卡面原尺寸
-            // 150×200，行距留 32 供底部徽标骑跨
-            grid.cellSize = new Vector2(150f, 200f);
-            grid.spacing = new Vector2(20f, 32f);
+            // GridLayoutGroup 只摆放子物体位置、不改 sizeDelta，且没有 childControl/
+            // childForceExpand 开关（那是 Horizontal/VerticalLayoutGroup 的成员）——
+            // cellSize 直接取卡牌预制体当前尺寸（预制体日后改动自动跟随，不硬编码
+            // 150×200），行距留 44 供底部徽标骑跨（徽标高 24 完全落在行距内，
+            // 不遮卡面描述、也不碰下一行卡面）
+            RectTransform prefabRt = null;
+            GameObject prefab = GetCardTilePrefab();
+            if (prefab != null) prefabRt = prefab.GetComponent<RectTransform>();
+            Vector2 cell = prefabRt != null ? prefabRt.rect.size : new Vector2(150f, 200f);
+            grid.cellSize = cell;
+            grid.spacing = new Vector2(20f, 44f);
             grid.padding = new RectOffset(14, 14, 8, 18);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 5;
@@ -442,24 +455,18 @@ namespace MutationChess.UI
 
         /// <summary>
         /// 放置一张真实卡牌预制体（CardUI 驱动，展示模式：禁悬停/拖拽，保留稀有度配色，点击弹大卡预览）。
-        /// Resources 下预制体缺失时（编辑器同步任务未执行）用程序化卡面兜底。
+        /// Resources 下预制体缺失时（编辑器同步任务未执行）或卡名无法映射到资产时用程序化卡面兜底。
         /// </summary>
-        private GameObject CreateCardTile(Card card, CardDataAsset asset, string badgeText, Color badgeColor)
+        private GameObject CreateCardTile(Card card, CardDataAsset asset, string badgeText, Color badgeColor, bool dim = false)
         {
             GameObject tile = null;
 
-            if (cardTilePrefab == null && !cardTilePrefabTried)
-            {
-                cardTilePrefabTried = true;
-                cardTilePrefab = Resources.Load<GameObject>("Prefabs/CardPrefab");
-                if (cardTilePrefab == null)
-                    GameLogger.LogWarning("[牌库档案] Resources 下未找到卡牌预制体（CardPrefabResourcesSetup 未执行？），使用程序化卡面兜底");
-            }
-
-            if (cardTilePrefab != null)
+            // 卡名无法映射到资产（如存档残留旧卡名）时用程序化卡面兜底，避免预制体空卡面
+            GameObject prefab = GetCardTilePrefab();
+            if (card != null && prefab != null)
             {
                 Transform tileParent = currentCardGrid != null ? (Transform)currentCardGrid : listContent;
-                tile = Instantiate(cardTilePrefab, tileParent);
+                tile = Instantiate(prefab, tileParent);
                 var ui = tile.GetComponent<CardUI>();
                 if (ui != null)
                 {
@@ -487,8 +494,32 @@ namespace MutationChess.UI
                 tile = BuildProceduralTile(card, asset);
             }
 
+            if (dim) AddDimOverlay(tile);
             AddCardBadge(tile, badgeText, badgeColor);
             return tile;
+        }
+
+        /// <summary>开发者模式"未发现"条目压暗一层（半透明黑罩，不参与点击，徽标在其上保持可读）。</summary>
+        private void AddDimOverlay(GameObject tile)
+        {
+            var dimGo = new GameObject("DimOverlay", typeof(RectTransform), typeof(Image));
+            dimGo.transform.SetParent(tile.transform, false);
+            StretchFull(dimGo.GetComponent<RectTransform>());
+            dimGo.GetComponent<Image>().color = new Color(0.04f, 0.04f, 0.07f, 0.45f);
+            dimGo.GetComponent<Image>().raycastTarget = false;
+        }
+
+        /// <summary>懒加载 Resources 下的卡牌预制体（编辑器脚本 CardPrefabResourcesSetup 同步产物）。</summary>
+        private static GameObject GetCardTilePrefab()
+        {
+            if (cardTilePrefab == null && !cardTilePrefabTried)
+            {
+                cardTilePrefabTried = true;
+                cardTilePrefab = Resources.Load<GameObject>("Prefabs/CardPrefab");
+                if (cardTilePrefab == null)
+                    GameLogger.LogWarning("[牌库档案] Resources 下未找到卡牌预制体（CardPrefabResourcesSetup 未执行？），使用程序化卡面兜底");
+            }
+            return cardTilePrefab;
         }
 
         /// <summary>程序化卡面兜底：稀有度边框 + 卡图 + 费用 + 名称 + 描述，尺寸与卡牌预制体一致（150×200）。</summary>
@@ -587,14 +618,18 @@ namespace MutationChess.UI
             var rt = badgeGo.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(0f, -16f); // 骑跨卡面底边：落在下方 32px 行距留白内，不遮描述
-            rt.sizeDelta = new Vector2(150f, 22f);
+            rt.anchoredPosition = new Vector2(0f, -24f); // 徽标完全落在 44px 行距内（占 -36..-12），不遮卡面描述也不碰下一行卡
+            rt.sizeDelta = new Vector2(132f, 24f);
             badgeGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
             badgeGo.GetComponent<Image>().raycastTarget = false;
 
             var tmp = CreateText(badgeGo.transform, "Label", 15, TextAlignmentOptions.Center, badgeColor);
             StretchFull(tmp.rectTransform);
             tmp.fontStyle = FontStyles.Bold;
+            tmp.enableWordWrapping = false;  // 单行徽标：换行会溢出徽标框叠到下一行卡面上
+            tmp.enableAutoSizing = true;     // 长徽标（如 "k7 ✓x3 ★ · 未发现"）自动缩字号挤进单行
+            tmp.fontSizeMin = 10f;
+            tmp.fontSizeMax = 15f;
             tmp.text = badgeText;
             tmp.raycastTarget = false;
         }
@@ -1113,6 +1148,28 @@ namespace MutationChess.UI
             scrollRect.movementType = ScrollRect.MovementType.Elastic;
             scrollRect.elasticity = 0.12f;
             scrollRect.scrollSensitivity = 40f;
+
+            // 右侧细滚动条（内容超高时出现，滚轮/拖拽均可滚动）
+            var sbGo = new GameObject("Scrollbar", typeof(RectTransform), typeof(Image), typeof(Scrollbar));
+            sbGo.transform.SetParent(scrollGo.transform, false);
+            var sbRt = sbGo.GetComponent<RectTransform>();
+            sbRt.anchorMin = new Vector2(1f, 0f);
+            sbRt.anchorMax = new Vector2(1f, 1f);
+            sbRt.pivot = new Vector2(1f, 0.5f);
+            sbRt.anchoredPosition = new Vector2(-6f, 0f);
+            sbRt.sizeDelta = new Vector2(12f, -16f);
+            sbGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.25f);
+
+            var sbHandleGo = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            sbHandleGo.transform.SetParent(sbGo.transform, false);
+            sbHandleGo.GetComponent<Image>().color = new Color(0.85f, 0.72f, 0.35f, 0.8f);
+
+            var scrollbar = sbGo.GetComponent<Scrollbar>();
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            scrollbar.targetGraphic = sbHandleGo.GetComponent<Image>();
+            scrollbar.handleRect = sbHandleGo.GetComponent<RectTransform>();
+            scrollRect.verticalScrollbar = scrollbar;
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 
             // 大卡预览区（右）
             previewPanel = new GameObject("Preview", typeof(RectTransform), typeof(Image));

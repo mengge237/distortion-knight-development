@@ -6,6 +6,12 @@ using MutationChess.UI;
 
 namespace MutationChess.Core
 {
+    /// <summary>
+    /// 战斗内设置管理：ESC 开关设置面板。
+    /// 面板统一为标签页式（显示/音量/游戏 + 滚轮内容区），由 SettingsPanelBuilder 构建：
+    /// 旧版平铺面板（无 TabBar 标记）启动时自动销毁重建，旧序列化控件引用清空后由
+    /// 新面板句柄回填同名字段——Update 的 FPS 统计、读档、恢复默认等逻辑零改动。
+    /// </summary>
     public class SettingsManager : MonoBehaviour
     {
         public static SettingsManager Instance { get; private set; }
@@ -17,11 +23,11 @@ namespace MutationChess.Core
         [SerializeField] private Button saveButton;
         [SerializeField] private Button resetButton;
 
-        [Header("显示设置")]
+        [Header("旧场景接线（面板重建后自动清空，仅读档兼容用）")]
         [SerializeField] private TMP_Dropdown resolutionDropdown;
         [SerializeField] private Toggle fullscreenToggle;
 
-        [Header("音量设置")]
+        [Header("音量设置（重建后指向新面板对应控件）")]
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private Slider musicVolumeSlider;
         [SerializeField] private Slider sfxVolumeSlider;
@@ -29,7 +35,7 @@ namespace MutationChess.Core
         [SerializeField] private TMP_Text musicVolumeText;
         [SerializeField] private TMP_Text sfxVolumeText;
 
-        [Header("UI样式")]
+        [Header("UI样式（旧下拉，重建后由游戏页步进行接管）")]
         [SerializeField] private TMP_Dropdown uiStyleDropdown;
 
         [Header("FPS显示")]
@@ -37,15 +43,9 @@ namespace MutationChess.Core
         [SerializeField] private TMP_Text fpsText;
 
         [Header("Boss遗物音效")]
-        [Tooltip("Boss遗物选取主题音效开关（缺失时运行时在设置面板内自动构建）")]
         [SerializeField] private Toggle bossRelicSfxToggle;
 
-        // 显示设置附加行（窗口模式/目标帧率/长宽比/分辨率/画质——运行时自动构建，无场景接线）
-        private TMP_Text windowModeValueTmp;
-        private TMP_Text targetFpsValueTmp;
-        private TMP_Text aspectValueTmp;
-        private TMP_Text resOptionValueTmp;
-        private TMP_Text qualityValueTmp;
+        private SettingsPanelHandle settingsHandle; // 标签页式设置面板句柄
 
         private Resolution[] resolutions;
         private float fpsTimer = 0f;
@@ -53,13 +53,10 @@ namespace MutationChess.Core
         private bool settingsOpen = false;
         private bool isInitialized = false;
 
-        private readonly string[] uiStyleOptions = { "默认", "简洁", "经典", "深色" };
-
         void Awake()
         {
             if (Instance != null && Instance != this)
             {
-
                 Destroy(gameObject);
                 return;
             }
@@ -76,6 +73,7 @@ namespace MutationChess.Core
             if (isInitialized) return;
             isInitialized = true;
 
+            MigrateSettingsPanel(); // 旧平铺面板 → 标签页式重建/接线（先于控件初始化和读档）
             InitializeSettings();
             LoadSettings();
 
@@ -87,20 +85,6 @@ namespace MutationChess.Core
                 saveButton.onClick.AddListener(SaveSettings);
             if (resetButton != null)
                 resetButton.onClick.AddListener(ResetSettings);
-
-            if (showFpsToggle != null)
-            {
-                bool showFps = PlayerPrefs.GetInt("ShowFPS", 0) == 1;
-                showFpsToggle.isOn = showFps;
-                if (fpsText != null)
-                    fpsText.gameObject.SetActive(showFps);
-            }
-
-            // Boss遗物主题音效开关（场景缺失时运行时自动构建）
-            EnsureBossRelicSfxToggle();
-
-            // 显示设置附加行：窗口模式/目标帧率/长宽比（场景缺失时运行时自动构建）
-            EnsureExtraSettingRows();
 
             // 启动恢复显示设置（目标帧率/窗口模式/长宽比）
             DisplaySettings.ApplyAll();
@@ -137,6 +121,77 @@ namespace MutationChess.Core
             }
         }
 
+        // ================= 面板迁移（标签页式） =================
+
+        /// <summary>
+        /// 设置面板迁移：新版标签页面板（含 TabBar 标记）直接反查句柄接线；
+        /// 旧版平铺面板销毁重建为标签页式（显示/音量/游戏 + 滚轮内容区，外框锚点
+        /// 直贴画布四边，任何屏幕比例都完整落在屏内）。重建后旧序列化控件引用全部
+        /// 清空，由新面板句柄回填同名字段，Update/读档/重置逻辑继续可用。
+        /// </summary>
+        private void MigrateSettingsPanel()
+        {
+            if (settingsPanel != null && settingsPanel.transform.Find("TabBar") != null)
+            {
+                settingsHandle = SettingsPanelBuilder.GetHandle(settingsPanel);
+                BindSettingsPanel();
+                return;
+            }
+
+            if (settingsPanel == null) return;
+
+            Transform oldParent = settingsPanel.transform.parent;
+            settingsPanel.transform.SetParent(null);
+            Destroy(settingsPanel);
+            settingsPanel = null;
+            // 旧面板已销毁，其控件引用全部失效——清空后由新面板句柄回填
+            resolutionDropdown = null;
+            uiStyleDropdown = null;
+            fullscreenToggle = null;
+            masterVolumeSlider = null;
+            musicVolumeSlider = null;
+            sfxVolumeSlider = null;
+            masterVolumeText = null;
+            musicVolumeText = null;
+            sfxVolumeText = null;
+            showFpsToggle = null;
+            bossRelicSfxToggle = null;
+
+            if (oldParent == null) return;
+            settingsHandle = SettingsPanelBuilder.Build(oldParent, "SettingsPanel");
+            settingsPanel = settingsHandle != null ? settingsHandle.Panel : null;
+            if (settingsPanel == null) return;
+            settingsPanel.transform.SetAsLastSibling();
+            settingsPanel.SetActive(false);
+            BindSettingsPanel();
+        }
+
+        /// <summary>标签页式设置面板接线：动作挂载 + 旧字段回填（战斗 HUD 旧 FPS 文本跟随开关）。</summary>
+        private void BindSettingsPanel()
+        {
+            if (settingsHandle == null) return;
+            var actions = SettingsPanelActions.CreateDefault();
+            actions.OnBack = HideSettings;
+            actions.OnClose = HideSettings;
+            actions.OnReset = () =>
+            {
+                actions.DefaultReset();
+                AudioManager.Instance?.PlayUIClick(0.3f);
+            };
+            SettingsPanelBuilder.Bind(settingsHandle, actions);
+
+            // 旧字段回填（Update 的 FPS 统计/读档/重置逻辑依赖这些引用）
+            fullscreenToggle = settingsHandle.FullscreenToggle;
+            showFpsToggle = settingsHandle.ShowFpsToggle;
+            bossRelicSfxToggle = settingsHandle.BossSfxToggle;
+            masterVolumeSlider = settingsHandle.MasterSlider;
+            musicVolumeSlider = settingsHandle.MusicSlider;
+            sfxVolumeSlider = settingsHandle.SfxSlider;
+            masterVolumeText = settingsHandle.MasterPercent;
+            musicVolumeText = settingsHandle.MusicPercent;
+            sfxVolumeText = settingsHandle.SfxPercent;
+        }
+
         void InitializeSettings()
         {
             if (resolutionDropdown != null)
@@ -165,8 +220,8 @@ namespace MutationChess.Core
             if (uiStyleDropdown != null)
             {
                 uiStyleDropdown.ClearOptions();
-                uiStyleDropdown.AddOptions(new List<string>(uiStyleOptions));
-                uiStyleDropdown.value = 0;
+                uiStyleDropdown.AddOptions(new List<string>(SettingsPanelBuilder.UiStyleNames));
+                uiStyleDropdown.value = SettingsPanelBuilder.GetUiStyleIndex();
                 uiStyleDropdown.RefreshShownValue();
                 uiStyleDropdown.onValueChanged.AddListener(OnUIStyleChanged);
             }
@@ -178,29 +233,74 @@ namespace MutationChess.Core
             }
 
             if (masterVolumeSlider != null)
-            {
                 masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
-                UpdateVolumeText(masterVolumeSlider, masterVolumeText);
-            }
             if (musicVolumeSlider != null)
-            {
                 musicVolumeSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
-                UpdateVolumeText(musicVolumeSlider, musicVolumeText);
-            }
             if (sfxVolumeSlider != null)
-            {
                 sfxVolumeSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
-                UpdateVolumeText(sfxVolumeSlider, sfxVolumeText);
-            }
 
             if (showFpsToggle != null)
                 showFpsToggle.onValueChanged.AddListener(OnShowFpsChanged);
         }
 
-        void UpdateVolumeText(Slider slider, TMP_Text text)
+        void OnResolutionChanged(int index)
         {
-            if (slider == null || text == null) return;
-            text.text = $"{Mathf.RoundToInt(slider.value * 100)}%";
+            if (resolutions == null || index < 0 || index >= resolutions.Length) return;
+            Resolution res = resolutions[index];
+            Screen.SetResolution(res.width, res.height, Screen.fullScreenMode, res.refreshRateRatio);
+            PlayerPrefs.SetInt("ResolutionIndex", index);
+            PlayerPrefs.Save();
+            // 同步分辨率候选索引 + 刷新步进行标签
+            DisplaySettings.SyncResOptionFromCurrent(res.width, res.height);
+            settingsHandle?.RefreshAll();
+        }
+
+        void OnFullscreenChanged(bool isFullscreen)
+        {
+            // 经由 DisplaySettings 统一入口：同步 WindowMode 键与旧 Fullscreen 键，两处显示设置互不打架
+            DisplaySettings.SetFullscreen(isFullscreen);
+            settingsHandle?.RefreshAll();
+        }
+
+        void OnUIStyleChanged(int index)
+        {
+            PlayerPrefs.SetInt("UIStyleIndex", index);
+            PlayerPrefs.Save();
+        }
+
+        void OnMasterVolumeChanged(float value)
+        {
+            AudioListener.volume = value;
+            if (masterVolumeText != null)
+                masterVolumeText.text = $"{Mathf.RoundToInt(value * 100)}%";
+            PlayerPrefs.SetFloat("MasterVolume", value);
+            PlayerPrefs.Save();
+        }
+
+        void OnMusicVolumeChanged(float value)
+        {
+            if (musicVolumeText != null)
+                musicVolumeText.text = $"{Mathf.RoundToInt(value * 100)}%";
+            PlayerPrefs.SetFloat("MusicVolume", value);
+            PlayerPrefs.Save();
+        }
+
+        void OnSFXVolumeChanged(float value)
+        {
+            if (sfxVolumeText != null)
+                sfxVolumeText.text = $"{Mathf.RoundToInt(value * 100)}%";
+            AudioManager.SetSFXVolume(value); // 同步到音效管理器（实际生效）
+            PlayerPrefs.SetFloat("SFXVolume", value);
+            PlayerPrefs.Save();
+        }
+
+        void OnShowFpsChanged(bool show)
+        {
+            PlayerPrefs.SetInt("ShowFPS", show ? 1 : 0);
+            PlayerPrefs.Save();
+            if (fpsText != null)
+                fpsText.gameObject.SetActive(show);
+            MutationChess.UI.FpsDisplay.SetVisible(show); // 无场景角标时由 FpsDisplay 组件接管（首页等）
         }
 
         public void ToggleSettings()
@@ -209,7 +309,10 @@ namespace MutationChess.Core
             settingsOpen = !settingsOpen;
             settingsPanel.SetActive(settingsOpen);
             if (settingsOpen)
+            {
+                settingsHandle?.RefreshAll(); // 打开前回读当前值
                 UiFeel.AnimatePanelIn(settingsPanel); // 打开时面板弹入
+            }
             Time.timeScale = settingsOpen ? 0f : 1f;
         }
 
@@ -218,6 +321,7 @@ namespace MutationChess.Core
             if (settingsPanel == null) return;
             settingsPanel.SetActive(true);
             settingsOpen = true;
+            settingsHandle?.RefreshAll();
             UiFeel.AnimatePanelIn(settingsPanel); // 打开时面板弹入
             Time.timeScale = 0f;
         }
@@ -230,400 +334,6 @@ namespace MutationChess.Core
             Time.timeScale = 1f;
         }
 
-        void OnResolutionChanged(int index)
-        {
-            if (index < 0 || index >= resolutions.Length) return;
-            Resolution res = resolutions[index];
-            Screen.SetResolution(res.width, res.height, Screen.fullScreenMode, res.refreshRateRatio);
-            PlayerPrefs.SetInt("ResolutionIndex", index);
-            PlayerPrefs.Save();
-            // 同步分辨率候选索引 + 刷新窗口模式等步进行标签
-            DisplaySettings.SyncResOptionFromCurrent(res.width, res.height);
-            RefreshExtraSettingRowLabels();
-        }
-
-        void OnFullscreenChanged(bool isFullscreen)
-        {
-            // 经由 DisplaySettings 统一入口：同步 WindowMode 键与旧 Fullscreen 键，两处显示设置互不打架
-            DisplaySettings.SetFullscreen(isFullscreen);
-            RefreshExtraSettingRowLabels(); // 窗口模式行标签同步
-        }
-
-        void OnUIStyleChanged(int index)
-        {
-            PlayerPrefs.SetInt("UIStyleIndex", index);
-            PlayerPrefs.Save();
-        }
-
-        void OnMasterVolumeChanged(float value)
-        {
-            AudioListener.volume = value;
-            UpdateVolumeText(masterVolumeSlider, masterVolumeText);
-            PlayerPrefs.SetFloat("MasterVolume", value);
-            PlayerPrefs.Save();
-        }
-
-        void OnMusicVolumeChanged(float value)
-        {
-            UpdateVolumeText(musicVolumeSlider, musicVolumeText);
-            PlayerPrefs.SetFloat("MusicVolume", value);
-            PlayerPrefs.Save();
-        }
-
-        void OnSFXVolumeChanged(float value)
-        {
-            UpdateVolumeText(sfxVolumeSlider, sfxVolumeText);
-            AudioManager.SetSFXVolume(value); // 同步到音效管理器（实际生效）
-            PlayerPrefs.SetFloat("SFXVolume", value);
-            PlayerPrefs.Save();
-        }
-
-        void OnBossRelicSfxChanged(bool enabled)
-        {
-            AudioManager.SetBossRelicPickSfxEnabled(enabled);
-            // 反馈：切换后播放一次轻响（开）以确认手感
-            if (enabled)
-                AudioManager.Instance?.PlayUIClick(0.3f);
-        }
-
-        void OnShowFpsChanged(bool show)
-        {
-            PlayerPrefs.SetInt("ShowFPS", show ? 1 : 0);
-            PlayerPrefs.Save();
-            if (fpsText != null)
-                fpsText.gameObject.SetActive(show);
-            MutationChess.UI.FpsDisplay.SetVisible(show); // 无场景角标时由 FpsDisplay 组件接管（首页等）
-        }
-
-        /// <summary>
-        /// Boss遗物主题音效开关：场景已接线则直接使用；否则运行时在设置面板内
-        /// 以 SFX 滑条为锚点自动构建一个标准 Toggle 行（含中文字体标签）。
-        /// </summary>
-        private void EnsureBossRelicSfxToggle()
-        {
-            if (bossRelicSfxToggle != null)
-            {
-                bossRelicSfxToggle.isOn = AudioManager.IsBossRelicPickSfxEnabled();
-                bossRelicSfxToggle.onValueChanged.RemoveListener(OnBossRelicSfxChanged);
-                bossRelicSfxToggle.onValueChanged.AddListener(OnBossRelicSfxChanged);
-                return;
-            }
-            if (settingsPanel == null || sfxVolumeSlider == null) return;
-
-            RectTransform sliderRt = sfxVolumeSlider.GetComponent<RectTransform>();
-            if (sliderRt == null) return;
-            Transform anchorParent = sliderRt.parent;
-
-            TMP_FontAsset font = UiFonts.Load();
-
-            // 行容器：开关盒 + 中文标签
-            GameObject rowGo = new GameObject("BossRelicSfxToggle", typeof(RectTransform));
-            rowGo.transform.SetParent(anchorParent, false);
-            RectTransform rowRt = rowGo.GetComponent<RectTransform>();
-            rowRt.sizeDelta = new Vector2(sliderRt.sizeDelta.x, 34f);
-            if (anchorParent.GetComponent<VerticalLayoutGroup>() == null &&
-                anchorParent.GetComponent<HorizontalLayoutGroup>() == null &&
-                anchorParent.GetComponent<GridLayoutGroup>() == null)
-            {
-                // 无自动布局：手动放在 SFX 滑条下方
-                rowRt.anchorMin = rowRt.anchorMax = sliderRt.anchorMin;
-                rowRt.pivot = sliderRt.pivot;
-                rowRt.anchoredPosition = sliderRt.anchoredPosition + new Vector2(0f, -42f);
-            }
-
-            // 标签
-            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            labelGo.transform.SetParent(rowGo.transform, false);
-            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
-            labelRt.anchorMin = new Vector2(0f, 0f);
-            labelRt.anchorMax = new Vector2(0.68f, 1f);
-            labelRt.offsetMin = Vector2.zero;
-            labelRt.offsetMax = Vector2.zero;
-            TMP_Text label = labelGo.GetComponent<TextMeshProUGUI>();
-            if (font != null) label.font = font;
-            label.fontSize = 22f;
-            label.alignment = TextAlignmentOptions.MidlineLeft;
-            label.color = new Color(0.9f, 0.88f, 0.8f);
-            label.text = "Boss遗物主题音效（选取时播放）";
-
-            // 标准开关盒（防御式构建：逐组件判空，缺失时补建，避免运行时 NRE）
-            GameObject toggleGo = new GameObject("Switch", typeof(RectTransform), typeof(Image));
-            toggleGo.transform.SetParent(rowGo.transform, false);
-            RectTransform toggleRt = toggleGo.GetComponent<RectTransform>();
-            if (toggleRt == null) toggleRt = toggleGo.AddComponent<RectTransform>();
-            toggleRt.anchorMin = new Vector2(0.72f, 0.5f);
-            toggleRt.anchorMax = new Vector2(0.72f, 0.5f);
-            toggleRt.pivot = new Vector2(0f, 0.5f);
-            toggleRt.sizeDelta = new Vector2(64f, 30f);
-            Image bg = toggleGo.GetComponent<Image>();
-            if (bg == null) bg = toggleGo.AddComponent<Image>();
-            bg.color = new Color(0.24f, 0.22f, 0.18f, 1f);
-
-            GameObject markGo = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
-            markGo.transform.SetParent(toggleGo.transform, false);
-            RectTransform markRt = markGo.GetComponent<RectTransform>();
-            if (markRt == null) markRt = markGo.AddComponent<RectTransform>();
-            markRt.anchorMin = new Vector2(0.1f, 0.15f);
-            markRt.anchorMax = new Vector2(0.9f, 0.85f);
-            markRt.offsetMin = Vector2.zero;
-            markRt.offsetMax = Vector2.zero;
-            Image mark = markGo.GetComponent<Image>();
-            if (mark == null) mark = markGo.AddComponent<Image>();
-            mark.color = new Color(0.85f, 0.72f, 0.35f, 1f);
-
-            // Toggle 单独补建（若 GameObject 构造未挂载则手动添加），并强制绑定 targetGraphic
-            Toggle toggle = toggleGo.GetComponent<Toggle>();
-            if (toggle == null) toggle = toggleGo.AddComponent<Toggle>();
-            if (toggle == null)
-            {
-                GameLogger.LogError("[Settings] Boss遗物主题音效开关创建失败（Toggle 组件缺失），已跳过");
-                if (rowGo != null) Destroy(rowGo);
-                return;
-            }
-            // Toggle 本身即 Selectable（自带点击/色变反馈），不可再挂 Button——
-            // Button 与 Toggle 同属 Selectable，同一 GameObject 挂第二个会抛
-            // "A GameObject can only contain one 'Selectable' component"
-            toggle.transition = Selectable.Transition.ColorTint;
-            toggle.targetGraphic = bg;
-            toggle.graphic = mark;
-            toggle.isOn = AudioManager.IsBossRelicPickSfxEnabled();
-            toggle.onValueChanged.AddListener(OnBossRelicSfxChanged);
-
-            bossRelicSfxToggle = toggle;
-            GameLogger.Log("[Settings] Boss遗物主题音效开关已运行时构建");
-        }
-
-        // ================= 显示设置附加行（窗口模式/目标帧率/长宽比） =================
-
-        /// <summary>
-        /// 构建三条步进选择行：窗口模式 / 目标帧率 / 长宽比（场景缺失时运行时自动构建）。
-        /// 以 Boss 遗物音效开关行（或 SFX 滑条行）为锚点依次向下排布，
-        /// 左标签 + ◀ 值 ▶ 步进按钮（TMP_Dropdown 模板在运行时构建成本高，步进器更稳）。
-        /// </summary>
-        private void EnsureExtraSettingRows()
-        {
-            if (settingsPanel == null) return;
-            if (windowModeValueTmp != null) return; // 幂等
-
-            // 锚点：Boss 遗物行 → 回退 SFX 滑条行
-            RectTransform anchor = null;
-            if (bossRelicSfxToggle != null)
-                anchor = bossRelicSfxToggle.GetComponent<RectTransform>();
-            if (anchor == null && sfxVolumeSlider != null)
-                anchor = sfxVolumeSlider.GetComponent<RectTransform>();
-            if (anchor == null) return;
-
-            TMP_FontAsset font = UiFonts.Load();
-            Transform parent = anchor.parent;
-            float yOffset = -44f;
-
-            windowModeValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_窗口模式", "窗口模式",
-                DisplaySettings.WindowModeNames, DisplaySettings.GetWindowMode(), idx =>
-                {
-                    DisplaySettings.SetWindowMode(idx);
-                    RefreshExtraSettingRowLabels();
-                });
-            yOffset -= 44f;
-
-            string[] fpsLabels = new string[DisplaySettings.TargetFpsOptions.Length];
-            for (int i = 0; i < fpsLabels.Length; i++)
-                fpsLabels[i] = DisplaySettings.TargetFpsOptions[i] > 0 ? $"{DisplaySettings.TargetFpsOptions[i]} FPS" : "不限";
-            int fpsIndex = 0;
-            for (int i = 0; i < DisplaySettings.TargetFpsOptions.Length; i++)
-                if (DisplaySettings.TargetFpsOptions[i] == DisplaySettings.GetTargetFPS()) fpsIndex = i;
-            targetFpsValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_目标帧率", "目标帧率",
-                fpsLabels, fpsIndex, idx =>
-                {
-                    DisplaySettings.SetTargetFPS(DisplaySettings.TargetFpsOptions[idx]);
-                    RefreshExtraSettingRowLabels();
-                });
-            yOffset -= 44f;
-
-            aspectValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_长宽比", "长宽比",
-                DisplaySettings.AspectRatioNames, DisplaySettings.GetAspectRatioIndex(), idx =>
-                {
-                    DisplaySettings.SetAspectRatioIndex(idx);
-                    RefreshExtraSettingRowLabels();
-                });
-
-            // 分辨率步进行：场景已接线旧分辨率下拉时不再重复构建
-            if (resolutionDropdown == null)
-            {
-                yOffset -= 44f;
-                resOptionValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_分辨率", "分辨率",
-                    DisplaySettings.ResolutionNames, DisplaySettings.GetResOptionIndex(), idx =>
-                    {
-                        DisplaySettings.SetResOptionIndex(idx);
-                        RefreshExtraSettingRowLabels();
-                    });
-            }
-
-            yOffset -= 44f;
-            qualityValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_画质", "画质",
-                DisplaySettings.QualityNames, DisplaySettings.GetQualityIndex(), idx =>
-                {
-                    DisplaySettings.SetQualityIndex(idx);
-                    RefreshExtraSettingRowLabels();
-                });
-
-            // 新行可能超出固定尺寸的场景面板 → 按世界坐标自适应扩展面板高度
-            FitPanelToRows(new System.Collections.Generic.List<RectTransform>
-            {
-                windowModeValueTmp != null ? windowModeValueTmp.rectTransform : null,
-                targetFpsValueTmp != null ? targetFpsValueTmp.rectTransform : null,
-                aspectValueTmp != null ? aspectValueTmp.rectTransform : null,
-                resOptionValueTmp != null ? resOptionValueTmp.rectTransform : null,
-                qualityValueTmp != null ? qualityValueTmp.rectTransform : null
-            });
-
-            GameLogger.Log("[Settings] 显示设置附加行已运行时构建（窗口模式/目标帧率/长宽比/分辨率/画质）");
-        }
-
-        /// <summary>新行超出面板底边时向下扩展面板（世界坐标计算，任意锚定/父级均适用）。</summary>
-        private void FitPanelToRows(System.Collections.Generic.List<RectTransform> rows)
-        {
-            if (settingsPanel == null || rows == null || rows.Count == 0) return;
-            RectTransform panelRt = settingsPanel.GetComponent<RectTransform>();
-            if (panelRt == null) return;
-
-            float panelBottom = panelRt.position.y - panelRt.rect.height * 0.5f * panelRt.lossyScale.y;
-            float minY = float.MaxValue;
-            foreach (RectTransform row in rows)
-            {
-                if (row == null) continue;
-                minY = Mathf.Min(minY, row.position.y - row.rect.height * 0.5f * row.lossyScale.y);
-            }
-            if (minY < panelBottom - 20f)
-            {
-                float grow = (panelBottom - minY) + 40f; // 底部留 40px 余量
-                panelRt.sizeDelta += new Vector2(0f, grow);
-                GameLogger.Log($"[Settings] 设置面板高度自适应扩展 +{Mathf.RoundToInt(grow)}px");
-            }
-        }
-
-        /// <summary>构建单个步进选择行：左标签 + ◀ 当前值 ▶（相对锚定，分辨率无关）。返回值文本。</summary>
-        private TMP_Text BuildStepperRow(Transform parent, TMP_FontAsset font, RectTransform anchor, float yOffset, string rowName, string label, string[] options, int valueIndex, System.Action<int> onChanged)
-        {
-            GameObject rowGo = new GameObject(rowName, typeof(RectTransform));
-            rowGo.transform.SetParent(parent, false);
-            RectTransform rowRt = rowGo.GetComponent<RectTransform>();
-            rowRt.sizeDelta = new Vector2(anchor.sizeDelta.x, 34f);
-            if (parent.GetComponent<VerticalLayoutGroup>() == null &&
-                parent.GetComponent<HorizontalLayoutGroup>() == null &&
-                parent.GetComponent<GridLayoutGroup>() == null)
-            {
-                // 无自动布局：手动排在锚点行下方
-                rowRt.anchorMin = rowRt.anchorMax = anchor.anchorMin;
-                rowRt.pivot = anchor.pivot;
-                rowRt.anchoredPosition = anchor.anchoredPosition + new Vector2(0f, yOffset);
-            }
-
-            // 左标签
-            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            labelGo.transform.SetParent(rowGo.transform, false);
-            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
-            labelRt.anchorMin = new Vector2(0f, 0f);
-            labelRt.anchorMax = new Vector2(0.42f, 1f);
-            labelRt.offsetMin = Vector2.zero;
-            labelRt.offsetMax = Vector2.zero;
-            TMP_Text labelTmp = labelGo.GetComponent<TextMeshProUGUI>();
-            if (font != null) labelTmp.font = font;
-            labelTmp.fontSize = 22f;
-            labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
-            labelTmp.color = new Color(0.9f, 0.88f, 0.8f);
-            labelTmp.text = label;
-
-            // 当前值
-            GameObject valueGo = new GameObject("Value", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            valueGo.transform.SetParent(rowGo.transform, false);
-            RectTransform valueRt = valueGo.GetComponent<RectTransform>();
-            valueRt.anchorMin = new Vector2(0.55f, 0f);
-            valueRt.anchorMax = new Vector2(0.84f, 1f);
-            valueRt.offsetMin = Vector2.zero;
-            valueRt.offsetMax = Vector2.zero;
-            TMP_Text valueTmp = valueGo.GetComponent<TextMeshProUGUI>();
-            if (font != null) valueTmp.font = font;
-            valueTmp.fontSize = 21f;
-            valueTmp.alignment = TextAlignmentOptions.Center;
-            valueTmp.color = new Color(0.85f, 0.78f, 0.55f);
-            valueTmp.text = options[Mathf.Clamp(valueIndex, 0, options.Length - 1)];
-
-            // ◀ / ▶ 步进按钮（共享捕获变量 current，反复点击持续增减而非永远从初始值起步）
-            int current = valueIndex;
-            CreateStepButton(rowGo.transform, font, "PrevButton", "◀", new Vector2(0.44f, 0.15f), new Vector2(0.54f, 0.85f), () =>
-            {
-                current = Mathf.Max(0, current - 1);
-                onChanged?.Invoke(current);
-                UpdateStepValue(valueTmp, options, current);
-                AudioManager.Instance?.PlayUIClick(0.25f);
-            });
-            CreateStepButton(rowGo.transform, font, "NextButton", "▶", new Vector2(0.85f, 0.15f), new Vector2(0.95f, 0.85f), () =>
-            {
-                current = Mathf.Min(options.Length - 1, current + 1);
-                onChanged?.Invoke(current);
-                UpdateStepValue(valueTmp, options, current);
-                AudioManager.Instance?.PlayUIClick(0.25f);
-            });
-
-            // 步进器闭包捕获 valueIndex 后刷新由回调负责；按钮只做 +1/-1
-            return valueTmp;
-        }
-
-        /// <summary>创建 ◀/▶ 步进小按钮。</summary>
-        private void CreateStepButton(Transform parent, TMP_FontAsset font, string goName, string label, Vector2 anchorMin, Vector2 anchorMax, UnityEngine.Events.UnityAction onClick)
-        {
-            GameObject go = new GameObject(goName, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            RectTransform rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-            Image img = go.GetComponent<Image>();
-            img.color = new Color(0.24f, 0.22f, 0.18f, 1f);
-
-            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            labelGo.transform.SetParent(go.transform, false);
-            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
-            labelRt.anchorMin = Vector2.zero;
-            labelRt.anchorMax = Vector2.one;
-            labelRt.offsetMin = Vector2.zero;
-            labelRt.offsetMax = Vector2.zero;
-            TMP_Text labelTmp = labelGo.GetComponent<TextMeshProUGUI>();
-            if (font != null) labelTmp.font = font;
-            labelTmp.fontSize = 18f;
-            labelTmp.alignment = TextAlignmentOptions.Center;
-            labelTmp.color = new Color(0.9f, 0.86f, 0.66f);
-            labelTmp.text = label;
-
-            Button btn = go.GetComponent<Button>();
-            btn.targetGraphic = img;
-            btn.transition = Selectable.Transition.None;
-            btn.onClick.AddListener(onClick);
-            UiFeel.ApplyButton(btn);
-        }
-
-        private static void UpdateStepValue(TMP_Text valueTmp, string[] options, int index)
-        {
-            if (valueTmp == null) return;
-            valueTmp.text = options[Mathf.Clamp(index, 0, options.Length - 1)];
-        }
-
-        /// <summary>从当前 PlayerPrefs 刷新步进行的显示值（读档/重置/旧控件联动后调用）。</summary>
-        private void RefreshExtraSettingRowLabels()
-        {
-            if (windowModeValueTmp != null)
-                windowModeValueTmp.text = DisplaySettings.GetWindowModeLabel();
-            if (targetFpsValueTmp != null)
-                targetFpsValueTmp.text = DisplaySettings.GetTargetFpsLabel();
-            if (aspectValueTmp != null)
-                aspectValueTmp.text = DisplaySettings.GetAspectRatioLabel();
-            if (resOptionValueTmp != null)
-                resOptionValueTmp.text = DisplaySettings.GetResOptionLabel();
-            if (qualityValueTmp != null)
-                qualityValueTmp.text = DisplaySettings.GetQualityLabel();
-        }
-
         void SaveSettings()
         {
             PlayerPrefs.Save();
@@ -634,7 +344,7 @@ namespace MutationChess.Core
             if (resolutionDropdown != null && PlayerPrefs.HasKey("ResolutionIndex"))
             {
                 int index = PlayerPrefs.GetInt("ResolutionIndex");
-                if (index >= 0 && index < resolutions.Length)
+                if (resolutions != null && index >= 0 && index < resolutions.Length)
                 {
                     resolutionDropdown.value = index;
                     resolutionDropdown.RefreshShownValue();
@@ -646,7 +356,7 @@ namespace MutationChess.Core
             if (uiStyleDropdown != null && PlayerPrefs.HasKey("UIStyleIndex"))
             {
                 int index = PlayerPrefs.GetInt("UIStyleIndex");
-                if (index < uiStyleOptions.Length)
+                if (index < SettingsPanelBuilder.UiStyleNames.Length)
                 {
                     uiStyleDropdown.value = index;
                     uiStyleDropdown.RefreshShownValue();
@@ -665,19 +375,22 @@ namespace MutationChess.Core
                 float vol = PlayerPrefs.GetFloat("MasterVolume");
                 masterVolumeSlider.value = vol;
                 AudioListener.volume = vol;
-                UpdateVolumeText(masterVolumeSlider, masterVolumeText);
+                if (masterVolumeText != null)
+                    masterVolumeText.text = $"{Mathf.RoundToInt(vol * 100)}%";
             }
 
             if (musicVolumeSlider != null && PlayerPrefs.HasKey("MusicVolume"))
             {
                 musicVolumeSlider.value = PlayerPrefs.GetFloat("MusicVolume");
-                UpdateVolumeText(musicVolumeSlider, musicVolumeText);
+                if (musicVolumeText != null)
+                    musicVolumeText.text = $"{Mathf.RoundToInt(musicVolumeSlider.value * 100)}%";
             }
 
             if (sfxVolumeSlider != null && PlayerPrefs.HasKey("SFXVolume"))
             {
                 sfxVolumeSlider.value = PlayerPrefs.GetFloat("SFXVolume");
-                UpdateVolumeText(sfxVolumeSlider, sfxVolumeText);
+                if (sfxVolumeText != null)
+                    sfxVolumeText.text = $"{Mathf.RoundToInt(sfxVolumeSlider.value * 100)}%";
                 AudioManager.SetSFXVolume(sfxVolumeSlider.value); // 同步到音效管理器
             }
 
@@ -689,8 +402,8 @@ namespace MutationChess.Core
                     fpsText.gameObject.SetActive(show);
             }
 
-            // 窗口模式/目标帧率/长宽比步进行读数（EnsureExtraSettingRows 之后行已存在）
-            RefreshExtraSettingRowLabels();
+            // 标签页式面板步进行/开关/滑条统一回读
+            settingsHandle?.RefreshAll();
         }
 
         public void ResetSettings()
@@ -704,17 +417,20 @@ namespace MutationChess.Core
             {
                 masterVolumeSlider.value = 1f;
                 AudioListener.volume = 1f;
-                UpdateVolumeText(masterVolumeSlider, masterVolumeText);
+                if (masterVolumeText != null)
+                    masterVolumeText.text = "100%";
             }
             if (musicVolumeSlider != null)
             {
                 musicVolumeSlider.value = 0.8f;
-                UpdateVolumeText(musicVolumeSlider, musicVolumeText);
+                if (musicVolumeText != null)
+                    musicVolumeText.text = "80%";
             }
             if (sfxVolumeSlider != null)
             {
                 sfxVolumeSlider.value = 0.8f;
-                UpdateVolumeText(sfxVolumeSlider, sfxVolumeText);
+                if (sfxVolumeText != null)
+                    sfxVolumeText.text = "80%";
             }
 
             if (fullscreenToggle != null)
@@ -738,7 +454,7 @@ namespace MutationChess.Core
 
             AudioManager.SetSFXVolume(0.8f);
             AudioManager.SetBossRelicPickSfxEnabled(true);
-            RefreshExtraSettingRowLabels();
+            settingsHandle?.RefreshAll();
         }
 
         public bool IsSettingsOpen() => settingsOpen;

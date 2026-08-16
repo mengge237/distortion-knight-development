@@ -465,7 +465,7 @@ namespace MutationChess.Core
             RectTransform confirmRt = confirmGo.GetComponent<RectTransform>();
             confirmRt.anchorMin = confirmRt.anchorMax = new Vector2(0.5f, 0f);
             confirmRt.pivot = new Vector2(0.5f, 0f);
-            confirmRt.anchoredPosition = new Vector2(105f, 8f);
+            confirmRt.anchoredPosition = new Vector2(160f, 8f);
             confirmRt.sizeDelta = new Vector2(300f, 60f);
             state.confirmImg = confirmGo.GetComponent<Image>();
             state.confirmImg.color = new Color(0.24f, 0.21f, 0.16f, 1f); // 未选：暗灰
@@ -492,7 +492,7 @@ namespace MutationChess.Core
             RectTransform guideBtnRt = guideBtnGo.GetComponent<RectTransform>();
             guideBtnRt.anchorMin = guideBtnRt.anchorMax = new Vector2(0.5f, 0f);
             guideBtnRt.pivot = new Vector2(0.5f, 0f);
-            guideBtnRt.anchoredPosition = new Vector2(-105f, 8f);
+            guideBtnRt.anchoredPosition = new Vector2(-160f, 8f);
             guideBtnRt.sizeDelta = new Vector2(240f, 60f);
             Image guideBtnImg = guideBtnGo.GetComponent<Image>();
             guideBtnImg.color = new Color(0.2f, 0.2f, 0.24f, 1f);
@@ -549,7 +549,7 @@ namespace MutationChess.Core
             viewportRt.pivot = new Vector2(0.5f, 1f);
             viewportRt.anchoredPosition = new Vector2(0f, -168f);
             viewportRt.sizeDelta = new Vector2(1120f, 372f);
-            viewportGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.16f); // 微弱底色标出滚轮区域
+            viewportGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f); // 全透明：仅保留射线接收（拖拽命中），色块不再叠在卡牌下层
 
             // 内容横排（六个卡位 + 左右留白）
             GameObject contentGo = new GameObject("WheelContent", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -719,7 +719,7 @@ namespace MutationChess.Core
                 v.accent.color = isSel ? new Color(0.95f, 0.8f, 0.4f) : v.baseAccent;
                 v.tag.color = new Color(0.95f, 0.82f, 0.42f, isSel ? 1f : 0f);
                 if (v.cardRoot != null)
-                    v.cardRoot.localScale = isSel ? new Vector3(1.06f, 1.06f, 1f) : new Vector3(0.94f, 0.94f, 1f);
+                    v.cardRoot.localScale = isSel ? new Vector3(1.04f, 1.04f, 1f) : Vector3.one; // 只放大选中卡，未选卡保持原尺寸（不对称缩放显脏）
             }
 
             if (state.selectedText != null)

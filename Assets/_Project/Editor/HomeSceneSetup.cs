@@ -285,15 +285,20 @@ namespace MutationChess.EditorTools
         private static void EnsureHomeScene()
         {
             bool exists = File.Exists(HomeScenePath);
-            if (exists && SceneFileHasMarker(HomeScenePath)) return;
+            bool fileOk = exists && SceneFileHasMarker(HomeScenePath) && SceneFileHasTabbedSettings(HomeScenePath);
+            if (fileOk) return;
 
             // 旧版场景（无画布）可能正被用户打开：不能关闭"最后一个打开的场景"（CloseScene 会静默失败），
             // 也不能把新建场景保存到仍被旧场景占用的同路径 → 改为原地清空重建并保存回自身路径
             Scene openScene = EditorSceneManager.GetSceneByPath(HomeScenePath);
             if (openScene.isLoaded)
             {
-                // 打开态以内存为准：已含画布或标记（含未保存的手动修改）→ 不再重建
-                if (SceneHasCanvas(openScene) || SceneHasMarker(openScene)) return;
+                // 打开态以内存为准：已含画布或标记（含未保存的手动修改）→ 只升级设置子面板，不动其余节点
+                if (SceneHasCanvas(openScene) || SceneHasMarker(openScene))
+                {
+                    UpgradeSettingsPanelInScene(openScene);
+                    return;
+                }
 
                 UnityEngine.Debug.Log("[HomeSceneSetup] HomeScene 正打开且缺少标记，原地清空重建（场景保持打开，用户可立即看到）");
                 foreach (GameObject root in openScene.GetRootGameObjects())
@@ -336,6 +341,35 @@ namespace MutationChess.EditorTools
             foreach (GameObject root in scene.GetRootGameObjects())
                 if (root.GetComponent<Canvas>() != null) return true;
             return false;
+        }
+
+        /// <summary>场景文件内是否含 TabBar 节点（SettingsPanelBuilder 生成的标签页式设置面板哨兵）。</summary>
+        private static bool SceneFileHasTabbedSettings(string scenePath)
+        {
+            return File.ReadAllText(scenePath).Contains("TabBar");
+        }
+
+        /// <summary>
+        /// 旧版平铺设置面板（无 TabBar 标记）→ 原地替换为标签页式（显示/音量/游戏 + 滚轮内容区）。
+        /// 只动设置子面板这一个节点，保留用户对场景其余节点的手动修改；面板已删除或已升级则不动。
+        /// </summary>
+        private static void UpgradeSettingsPanelInScene(Scene scene)
+        {
+            Canvas canvas = null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                canvas = root.GetComponentInChildren<Canvas>(true);
+                if (canvas != null) break;
+            }
+            if (canvas == null) return;
+
+            Transform oldPanel = canvas.transform.Find("HomeSettings");
+            if (oldPanel == null || oldPanel.Find("TabBar") != null) return;
+
+            UnityEngine.Object.DestroyImmediate(oldPanel.gameObject);
+            CreateSettingsPanel(canvas.transform);
+            EditorSceneManager.SaveScene(scene);
+            UnityEngine.Debug.Log("[HomeSceneSetup] 已升级首页设置子面板为标签页式（显示/音量/游戏 + 滚轮）");
         }
 
         private static void BuildHomeScene(Scene scene)
@@ -399,7 +433,7 @@ namespace MutationChess.EditorTools
             CreateHomeButton(btnPanel.transform, font, "Btn_开始游戏", "开始游戏", "选择难度，踏入深渊", -400f);
             CreateHomeButton(btnPanel.transform, font, "Btn_继续游戏", "继续游戏", "", -540f);
             CreateHomeButton(btnPanel.transform, font, "Btn_牌库档案", "图鉴", "卡牌 · 遗物 · 药水", -680f);
-            CreateHomeButton(btnPanel.transform, font, "Btn_设置", "设置", "音量 · 全屏 · 音效开关", -820f);
+            CreateHomeButton(btnPanel.transform, font, "Btn_设置", "设置", "显示 · 音量 · 游戏", -820f);
 
             // 底部提示
             CreateTmpText(canvasGo.transform, "Footer", font, 18, "分支 8.16.3 · F2 图鉴 · ESC 关闭面板", TextAlignmentOptions.Center,
@@ -407,7 +441,7 @@ namespace MutationChess.EditorTools
                 new Color(0.45f, 0.43f, 0.4f), FontStyles.Normal);
 
             // 设置子面板（编辑器内可见；运行时由 HomeScreen 绑定并隐藏）
-            CreateSettingsPanel(canvasGo.transform, font);
+            CreateSettingsPanel(canvasGo.transform);
         }
 
         private static void CreateCornerDecor(Transform parent, string name, Vector2 anchor, Vector2 pivot, float rotation)
@@ -444,108 +478,24 @@ namespace MutationChess.EditorTools
                 new Color(0.55f, 0.53f, 0.5f), FontStyles.Normal);
         }
 
-        private static void CreateSettingsPanel(Transform canvasT, TMP_FontAsset font)
+        /// <summary>
+        /// 标签页式设置子面板（显示/音量/游戏 + 滚轮内容区）：与运行时共用 SettingsPanelBuilder 同一构建器，
+        /// 场景实体与运行时结构完全一致，可直接在编辑器内手动调整；控件逻辑由 HomeScreen 运行时绑定
+        /// （以 TabBar 标记识别新版面板；未激活的标签页内容组可在层级里手动激活后编辑）。
+        /// </summary>
+        private static void CreateSettingsPanel(Transform canvasT)
         {
-            var panel = new GameObject("HomeSettings", typeof(RectTransform), typeof(Image));
-            panel.transform.SetParent(canvasT, false);
-            SetRect(panel.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820f, 660f));
-            var img = panel.GetComponent<Image>();
-            img.sprite = LoadSprite("UI/Home/settings_panel");
-            img.type = Image.Type.Sliced;
+            var handle = SettingsPanelBuilder.Build(canvasT, "HomeSettings");
+            if (handle == null || handle.Panel == null) return;
 
-            CreateTmpText(panel.transform, "Title", font, 36, "设 置", TextAlignmentOptions.Center,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -28f), new Vector2(600f, 48f),
-                new Color(0.92f, 0.8f, 0.42f), FontStyles.Bold);
-
-            CreateSliderRow(panel.transform, font, "Row_主音量", "主音量", -110f);
-            CreateSliderRow(panel.transform, font, "Row_音乐音量", "音乐音量", -190f);
-            CreateSliderRow(panel.transform, font, "Row_音效音量", "音效音量", -270f);
-            CreateToggleRow(panel.transform, font, "Row_Boss遗物主题音效", "Boss遗物主题音效（选取时播放）", -350f);
-            CreateToggleRow(panel.transform, font, "Row_全屏显示", "全屏显示", -430f);
-
-            // 返回按钮
-            var backGo = new GameObject("BackButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            backGo.transform.SetParent(panel.transform, false);
-            SetRect(backGo.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(320f, 58f));
-            var backImg = backGo.GetComponent<Image>();
-            backImg.color = new Color(0.28f, 0.25f, 0.19f, 1f);
-            var backBtn = backGo.GetComponent<Button>();
-            backBtn.targetGraphic = backImg;
-            backBtn.transition = Selectable.Transition.None;
-            var backLabel = CreateTmpText(backGo.transform, "Label", font, 26, "返 回", TextAlignmentOptions.Center,
-                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero,
-                new Color(0.93f, 0.86f, 0.66f), FontStyles.Normal);
-            backLabel.raycastTarget = false;
-        }
-
-        private static void CreateSliderRow(Transform parent, TMP_FontAsset font, string rowName, string label, float y)
-        {
-            var row = new GameObject(rowName, typeof(RectTransform));
-            row.transform.SetParent(parent, false);
-            SetRect(row.GetComponent<RectTransform>(), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, y), new Vector2(740f, 56f));
-
-            CreateTmpText(row.transform, "Label", font, 22, label, TextAlignmentOptions.MidlineLeft,
-                new Vector2(0f, 0f), new Vector2(0.3f, 1f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero,
-                new Color(0.9f, 0.88f, 0.8f), FontStyles.Normal);
-            CreateTmpText(row.transform, "Percent", font, 20, "100%", TextAlignmentOptions.MidlineRight,
-                new Vector2(0.9f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero,
-                new Color(0.85f, 0.78f, 0.55f), FontStyles.Normal);
-
-            var sliderGo = new GameObject("Slider", typeof(RectTransform));
-            sliderGo.transform.SetParent(row.transform, false);
-            SetRect(sliderGo.GetComponent<RectTransform>(), new Vector2(0.32f, 0.5f), new Vector2(0.88f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, 16f));
-            var slider = sliderGo.AddComponent<Slider>();
-
-            var bg = CreateImage(sliderGo.transform, "Background", null);
-            StretchFull(bg.rectTransform);
-            bg.color = new Color(0.2f, 0.19f, 0.17f, 1f);
-
-            var fillArea = new GameObject("Fill Area", typeof(RectTransform));
-            fillArea.transform.SetParent(sliderGo.transform, false);
-            SetRect(fillArea.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(-12f, -8f));
-            var fill = CreateImage(fillArea.transform, "Fill", null);
-            StretchFull(fill.rectTransform);
-            fill.color = new Color(0.62f, 0.5f, 0.24f, 1f);
-
-            var handleArea = new GameObject("Handle Slide Area", typeof(RectTransform));
-            handleArea.transform.SetParent(sliderGo.transform, false);
-            SetRect(handleArea.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(-20f, 0f));
-            var handle = CreateImage(handleArea.transform, "Handle", null);
-            SetRect(handle.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(24f, 24f));
-            handle.color = new Color(0.92f, 0.8f, 0.42f, 1f);
-
-            slider.fillRect = fill.rectTransform;
-            slider.handleRect = handle.rectTransform;
-            slider.targetGraphic = handle;
-            slider.minValue = 0f;
-            slider.maxValue = 1f;
-        }
-
-        private static void CreateToggleRow(Transform parent, TMP_FontAsset font, string rowName, string label, float y)
-        {
-            var row = new GameObject(rowName, typeof(RectTransform));
-            row.transform.SetParent(parent, false);
-            SetRect(row.GetComponent<RectTransform>(), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, y), new Vector2(740f, 56f));
-
-            CreateTmpText(row.transform, "Label", font, 22, label, TextAlignmentOptions.MidlineLeft,
-                new Vector2(0f, 0f), new Vector2(0.72f, 1f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero,
-                new Color(0.9f, 0.88f, 0.8f), FontStyles.Normal);
-
-            // 开关盒：Toggle 即 Selectable（同一 GameObject 不可再挂 Button）
-            var switchGo = new GameObject("Switch", typeof(RectTransform), typeof(Image));
-            switchGo.transform.SetParent(row.transform, false);
-            SetRect(switchGo.GetComponent<RectTransform>(), new Vector2(0.76f, 0.5f), new Vector2(0.76f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(64f, 30f));
-            var swImg = switchGo.GetComponent<Image>();
-            swImg.color = new Color(0.24f, 0.22f, 0.18f, 1f);
-
-            var mark = CreateImage(switchGo.transform, "Checkmark", null);
-            SetRect(mark.rectTransform, new Vector2(0.1f, 0.15f), new Vector2(0.9f, 0.85f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            mark.color = new Color(0.85f, 0.72f, 0.35f, 1f);
-
-            var toggle = switchGo.AddComponent<Toggle>();
-            toggle.transition = Selectable.Transition.ColorTint;
-            toggle.targetGraphic = swImg;
-            toggle.graphic = mark;
+            // 面板底板换用首页设置专用 9-slice 美术（builder 默认底图为通用奖励面板背景）
+            Image img = handle.Panel.GetComponent<Image>();
+            Sprite sp = LoadSprite("UI/Home/settings_panel");
+            if (img != null && sp != null)
+            {
+                img.sprite = sp;
+                img.type = Image.Type.Sliced;
+            }
         }
 
         // ================= 工具 =================
