@@ -947,12 +947,12 @@ namespace MutationChess.Core
             pageRt.sizeDelta = new Vector2(300f, 30f);
 
             // 上一页 / 下一页
-            CreateGuideNavButton(frame, font, "PrevButton", "◀ 上一页", new Vector2(-140f, 46f), () =>
+            CreateGuideNavButton(frame.transform, font, "PrevButton", "◀ 上一页", new Vector2(-140f, 46f), () =>
             {
                 guidePageIndex = Mathf.Max(0, guidePageIndex - 1);
                 RefreshGuidePage();
             });
-            CreateGuideNavButton(frame, font, "NextButton", "下一页 ▶", new Vector2(140f, 46f), () =>
+            CreateGuideNavButton(frame.transform, font, "NextButton", "下一页 ▶", new Vector2(140f, 46f), () =>
             {
                 guidePageIndex = Mathf.Min(GameTips.PageCount - 1, guidePageIndex + 1);
                 RefreshGuidePage();
