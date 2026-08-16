@@ -40,6 +40,11 @@ namespace MutationChess.Core
         [Tooltip("Boss遗物选取主题音效开关（缺失时运行时在设置面板内自动构建）")]
         [SerializeField] private Toggle bossRelicSfxToggle;
 
+        // 显示设置附加行（窗口模式/目标帧率/长宽比——运行时自动构建，无场景接线）
+        private TMP_Text windowModeValueTmp;
+        private TMP_Text targetFpsValueTmp;
+        private TMP_Text aspectValueTmp;
+
         private Resolution[] resolutions;
         private float fpsTimer = 0f;
         private int frameCount = 0;
@@ -91,6 +96,12 @@ namespace MutationChess.Core
 
             // Boss遗物主题音效开关（场景缺失时运行时自动构建）
             EnsureBossRelicSfxToggle();
+
+            // 显示设置附加行：窗口模式/目标帧率/长宽比（场景缺失时运行时自动构建）
+            EnsureExtraSettingRows();
+
+            // 启动恢复显示设置（目标帧率/窗口模式/长宽比）
+            DisplaySettings.ApplyAll();
 
             // 设置面板统一手感（按压回弹/悬停/点击音效）
             if (settingsPanel != null)
@@ -228,9 +239,8 @@ namespace MutationChess.Core
 
         void OnFullscreenChanged(bool isFullscreen)
         {
-            Screen.fullScreen = isFullscreen;
-            PlayerPrefs.SetInt("Fullscreen", isFullscreen ? 1 : 0);
-            PlayerPrefs.Save();
+            // 经由 DisplaySettings 统一入口：同步 WindowMode 键与旧 Fullscreen 键，两处显示设置互不打架
+            DisplaySettings.SetFullscreen(isFullscreen);
         }
 
         void OnUIStyleChanged(int index)
@@ -276,6 +286,7 @@ namespace MutationChess.Core
             PlayerPrefs.Save();
             if (fpsText != null)
                 fpsText.gameObject.SetActive(show);
+            MutationChess.UI.FpsDisplay.SetVisible(show); // 无场景角标时由 FpsDisplay 组件接管（首页等）
         }
 
         /// <summary>
@@ -376,6 +387,181 @@ namespace MutationChess.Core
             GameLogger.Log("[Settings] Boss遗物主题音效开关已运行时构建");
         }
 
+        // ================= 显示设置附加行（窗口模式/目标帧率/长宽比） =================
+
+        /// <summary>
+        /// 构建三条步进选择行：窗口模式 / 目标帧率 / 长宽比（场景缺失时运行时自动构建）。
+        /// 以 Boss 遗物音效开关行（或 SFX 滑条行）为锚点依次向下排布，
+        /// 左标签 + ◀ 值 ▶ 步进按钮（TMP_Dropdown 模板在运行时构建成本高，步进器更稳）。
+        /// </summary>
+        private void EnsureExtraSettingRows()
+        {
+            if (settingsPanel == null) return;
+            if (windowModeValueTmp != null) return; // 幂等
+
+            // 锚点：Boss 遗物行 → 回退 SFX 滑条行
+            RectTransform anchor = null;
+            if (bossRelicSfxToggle != null)
+                anchor = bossRelicSfxToggle.GetComponent<RectTransform>();
+            if (anchor == null && sfxVolumeSlider != null)
+                anchor = sfxVolumeSlider.GetComponent<RectTransform>();
+            if (anchor == null) return;
+
+            TMP_FontAsset font = UiFonts.Load();
+            Transform parent = anchor.parent;
+            float yOffset = -44f;
+
+            windowModeValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_窗口模式", "窗口模式",
+                DisplaySettings.WindowModeNames, DisplaySettings.GetWindowMode(), idx =>
+                {
+                    DisplaySettings.SetWindowMode(idx);
+                    RefreshExtraSettingRowLabels();
+                });
+            yOffset -= 44f;
+
+            string[] fpsLabels = new string[DisplaySettings.TargetFpsOptions.Length];
+            for (int i = 0; i < fpsLabels.Length; i++)
+                fpsLabels[i] = DisplaySettings.TargetFpsOptions[i] > 0 ? $"{DisplaySettings.TargetFpsOptions[i]} FPS" : "不限";
+            int fpsIndex = 0;
+            for (int i = 0; i < DisplaySettings.TargetFpsOptions.Length; i++)
+                if (DisplaySettings.TargetFpsOptions[i] == DisplaySettings.GetTargetFPS()) fpsIndex = i;
+            targetFpsValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_目标帧率", "目标帧率",
+                fpsLabels, fpsIndex, idx =>
+                {
+                    DisplaySettings.SetTargetFPS(DisplaySettings.TargetFpsOptions[idx]);
+                    RefreshExtraSettingRowLabels();
+                });
+            yOffset -= 44f;
+
+            aspectValueTmp = BuildStepperRow(parent, font, anchor, yOffset, "Row_长宽比", "长宽比",
+                DisplaySettings.AspectRatioNames, DisplaySettings.GetAspectRatioIndex(), idx =>
+                {
+                    DisplaySettings.SetAspectRatioIndex(idx);
+                    RefreshExtraSettingRowLabels();
+                });
+
+            GameLogger.Log("[Settings] 显示设置附加行已运行时构建（窗口模式/目标帧率/长宽比）");
+        }
+
+        /// <summary>构建单个步进选择行：左标签 + ◀ 当前值 ▶（相对锚定，分辨率无关）。返回值文本。</summary>
+        private TMP_Text BuildStepperRow(Transform parent, TMP_FontAsset font, RectTransform anchor, float yOffset, string rowName, string label, string[] options, int valueIndex, System.Action<int> onChanged)
+        {
+            GameObject rowGo = new GameObject(rowName, typeof(RectTransform));
+            rowGo.transform.SetParent(parent, false);
+            RectTransform rowRt = rowGo.GetComponent<RectTransform>();
+            rowRt.sizeDelta = new Vector2(anchor.sizeDelta.x, 34f);
+            if (parent.GetComponent<VerticalLayoutGroup>() == null &&
+                parent.GetComponent<HorizontalLayoutGroup>() == null &&
+                parent.GetComponent<GridLayoutGroup>() == null)
+            {
+                // 无自动布局：手动排在锚点行下方
+                rowRt.anchorMin = rowRt.anchorMax = anchor.anchorMin;
+                rowRt.pivot = anchor.pivot;
+                rowRt.anchoredPosition = anchor.anchoredPosition + new Vector2(0f, yOffset);
+            }
+
+            // 左标签
+            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            labelGo.transform.SetParent(rowGo.transform, false);
+            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
+            labelRt.anchorMin = new Vector2(0f, 0f);
+            labelRt.anchorMax = new Vector2(0.42f, 1f);
+            labelRt.offsetMin = Vector2.zero;
+            labelRt.offsetMax = Vector2.zero;
+            TMP_Text labelTmp = labelGo.GetComponent<TextMeshProUGUI>();
+            if (font != null) labelTmp.font = font;
+            labelTmp.fontSize = 22f;
+            labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
+            labelTmp.color = new Color(0.9f, 0.88f, 0.8f);
+            labelTmp.text = label;
+
+            // 当前值
+            GameObject valueGo = new GameObject("Value", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            valueGo.transform.SetParent(rowGo.transform, false);
+            RectTransform valueRt = valueGo.GetComponent<RectTransform>();
+            valueRt.anchorMin = new Vector2(0.55f, 0f);
+            valueRt.anchorMax = new Vector2(0.84f, 1f);
+            valueRt.offsetMin = Vector2.zero;
+            valueRt.offsetMax = Vector2.zero;
+            TMP_Text valueTmp = valueGo.GetComponent<TextMeshProUGUI>();
+            if (font != null) valueTmp.font = font;
+            valueTmp.fontSize = 21f;
+            valueTmp.alignment = TextAlignmentOptions.Center;
+            valueTmp.color = new Color(0.85f, 0.78f, 0.55f);
+            valueTmp.text = options[Mathf.Clamp(valueIndex, 0, options.Length - 1)];
+
+            // ◀ / ▶ 步进按钮（共享捕获变量 current，反复点击持续增减而非永远从初始值起步）
+            int current = valueIndex;
+            CreateStepButton(rowGo.transform, font, "PrevButton", "◀", new Vector2(0.44f, 0.15f), new Vector2(0.54f, 0.85f), () =>
+            {
+                current = Mathf.Max(0, current - 1);
+                onChanged?.Invoke(current);
+                UpdateStepValue(valueTmp, options, current);
+                AudioManager.Instance?.PlayUIClick(0.25f);
+            });
+            CreateStepButton(rowGo.transform, font, "NextButton", "▶", new Vector2(0.85f, 0.15f), new Vector2(0.95f, 0.85f), () =>
+            {
+                current = Mathf.Min(options.Length - 1, current + 1);
+                onChanged?.Invoke(current);
+                UpdateStepValue(valueTmp, options, current);
+                AudioManager.Instance?.PlayUIClick(0.25f);
+            });
+
+            // 步进器闭包捕获 valueIndex 后刷新由回调负责；按钮只做 +1/-1
+            return valueTmp;
+        }
+
+        /// <summary>创建 ◀/▶ 步进小按钮。</summary>
+        private void CreateStepButton(Transform parent, TMP_FontAsset font, string goName, string label, Vector2 anchorMin, Vector2 anchorMax, UnityEngine.Events.UnityAction onClick)
+        {
+            GameObject go = new GameObject(goName, typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            Image img = go.GetComponent<Image>();
+            img.color = new Color(0.24f, 0.22f, 0.18f, 1f);
+
+            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            labelGo.transform.SetParent(go.transform, false);
+            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = Vector2.zero;
+            labelRt.offsetMax = Vector2.zero;
+            TMP_Text labelTmp = labelGo.GetComponent<TextMeshProUGUI>();
+            if (font != null) labelTmp.font = font;
+            labelTmp.fontSize = 18f;
+            labelTmp.alignment = TextAlignmentOptions.Center;
+            labelTmp.color = new Color(0.9f, 0.86f, 0.66f);
+            labelTmp.text = label;
+
+            Button btn = go.GetComponent<Button>();
+            btn.targetGraphic = img;
+            btn.transition = Selectable.Transition.None;
+            btn.onClick.AddListener(onClick);
+            UiFeel.ApplyButton(btn);
+        }
+
+        private static void UpdateStepValue(TMP_Text valueTmp, string[] options, int index)
+        {
+            if (valueTmp == null) return;
+            valueTmp.text = options[Mathf.Clamp(index, 0, options.Length - 1)];
+        }
+
+        /// <summary>从当前 PlayerPrefs 刷新三条步进行的显示值（读档/重置后调用）。</summary>
+        private void RefreshExtraSettingRowLabels()
+        {
+            if (windowModeValueTmp != null)
+                windowModeValueTmp.text = DisplaySettings.GetWindowModeLabel();
+            if (targetFpsValueTmp != null)
+                targetFpsValueTmp.text = DisplaySettings.GetTargetFpsLabel();
+            if (aspectValueTmp != null)
+                aspectValueTmp.text = DisplaySettings.GetAspectRatioLabel();
+        }
+
         void SaveSettings()
         {
             PlayerPrefs.Save();
@@ -439,6 +625,9 @@ namespace MutationChess.Core
                 if (fpsText != null)
                     fpsText.gameObject.SetActive(show);
             }
+
+            // 窗口模式/目标帧率/长宽比步进行读数（EnsureExtraSettingRows 之后行已存在）
+            RefreshExtraSettingRowLabels();
         }
 
         public void ResetSettings()
@@ -494,6 +683,12 @@ namespace MutationChess.Core
                 var res = resolutions[resolutions.Length - 1];
                 Screen.SetResolution(res.width, res.height, Screen.fullScreenMode, res.refreshRateRatio);
             }
+
+            // 显示设置恢复默认并即时应用（DeleteAll 后各键回默认：帧率不限/全屏/跟随分辨率）
+            DisplaySettings.ApplyAll();
+            if (fullscreenToggle != null)
+                fullscreenToggle.isOn = Screen.fullScreen;
+            RefreshExtraSettingRowLabels();
 
         }
 

@@ -13,7 +13,7 @@ namespace MutationChess.Map
         public List<Texture2D> textures = new List<Texture2D>();
     }
 
-    public class MapGenerator : MonoBehaviour
+    public class MapGenerator : MonoBehaviour, ISaveable
     {
         [Header("地图布局参数")]
         [SerializeField] private int rows = 8;
@@ -79,6 +79,8 @@ namespace MutationChess.Map
 
         void Start()
         {
+            SaveService.Instance.Register(this);
+
             GameLogger.Log("=== MapGenerator.Start() 开始 ===");
 
             if (Camera.main != null && Camera.main.GetComponent<PhysicsRaycaster>() == null)
@@ -1537,6 +1539,157 @@ namespace MutationChess.Map
             public LineRenderer lineRenderer;
             public MapNode fromNode;
             public MapNode toNode;
+        }
+
+        // ================= 存档接口（地图快照：读档恢复地图布局与当前位置） =================
+
+        [System.Serializable]
+        public class MapSaveData
+        {
+            public List<int> layerCounts = new List<int>();   // 每行节点数
+            public List<int> layerTypes = new List<int>();    // 行优先的 NodeType 索引
+            public List<bool> visited = new List<bool>();     // 行优先的访问标记
+            public int currentPointX = -1;
+            public int currentPointY = -1;
+        }
+
+        /// <summary>待恢复的地图快照（LoadGame 时暂存，GameManager 读档流程调用 TryRestoreFromSave 应用）。</summary>
+        private MapSaveData pendingMapRestore;
+
+        public string SaveKey => "map";
+
+        public string SerializeState()
+        {
+            var data = new MapSaveData();
+            foreach (var layer in allLayers)
+            {
+                if (layer == null) continue;
+                data.layerCounts.Add(layer.Count);
+                foreach (var node in layer)
+                {
+                    if (node == null)
+                    {
+                        data.layerTypes.Add(0);
+                        data.visited.Add(false);
+                        continue;
+                    }
+                    data.layerTypes.Add((int)node.nodeType);
+                    data.visited.Add(node.isVisited);
+                }
+            }
+            if (currentNode != null)
+            {
+                data.currentPointX = currentNode.point.x;
+                data.currentPointY = currentNode.point.y;
+            }
+            return JsonUtility.ToJson(data);
+        }
+
+        public void DeserializeState(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+            try
+            {
+                pendingMapRestore = JsonUtility.FromJson<MapSaveData>(json);
+            }
+            catch (System.Exception e)
+            {
+                GameLogger.LogError($"[存档] map 反序列化失败：{e.Message}");
+                pendingMapRestore = null;
+            }
+        }
+
+        /// <summary>是否有待恢复的地图快照（GameManager 据此决定跳过随机生成）。</summary>
+        public bool HasPendingMapRestore() => pendingMapRestore != null;
+
+        /// <summary>
+        /// 按存档重建地图：布局与节点类型与存档一致（位置重新计算，随机偏移仅影响外观），
+        /// 恢复访问标记与当前节点；失败或无待恢复数据时返回 false（调用方回退 GenerateMap）。
+        /// </summary>
+        public bool TryRestoreFromSave()
+        {
+            if (pendingMapRestore == null) return false;
+            MapSaveData d = pendingMapRestore;
+            pendingMapRestore = null;
+
+            if (d.layerCounts == null || d.layerCounts.Count == 0 || d.layerTypes == null)
+            {
+                GameLogger.LogWarning("[存档] 地图快照为空，回退随机生成");
+                return false;
+            }
+
+            GameLogger.Log("[MapGenerator] 按存档重建地图布局");
+
+            ClearMap();
+            allLayers.Clear();
+            lineConnections.Clear();
+
+            if (boardObject != null)
+            {
+                Destroy(boardObject);
+                boardObject = null;
+            }
+            ClearFogOfWar();
+
+            if (linesParent != null) Destroy(linesParent.gameObject);
+            linesParent = new GameObject("Lines").transform;
+            linesParent.SetParent(contentRoot != null ? contentRoot : transform, false);
+
+            int typeIndex = 0;
+            int visitedIndex = 0;
+            for (int row = 0; row < d.layerCounts.Count; row++)
+            {
+                int count = Mathf.Clamp(d.layerCounts[row], 1, maxNodesPerRow);
+                List<MapNode> layer = new List<MapNode>();
+                for (int col = 0; col < count; col++)
+                {
+                    NodeType type = typeIndex < d.layerTypes.Count
+                        ? (NodeType)Mathf.Clamp(d.layerTypes[typeIndex], 0, (int)NodeType.Boss)
+                        : NodeType.NormalMonster;
+                    Vector3 pos = CalculatePosition(row, col, count);
+                    MapNode node = CreateNode(pos, type, row, col);
+                    node.position = pos;
+                    if (visitedIndex < d.visited.Count)
+                        node.isVisited = d.visited[visitedIndex];
+                    typeIndex++;
+                    visitedIndex++;
+                    layer.Add(node);
+                }
+                allLayers.Add(layer);
+            }
+
+            BuildFullConnections();
+            EnsureAllNodesReachableFromBottom();
+            UpdateStartAndBossVisuals();
+            DrawAllLines();
+
+            CreateBoardVisual();
+            if (enableFogOfWar)
+                CreateFogOfWar();
+            if (enableMapDisplay)
+                UpdateAllMapDisplays();
+
+            // 恢复当前节点与可达性（与 ConfirmReachNode 同逻辑，但不触发 OnNodeReached）
+            currentNode = GetNode(new Vector2Int(d.currentPointX, d.currentPointY));
+            if (currentNode == null)
+            {
+                currentNode = allLayers[0][0];
+                GameLogger.LogWarning("[存档] 当前节点缺失，回退起点");
+            }
+            currentNode.isVisited = true;
+            foreach (var layer2 in allLayers)
+                foreach (var n in layer2)
+                    n.isReachable = false;
+            foreach (var conn in currentNode.connections)
+                conn.isReachable = true;
+
+            UpdateLineColors();
+            if (enableMapDisplay)
+                UpdateAllMapDisplays();
+            UpdateFogOfWar();
+
+            GameLogger.Log($"[MapGenerator] 地图恢复完成：{d.layerCounts.Count} 行 · 当前节点 {currentNode.nodeType} ({currentNode.point.x},{currentNode.point.y})");
+            return true;
         }
     }
 }

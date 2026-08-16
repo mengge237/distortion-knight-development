@@ -239,6 +239,23 @@ namespace MutationChess.Core
             return potion;
         }
 
+        /// <summary>按 potionId 重建药水（含效果重载）——存档读档恢复药水栏用。</summary>
+        public static Potion CreateFromAssetId(string potionId)
+        {
+            if (string.IsNullOrEmpty(potionId)) return null;
+
+            PotionDataAsset[] all = Resources.LoadAll<PotionDataAsset>(ResourcePaths.Potions);
+            foreach (var asset in all)
+            {
+                if (asset == null || asset.potionId != potionId) continue;
+                PotionDropService svc = Instance;
+                return svc != null ? svc.CreatePotionFromAsset(asset) : null;
+            }
+
+            GameLogger.LogWarning($"[PotionDropService] 找不到药水资产：{potionId}");
+            return null;
+        }
+
         private CardEffect LoadPotionEffect(string effectId)
         {
             return Resources.Load<CardEffect>($"{ResourcePaths.Effects}/{effectId}");

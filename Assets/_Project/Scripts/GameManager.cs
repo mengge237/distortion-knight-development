@@ -42,9 +42,16 @@ public class GameManager : MonoBehaviour, ISaveable
     private bool isInBattle = false;
     private EnemyType currentEnemyType = EnemyType.Normal;
     private int currentFloor = 1;
+    private float playtimeSeconds = 0f;
 
     public event System.Action<int> OnFloorChanged;
     public event System.Action OnGameComplete;
+
+    void Update()
+    {
+        // 累计本局游玩时长（真实时间，存档页面展示用）
+        playtimeSeconds += Time.unscaledDeltaTime;
+    }
 
     void Start()
     {
@@ -124,8 +131,9 @@ public class GameManager : MonoBehaviour, ISaveable
             if (dm.HasChosen)
                 dm.ApplyRunStartCurses();
 
-            // 存档接口注册 + 新一局自动存档（槽位 1）
+            // 存档接口注册 + 新一局自动存档（活动槽位）+ 标记对局进行中
             SaveService.Instance.Register(this);
+            SaveService.MarkRunActive(true);
             SaveService.Instance.AutoSave();
         }
     }
@@ -141,18 +149,26 @@ public class GameManager : MonoBehaviour, ISaveable
 
         if (ok)
         {
-            // 恢复到保存的楼层：重建地图与玩家位置（难度/玩家/遗物已由读档恢复）
+            // 恢复到保存的楼层：按存档重建地图布局与当前位置（难度/玩家/遗物已由读档恢复）
             if (mapGenerator != null)
             {
-                mapGenerator.GenerateMap();
+                if (!mapGenerator.TryRestoreFromSave())
+                    mapGenerator.GenerateMap();
                 mapGenerator.UpdateFogOfWar();
             }
             SetupPlayer();
             if (mapView != null)
                 mapView.RefreshAllNodes();
 
+            // 战斗快照恢复（存档于战斗中途时）：直接回到战斗内时刻
+            if (battleManager != null && battleManager.RestoreBattle())
+            {
+                isInBattle = true;
+            }
+
             // 存档可能未选难度（开局即存）→ 弹出选择面板；已选则跳过
             dm.EnsureSelected();
+            SaveService.MarkRunActive(true);
             GameLogger.Log($"[GameManager] 读档完成：第 {currentFloor} 层，继续冒险");
         }
         else
@@ -162,6 +178,7 @@ public class GameManager : MonoBehaviour, ISaveable
             dm.RollFloorCurses();
             if (dm.HasChosen)
                 dm.ApplyRunStartCurses();
+            SaveService.MarkRunActive(true);
         }
     }
 
@@ -170,10 +187,13 @@ public class GameManager : MonoBehaviour, ISaveable
         Vector3 startPos = Vector3.zero;
         MapNode startNode = null;
 
-        if (mapGenerator != null && mapGenerator.AllLayers.Count > 0)
+        if (mapGenerator != null)
         {
-            startNode = mapGenerator.AllLayers[0][0];
-            if (startNode.nodeObject != null)
+            // 读档后回到存档时的当前节点；新一局 CurrentNode 即起点
+            startNode = mapGenerator.CurrentNode;
+            if (startNode == null && mapGenerator.AllLayers.Count > 0)
+                startNode = mapGenerator.AllLayers[0][0];
+            if (startNode != null && startNode.nodeObject != null)
             {
                 startPos = mapGenerator.GetNodeWorldPosition(startNode);
                 startPos.y += playerYOffset;
@@ -465,6 +485,9 @@ public class GameManager : MonoBehaviour, ISaveable
         // 更新玩家UI
         if (dataManager != null)
             dataManager.UpdateUI();
+
+        // 战斗结束即存档点：胜利后地图进度/奖励已落袋，失败也保留那一刻
+        SaveService.Instance.AutoSave();
     }
 
     public void AdvanceToNextFloor()
@@ -499,7 +522,7 @@ public class GameManager : MonoBehaviour, ISaveable
             GameLogger.LogWarning("[GameManager] MapGenerator is null, cannot regenerate next floor map.");
         }
 
-        // 存档接口：楼层推进自动存档（槽位 1）
+        // 存档接口：楼层推进自动存档（活动槽位）
         SaveService.Instance.AutoSave();
     }
 
@@ -509,19 +532,25 @@ public class GameManager : MonoBehaviour, ISaveable
     public float GetGoldBonusPerFloor() => goldBonusPerFloor;
 
     // ================= 存档接口 =================
-    // （地图节点进度/卡组等复杂状态后续版本接入，当前仅保存楼层）
+    // 地图布局/战斗快照/牌堆分别由 MapGenerator/BattleManager/HandManager 存档，
+    // 本条目保存楼层与游玩时长。
 
     [System.Serializable]
     public class RunSaveData
     {
         public int floor;
+        public float playtimeSeconds;
     }
 
     public string SaveKey => "run";
 
     public string SerializeState()
     {
-        return JsonUtility.ToJson(new RunSaveData { floor = currentFloor });
+        return JsonUtility.ToJson(new RunSaveData
+        {
+            floor = currentFloor,
+            playtimeSeconds = playtimeSeconds
+        });
     }
 
     public void DeserializeState(string json)
@@ -532,13 +561,17 @@ public class GameManager : MonoBehaviour, ISaveable
             RunSaveData d = JsonUtility.FromJson<RunSaveData>(json);
             if (d == null) return;
             currentFloor = Mathf.Clamp(d.floor, 1, Mathf.Max(1, maxFloor));
-            GameLogger.Log($"[存档] 恢复楼层：{currentFloor}（节点进度恢复待后续版本）");
+            playtimeSeconds = Mathf.Max(0f, d.playtimeSeconds);
+            GameLogger.Log($"[存档] 恢复楼层：{currentFloor} · 已游玩 {(int)(playtimeSeconds / 60f)} 分");
         }
         catch (System.Exception e)
         {
             GameLogger.LogError($"[存档] run 反序列化失败：{e.Message}");
         }
     }
+
+    /// <summary>本局累计游玩时长（秒，存档页面展示用）。</summary>
+    public long GetPlaytimeSeconds() => (long)playtimeSeconds;
 
     public float GetGoldMultiplier()
     {

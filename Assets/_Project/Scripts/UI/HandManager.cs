@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace MutationChess.UI
 {
-    public class HandManager : MonoBehaviour
+    public class HandManager : MonoBehaviour, ISaveable
     {
         public static HandManager Instance { get; private set; }
 
@@ -64,6 +64,8 @@ namespace MutationChess.UI
         {
             if (Instance == null) Instance = this;
             else Destroy(gameObject);
+
+            SaveService.Instance.Register(this);
         }
 
         void OnDestroy()
@@ -1127,5 +1129,90 @@ namespace MutationChess.UI
         }
 
         public bool IsInBattle() => handPanel != null && handPanel.activeSelf;
+
+        // ================= 存档接口（牌堆快照：读档恢复战斗内手牌/牌堆/能量） =================
+
+        [System.Serializable]
+        public class HandSaveData
+        {
+            public List<string> drawPile = new List<string>();
+            public List<string> hand = new List<string>();
+            public List<string> discard = new List<string>();
+            public List<string> exhaust = new List<string>();
+            public int currentEnergy;
+            public int maxEnergy;
+            public int pendingNextTurnEnergy;
+            public bool isFirstTurn;
+        }
+
+        public string SaveKey => "hand";
+
+        public string SerializeState()
+        {
+            var data = new HandSaveData
+            {
+                currentEnergy = currentEnergy,
+                maxEnergy = maxEnergy,
+                pendingNextTurnEnergy = pendingNextTurnEnergy,
+                isFirstTurn = isFirstTurn
+            };
+            foreach (var c in drawPile)
+                if (c != null && !string.IsNullOrEmpty(c.cardName)) data.drawPile.Add(c.cardName);
+            foreach (var c in handCards)
+                if (c != null && !string.IsNullOrEmpty(c.cardName)) data.hand.Add(c.cardName);
+            foreach (var c in discardPile)
+                if (c != null && !string.IsNullOrEmpty(c.cardName)) data.discard.Add(c.cardName);
+            foreach (var c in exhaustPile)
+                if (c != null && !string.IsNullOrEmpty(c.cardName)) data.exhaust.Add(c.cardName);
+            return JsonUtility.ToJson(data);
+        }
+
+        public void DeserializeState(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+            try
+            {
+                HandSaveData d = JsonUtility.FromJson<HandSaveData>(json);
+                if (d == null) return;
+
+                drawPile = RebuildCards(d.drawPile);
+                handCards = RebuildCards(d.hand);
+                discardPile = RebuildCards(d.discard);
+                exhaustPile = RebuildCards(d.exhaust);
+                if (d.maxEnergy > 0) maxEnergy = d.maxEnergy;
+                currentEnergy = Mathf.Clamp(d.currentEnergy, 0, maxEnergy);
+                pendingNextTurnEnergy = Mathf.Max(0, d.pendingNextTurnEnergy);
+                isFirstTurn = d.isFirstTurn;
+
+                UpdateEnergyUI();
+                UpdatePileCountUI();
+                GameLogger.Log($"[存档] 恢复牌堆：抽{drawPile.Count}/手{handCards.Count}/弃{discardPile.Count}/耗{exhaustPile.Count} · 能量 {currentEnergy}/{maxEnergy}");
+            }
+            catch (System.Exception e)
+            {
+                GameLogger.LogError($"[存档] hand 反序列化失败：{e.Message}");
+            }
+        }
+
+        /// <summary>按卡名列表重建全新卡牌实例（读档用；卡牌本体不序列化，只存卡名）。</summary>
+        private static List<Card> RebuildCards(List<string> names)
+        {
+            var list = new List<Card>();
+            if (names == null) return list;
+            foreach (string name in names)
+            {
+                if (string.IsNullOrEmpty(name)) continue;
+                if (System.Enum.TryParse<CardName>(name, out var cn))
+                {
+                    Card fresh = CardData.CreateCard(cn);
+                    if (fresh != null) list.Add(fresh);
+                }
+                else
+                {
+                    GameLogger.LogWarning($"[存档] 未知卡名跳过：{name}");
+                }
+            }
+            return list;
+        }
     }
 }

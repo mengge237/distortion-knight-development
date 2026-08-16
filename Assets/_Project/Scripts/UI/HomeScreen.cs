@@ -21,6 +21,9 @@ namespace MutationChess.UI
         private Canvas canvas;
         private GameObject settingsSubPanel;
         private TMP_Text continueHintTmp; // 继续游戏按钮副标签（场景绑定与运行时自建共用）
+        private TMP_Text homeWindowModeTmp;
+        private TMP_Text homeTargetFpsTmp;
+        private TMP_Text homeAspectTmp;
         private static TMP_FontAsset cachedFont;
 
         void Awake()
@@ -35,6 +38,10 @@ namespace MutationChess.UI
 
         void Start()
         {
+            // 显示设置启动恢复（目标帧率/窗口模式/长宽比）+ 首页 FPS 角标
+            DisplaySettings.ApplyAll();
+            FpsDisplay.EnsureExists();
+
             // 优先绑定场景内实体画布（HomeSceneSetup 生成）；旧场景缺接线时回退运行时自建
             if (!TryBindSceneUI())
                 BuildHomeUI();
@@ -187,24 +194,16 @@ namespace MutationChess.UI
         private void RefreshContinueHint()
         {
             if (continueHintTmp == null) return;
-            if (!SaveService.Instance.HasSave(1))
+            int active = SaveService.GetActiveSlot();
+            var meta = SaveService.Instance.GetMeta(active);
+            if (meta == null)
             {
                 continueHintTmp.text = "（暂无存档）";
                 continueHintTmp.color = new Color(0.45f, 0.43f, 0.4f);
                 return;
             }
-            var slots = SaveService.Instance.ListSaveSlots();
-            var meta = slots != null ? slots.Find(s => s.slot == 1) : null;
-            if (meta != null)
-            {
-                continueHintTmp.text = $"读取槽位 1：{meta.difficulty} · 第 {meta.floor} 层 · {meta.savedAt}";
-                continueHintTmp.color = new Color(0.62f, 0.68f, 0.5f);
-            }
-            else
-            {
-                continueHintTmp.text = "（存档数据损坏）";
-                continueHintTmp.color = new Color(0.9f, 0.5f, 0.45f);
-            }
+            continueHintTmp.text = $"继续槽位 {active}：{meta.difficulty} · 第 {meta.floor} 层 · HP {meta.hp}/{meta.maxHp}";
+            continueHintTmp.color = new Color(0.62f, 0.68f, 0.5f);
         }
 
         // ================= 场景绑定（HomeSceneSetup 生成的实体画布） =================
@@ -243,25 +242,25 @@ namespace MutationChess.UI
 
         private void StartNewGame()
         {
-            var dm = DifficultyManager.Instance;
-            dm.ResetChosen();
-            dm.ShowSelectionPanel(() => SceneManager.LoadScene("MainScene"));
+            // 以撒式存档位选择（新游戏模式：空位直接开、有档需确认覆盖）→ 难度选择（含冒险须知）→ 加载缓冲屏
+            SaveSlotPanel.Show(false, slot =>
+            {
+                SaveService.SetActiveSlot(slot);
+                var dm = DifficultyManager.Instance;
+                dm.ResetChosen();
+                dm.ShowSelectionPanel(() => LoadingScreen.ShowAndLoad("MainScene"));
+            }, null);
         }
 
         private void ContinueGame()
         {
-            if (!SaveService.Instance.HasSave(1))
+            // 以撒式存档位选择（继续模式：仅已有存档的槽位可点）→ 加载缓冲屏 → 主场景读档
+            SaveSlotPanel.Show(true, slot =>
             {
-                AudioManager.Instance?.PlayUIClick(0.25f);
-                if (continueHintTmp != null)
-                {
-                    continueHintTmp.text = "（暂无存档 · 请先开始游戏）";
-                    continueHintTmp.color = new Color(0.9f, 0.5f, 0.45f);
-                }
-                return;
-            }
-            SaveService.SetPendingLoad(1);
-            SceneManager.LoadScene("MainScene");
+                SaveService.SetActiveSlot(slot);
+                SaveService.SetPendingLoad(slot);
+                LoadingScreen.ShowAndLoad("MainScene");
+            }, null);
         }
 
         private void OpenArchive()
@@ -276,6 +275,7 @@ namespace MutationChess.UI
                 BuildSettingsSubPanel(); // 运行时自建路径延迟构建
                 if (settingsSubPanel == null) return;
             }
+            RefreshHomeExtraRowLabels(); // 战斗内改过的显示设置回首页后同步
             settingsSubPanel.SetActive(true);
             UiFeel.AnimatePanelIn(settingsSubPanel);
         }
@@ -321,6 +321,9 @@ namespace MutationChess.UI
                 PlayerPrefs.Save();
             });
 
+            // 场景面板补建显示设置行（窗口模式/目标帧率/长宽比/显示FPS），幂等
+            EnsureHomeExtraSettingRows(p);
+
             var back = p.Find("BackButton")?.GetComponent<Button>();
             if (back != null)
             {
@@ -358,6 +361,135 @@ namespace MutationChess.UI
             toggle.onValueChanged.AddListener(onChanged);
         }
 
+        // ================= 显示设置行（场景/运行时面板共用） =================
+
+        /// <summary>场景设置面板补建显示设置行（显示FPS/窗口模式/目标帧率/长宽比），幂等。</summary>
+        private void EnsureHomeExtraSettingRows(Transform p)
+        {
+            if (p == null || p.Find("Row_窗口模式") != null) return;
+
+            // 场景面板加高容纳新增行（BackButton 底部锚定随面板下移）
+            RectTransform panelRt = settingsSubPanel != null ? settingsSubPanel.GetComponent<RectTransform>() : null;
+            if (panelRt != null)
+                panelRt.sizeDelta = new Vector2(panelRt.sizeDelta.x, 960f);
+
+            // 显示 FPS 角标
+            CreateToggleRow(p, "显示FPS角标", -510f, PlayerPrefs.GetInt("ShowFPS", 0) == 1, v =>
+            {
+                PlayerPrefs.SetInt("ShowFPS", v ? 1 : 0);
+                PlayerPrefs.Save();
+                FpsDisplay.SetVisible(v);
+            });
+
+            // 窗口模式
+            homeWindowModeTmp = CreateStepperRow(p, "窗口模式", -590f,
+                DisplaySettings.WindowModeNames, DisplaySettings.GetWindowMode(), idx =>
+                {
+                    DisplaySettings.SetWindowMode(idx);
+                    RefreshHomeExtraRowLabels();
+                });
+
+            // 目标帧率
+            string[] fpsLabels = new string[DisplaySettings.TargetFpsOptions.Length];
+            for (int i = 0; i < fpsLabels.Length; i++)
+                fpsLabels[i] = DisplaySettings.TargetFpsOptions[i] > 0 ? $"{DisplaySettings.TargetFpsOptions[i]} FPS" : "不限";
+            int fpsIndex = 0;
+            for (int i = 0; i < DisplaySettings.TargetFpsOptions.Length; i++)
+                if (DisplaySettings.TargetFpsOptions[i] == DisplaySettings.GetTargetFPS()) fpsIndex = i;
+            homeTargetFpsTmp = CreateStepperRow(p, "目标帧率", -670f, fpsLabels, fpsIndex, idx =>
+            {
+                DisplaySettings.SetTargetFPS(DisplaySettings.TargetFpsOptions[idx]);
+                RefreshHomeExtraRowLabels();
+            });
+
+            // 长宽比
+            homeAspectTmp = CreateStepperRow(p, "长宽比", -750f,
+                DisplaySettings.AspectRatioNames, DisplaySettings.GetAspectRatioIndex(), idx =>
+                {
+                    DisplaySettings.SetAspectRatioIndex(idx);
+                    RefreshHomeExtraRowLabels();
+                });
+
+            RefreshHomeExtraRowLabels();
+        }
+
+        /// <summary>步进行：左标签 + ◀ 当前值 ▶（返回当前值文本供跨面板刷新）。</summary>
+        private TMP_Text CreateStepperRow(Transform parent, string label, float y, string[] options, int valueIndex, System.Action<int> onChanged)
+        {
+            var rowGo = new GameObject("Row_" + label, typeof(RectTransform));
+            rowGo.transform.SetParent(parent, false);
+            var rowRt = rowGo.GetComponent<RectTransform>();
+            rowRt.anchorMin = rowRt.anchorMax = new Vector2(0.5f, 1f);
+            rowRt.pivot = new Vector2(0.5f, 0.5f);
+            rowRt.anchoredPosition = new Vector2(0f, y);
+            rowRt.sizeDelta = new Vector2(740f, 56f);
+
+            var labelTmp = CreateText(rowGo.transform, "Label", 22, TextAlignmentOptions.MidlineLeft, new Color(0.9f, 0.88f, 0.8f));
+            var labelRt = labelTmp.rectTransform;
+            labelRt.anchorMin = new Vector2(0f, 0f);
+            labelRt.anchorMax = new Vector2(0.5f, 1f);
+            labelRt.offsetMin = Vector2.zero;
+            labelRt.offsetMax = Vector2.zero;
+            labelTmp.text = label;
+
+            var valueTmp = CreateText(rowGo.transform, "Value", 21, TextAlignmentOptions.Center, new Color(0.85f, 0.78f, 0.55f));
+            var valueRt = valueTmp.rectTransform;
+            valueRt.anchorMin = new Vector2(0.63f, 0f);
+            valueRt.anchorMax = new Vector2(0.89f, 1f);
+            valueRt.offsetMin = Vector2.zero;
+            valueRt.offsetMax = Vector2.zero;
+            valueTmp.text = options[Mathf.Clamp(valueIndex, 0, options.Length - 1)];
+
+            // 共享捕获变量：◀/▶ 连点必须从"当前值"步进，捕获形参会在每次点击时从初始值重算
+            int current = valueIndex;
+            CreateStepButton(rowGo.transform, "PrevButton", "◀", new Vector2(0.51f, 0.2f), new Vector2(0.59f, 0.8f), () =>
+            {
+                current = Mathf.Max(0, current - 1);
+                onChanged?.Invoke(current);
+                valueTmp.text = options[current];
+                AudioManager.Instance?.PlayUIClick(0.25f);
+            });
+            CreateStepButton(rowGo.transform, "NextButton", "▶", new Vector2(0.9f, 0.2f), new Vector2(0.98f, 0.8f), () =>
+            {
+                current = Mathf.Min(options.Length - 1, current + 1);
+                onChanged?.Invoke(current);
+                valueTmp.text = options[current];
+                AudioManager.Instance?.PlayUIClick(0.25f);
+            });
+
+            return valueTmp;
+        }
+
+        private void CreateStepButton(Transform parent, string goName, string label, Vector2 anchorMin, Vector2 anchorMax, UnityAction onClick)
+        {
+            var go = new GameObject(goName, typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            go.GetComponent<Image>().color = new Color(0.24f, 0.22f, 0.18f, 1f);
+
+            var labelTmp = CreateText(go.transform, "Label", 18, TextAlignmentOptions.Center, new Color(0.9f, 0.86f, 0.66f));
+            StretchFull(labelTmp.rectTransform);
+            labelTmp.text = label;
+
+            var btn = go.GetComponent<Button>();
+            btn.targetGraphic = go.GetComponent<Image>();
+            btn.transition = Selectable.Transition.None;
+            btn.onClick.AddListener(onClick);
+            UiFeel.ApplyButton(btn);
+        }
+
+        /// <summary>显示设置行当前值文本刷新（战斗内改动后回首页同步）。</summary>
+        private void RefreshHomeExtraRowLabels()
+        {
+            if (homeWindowModeTmp != null) homeWindowModeTmp.text = DisplaySettings.GetWindowModeLabel();
+            if (homeTargetFpsTmp != null) homeTargetFpsTmp.text = DisplaySettings.GetTargetFpsLabel();
+            if (homeAspectTmp != null) homeAspectTmp.text = DisplaySettings.GetAspectRatioLabel();
+        }
+
         // ================= 设置子面板 =================
 
         private void BuildSettingsSubPanel()
@@ -366,7 +498,7 @@ namespace MutationChess.UI
             settingsSubPanel.transform.SetParent(transform, false);
             var panelRt = settingsSubPanel.GetComponent<RectTransform>();
             panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRt.sizeDelta = new Vector2(820f, 660f);
+            panelRt.sizeDelta = new Vector2(820f, 960f);
             settingsSubPanel.GetComponent<Image>().color = new Color(0.08f, 0.08f, 0.11f, 0.99f);
 
             // 标题
@@ -423,6 +555,41 @@ namespace MutationChess.UI
                 PlayerPrefs.SetInt("Fullscreen", v ? 1 : 0);
                 PlayerPrefs.Save();
             });
+
+            // 显示 FPS 角标
+            CreateToggleRow(settingsSubPanel.transform, "显示FPS角标", -510f, PlayerPrefs.GetInt("ShowFPS", 0) == 1, v =>
+            {
+                PlayerPrefs.SetInt("ShowFPS", v ? 1 : 0);
+                PlayerPrefs.Save();
+                FpsDisplay.SetVisible(v);
+            });
+
+            // 窗口模式 / 目标帧率 / 长宽比 步进行
+            homeWindowModeTmp = CreateStepperRow(settingsSubPanel.transform, "窗口模式", -590f,
+                DisplaySettings.WindowModeNames, DisplaySettings.GetWindowMode(), idx =>
+                {
+                    DisplaySettings.SetWindowMode(idx);
+                    RefreshHomeExtraRowLabels();
+                });
+
+            string[] fpsLabels = new string[DisplaySettings.TargetFpsOptions.Length];
+            for (int i = 0; i < fpsLabels.Length; i++)
+                fpsLabels[i] = DisplaySettings.TargetFpsOptions[i] > 0 ? $"{DisplaySettings.TargetFpsOptions[i]} FPS" : "不限";
+            int fpsIndex = 0;
+            for (int i = 0; i < DisplaySettings.TargetFpsOptions.Length; i++)
+                if (DisplaySettings.TargetFpsOptions[i] == DisplaySettings.GetTargetFPS()) fpsIndex = i;
+            homeTargetFpsTmp = CreateStepperRow(settingsSubPanel.transform, "目标帧率", -670f, fpsLabels, fpsIndex, idx =>
+            {
+                DisplaySettings.SetTargetFPS(DisplaySettings.TargetFpsOptions[idx]);
+                RefreshHomeExtraRowLabels();
+            });
+
+            homeAspectTmp = CreateStepperRow(settingsSubPanel.transform, "长宽比", -750f,
+                DisplaySettings.AspectRatioNames, DisplaySettings.GetAspectRatioIndex(), idx =>
+                {
+                    DisplaySettings.SetAspectRatioIndex(idx);
+                    RefreshHomeExtraRowLabels();
+                });
 
             // 返回按钮
             var backGo = new GameObject("BackButton", typeof(RectTransform), typeof(Image), typeof(Button));

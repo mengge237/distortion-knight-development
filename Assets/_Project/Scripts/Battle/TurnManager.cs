@@ -82,5 +82,12 @@ namespace MutationChess.Battle
             isPlayerTurn = true;
             isBattleActive = false;
         }
+
+        /// <summary>读档恢复战斗回合状态：直接赋值，不触发任何事件（避免重放回合开始副作用）。</summary>
+        public void RestoreBattleState(bool playerTurn)
+        {
+            isBattleActive = true;
+            isPlayerTurn = playerTurn;
+        }
     }
 }

@@ -445,6 +445,97 @@ namespace MutationChess.Battle
 
             return enemy;
         }
+
+        /// <summary>按敌人名重建敌人实例（存档读档用）。未知名称返回 null。</summary>
+        public static Enemy CreateByName(string enemyName)
+        {
+            switch (enemyName)
+            {
+                case "腐化士兵": return CreateCorruptedSoldier();
+                case "畸变猎犬": return CreateMutantHound();
+                case "瘟疫信徒": return CreatePlagueAcolyte();
+                case "深渊幼虫": return CreateAbyssGrub();
+                case "腐蚀骑士": return CreateCorruptedKnight();
+                case "炼狱审判官": return CreateHellInquisitor();
+                case "虚空法师": return CreateVoidWizard();
+                case "腐化魔像": return CreateCorruptedGolem();
+                case "腐化君王": return CreateAbyssLord();
+                default:
+                    GameLogger.LogWarning($"[Enemy] 未知敌人名：{enemyName}");
+                    return null;
+            }
+        }
+
+        /// <summary>敌人战斗内完整状态快照（存档保留"战斗中的时刻"）。</summary>
+        public EnemyStateSnapshot CreateSnapshot()
+        {
+            var snap = new EnemyStateSnapshot
+            {
+                enemyName = enemyName,
+                maxHealth = maxHealth,
+                currentHealth = currentHealth,
+                baseAttackDamage = baseAttackDamage,
+                currentAttackDamage = currentAttackDamage,
+                enemyType = (int)enemyType,
+                isSecondForm = isSecondForm,
+                currentActionIndex = currentActionIndex,
+                currentLoopCount = currentLoopCount,
+                turnCount = turnCount
+            };
+            foreach (var b in buffs)
+                if (b != null) snap.buffs.Add(b);
+            foreach (var d in delayedDamages)
+                snap.delayedDamages.Add(d.damageAmount);
+            return snap;
+        }
+
+        /// <summary>从快照恢复战斗内状态（读档后调用；不重触发任何开局副作用）。</summary>
+        public void RestoreFromSnapshot(EnemyStateSnapshot snap)
+        {
+            if (snap == null) return;
+
+            maxHealth = Mathf.Max(1, snap.maxHealth);
+            currentHealth = Mathf.Clamp(snap.currentHealth, 0, maxHealth);
+            baseAttackDamage = snap.baseAttackDamage;
+            enemyType = (EnemyType)snap.enemyType;
+            currentActionIndex = Mathf.Max(0, snap.currentActionIndex);
+            currentLoopCount = Mathf.Max(0, snap.currentLoopCount);
+            turnCount = Mathf.Max(0, snap.turnCount);
+
+            // 二阶段：重新应用换肤（SwitchToSecondForm 自带 +5 攻击，随后用快照值覆盖）
+            bool wantSecondForm = snap.isSecondForm;
+            isSecondForm = false;
+            if (wantSecondForm) SwitchToSecondForm();
+            currentAttackDamage = snap.currentAttackDamage;
+
+            buffs = new List<Buff>();
+            if (snap.buffs != null)
+                foreach (var b in snap.buffs)
+                    if (b != null && !b.IsExpired()) buffs.Add(b);
+
+            delayedDamages = new List<DelayedDamage>();
+            if (snap.delayedDamages != null)
+                foreach (int dmg in snap.delayedDamages)
+                    delayedDamages.Add(new DelayedDamage { damageAmount = dmg });
+        }
+    }
+
+    /// <summary>敌人战斗内状态快照（可序列化，随 BattleSaveData 存档）。</summary>
+    [System.Serializable]
+    public class EnemyStateSnapshot
+    {
+        public string enemyName;
+        public int maxHealth;
+        public int currentHealth;
+        public int baseAttackDamage;
+        public int currentAttackDamage;
+        public int enemyType;            // (int)EnemyType
+        public bool isSecondForm;
+        public int currentActionIndex;   // AI 模式当前动作索引
+        public int currentLoopCount;     // AI 模式当前循环次数
+        public int turnCount;
+        public List<Buff> buffs = new List<Buff>();
+        public List<int> delayedDamages = new List<int>();
     }
 
     [System.Serializable]
@@ -472,6 +563,7 @@ namespace MutationChess.Battle
         Thorns
     }
 
+    [System.Serializable]
     [System.Serializable]
     public class DelayedDamage
     {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MutationChess.Battle;
 using MutationChess.Core;
 using UnityEngine;
 using TMPro;
@@ -11,6 +12,9 @@ namespace MutationChess.Core
         public int maxHealth;
         public int currentHealth;
         public int gold;
+        public List<string> deck = new List<string>();      // 卡名列表（CardName 枚举名）
+        public List<string> potions = new List<string>();    // potionId 列表（读档按资产重建）
+        public List<Buff> buffs = new List<Buff>();          // 玩家 Buff（跳过已过期）
     }
 
     public class PlayerDataManager : MonoBehaviour, ISaveable
@@ -238,12 +242,26 @@ namespace MutationChess.Core
 
         public string SerializeState()
         {
-            return JsonUtility.ToJson(new PlayerSaveData
+            var data = new PlayerSaveData
             {
                 maxHealth = playerData.maxHealth,
                 currentHealth = playerData.currentHealth,
                 gold = playerData.gold
-            });
+            };
+
+            foreach (var card in runtimeDeck)
+                if (card != null && !string.IsNullOrEmpty(card.cardName))
+                    data.deck.Add(card.cardName);
+
+            foreach (var potion in playerData.GetPotions())
+                if (potion != null && !string.IsNullOrEmpty(potion.potionId))
+                    data.potions.Add(potion.potionId);
+
+            foreach (var buff in playerData.GetBuffs())
+                if (buff != null && !buff.IsExpired())
+                    data.buffs.Add(buff);
+
+            return JsonUtility.ToJson(data);
         }
 
         public void DeserializeState(string json)
@@ -256,9 +274,51 @@ namespace MutationChess.Core
                 playerData.maxHealth = Mathf.Max(1, d.maxHealth);
                 playerData.currentHealth = Mathf.Clamp(d.currentHealth, 0, playerData.maxHealth);
                 playerData.gold = Mathf.Max(0, d.gold);
+
+                // 卡组重建：按卡名解析枚举 → 全新卡牌实例
+                if (d.deck != null && d.deck.Count > 0)
+                {
+                    runtimeDeck = new List<Card>();
+                    foreach (string name in d.deck)
+                    {
+                        if (string.IsNullOrEmpty(name)) continue;
+                        if (System.Enum.TryParse<CardName>(name, out var cn))
+                        {
+                            Card fresh = CardData.CreateCard(cn);
+                            if (fresh != null) runtimeDeck.Add(fresh);
+                        }
+                        else
+                        {
+                            GameLogger.LogWarning($"[存档] 未知卡名跳过：{name}");
+                        }
+                    }
+                }
+
+                // 药水栏重建：按 potionId 从资产重建（含效果重载）
+                playerData.ClearPotions();
+                if (d.potions != null)
+                {
+                    foreach (string potionId in d.potions)
+                    {
+                        Potion p = PotionDropService.CreateFromAssetId(potionId);
+                        if (p != null) playerData.AddPotion(p);
+                    }
+                }
+
+                // 玩家 Buff 恢复（跳过已过期）
+                playerData.ClearBuffs();
+                if (d.buffs != null)
+                {
+                    foreach (var buff in d.buffs)
+                    {
+                        if (buff == null || buff.IsExpired()) continue;
+                        playerData.AddBuff(buff);
+                    }
+                }
+
                 OnDataChanged?.Invoke(playerData);
                 UpdateUI();
-                GameLogger.Log($"[存档] 恢复玩家状态：HP {playerData.currentHealth}/{playerData.maxHealth} · 金币 {playerData.gold}");
+                GameLogger.Log($"[存档] 恢复玩家状态：HP {playerData.currentHealth}/{playerData.maxHealth} · 金币 {playerData.gold} · 卡组 {runtimeDeck.Count} · 药水 {playerData.PotionCount} · Buff {playerData.GetBuffs().Count}");
             }
             catch (System.Exception e)
             {

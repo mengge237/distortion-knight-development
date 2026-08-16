@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace MutationChess.Battle
 {
-    public class BattleManager : MonoBehaviour
+    public class BattleManager : MonoBehaviour, ISaveable
     {
         public static BattleManager Instance { get; private set; }
 
@@ -87,6 +87,8 @@ namespace MutationChess.Battle
                 Instance = this;
             else
                 Destroy(gameObject);
+
+            SaveService.Instance.Register(this);
         }
 
         void Start()
@@ -1571,6 +1573,157 @@ namespace MutationChess.Battle
             }
 
             return Mathf.Max(0, finalDamage);
+        }
+
+        // ================= 存档接口（战斗快照：读档恢复战斗内时刻） =================
+
+        [System.Serializable]
+        public class BattleSaveData
+        {
+            public bool inBattle;
+            public string enemyName;              // 重建用
+            public EnemyStateSnapshot enemy;      // 敌人完整状态快照
+            public int playerBlock;
+            public bool isPlayerTurn;
+            public int intentType;                // (int)EnemyIntentType
+            public int intentValue;
+            public bool viewingMap;
+        }
+
+        /// <summary>待恢复的战斗快照（LoadGame 时暂存，GameManager 读档流程末尾调用 RestoreBattle 应用）。</summary>
+        private BattleSaveData pendingBattleRestore;
+
+        public string SaveKey => "battle";
+
+        public string SerializeState()
+        {
+            bool inBattleNow = isInBattle && currentEnemy != null;
+            var data = new BattleSaveData
+            {
+                inBattle = inBattleNow,
+                playerBlock = Mathf.Max(0, playerBlock),
+                isPlayerTurn = TurnManager.Instance != null ? TurnManager.Instance.IsPlayerTurn : true,
+                intentType = (int)currentIntent,
+                intentValue = currentIntentValue,
+                viewingMap = isViewingMap
+            };
+            if (inBattleNow)
+            {
+                data.enemyName = currentEnemy.enemyName;
+                data.enemy = currentEnemy.CreateSnapshot();
+            }
+            return JsonUtility.ToJson(data);
+        }
+
+        public void DeserializeState(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+            try
+            {
+                pendingBattleRestore = JsonUtility.FromJson<BattleSaveData>(json);
+            }
+            catch (Exception e)
+            {
+                GameLogger.LogError($"[存档] battle 反序列化失败：{e.Message}");
+                pendingBattleRestore = null;
+            }
+        }
+
+        /// <summary>
+        /// 应用待恢复的战斗快照（GameManager 读档流程调用）：
+        /// 直接赋值恢复状态，不重触发 StartBattlePhase2 的副作用
+        /// （遗物 OnBattleStart/诅咒掉血/BattleStart 效果均不重放）。
+        /// 返回是否成功恢复到战斗中。
+        /// </summary>
+        public bool RestoreBattle()
+        {
+            if (pendingBattleRestore == null || !pendingBattleRestore.inBattle)
+            {
+                pendingBattleRestore = null;
+                return false;
+            }
+
+            BattleSaveData d = pendingBattleRestore;
+            pendingBattleRestore = null;
+
+            Enemy enemy = Enemy.CreateByName(d.enemyName);
+            if (enemy == null)
+            {
+                GameLogger.LogWarning($"[存档] 无法重建敌人 {d.enemyName}，放弃恢复战斗");
+                return false;
+            }
+            enemy.RestoreFromSnapshot(d.enemy);
+            currentEnemy = enemy;
+
+            var pdm = PlayerDataManager.Instance;
+            playerData = pdm != null ? pdm.GetPlayerData() : null;
+            if (playerData == null)
+            {
+                GameLogger.LogWarning("[存档] 玩家数据缺失，放弃恢复战斗");
+                return false;
+            }
+
+            if (BattleLogManager.Instance != null) BattleLogManager.Instance.ClearLogs();
+
+            // 直接设置战斗状态（不触发任何开局副作用）
+            isInBattle = true;
+            isBattleEnding = false;
+            isViewingMap = d.viewingMap;
+            isEnemyTurn = !d.isPlayerTurn;
+            playerBlock = Mathf.Max(0, d.playerBlock);
+            waitingForPlayerInput = d.isPlayerTurn;
+            currentIntent = (EnemyIntentType)d.intentType;
+            currentIntentValue = d.intentValue;
+
+            // 视图与 UI
+            if (enemyImage != null && enemy.GetSprite() != null)
+            {
+                enemyImage.sprite = enemy.GetSprite();
+                enemyImage.gameObject.SetActive(true);
+            }
+            SetBattleBackground(currentEnemy.enemyType, currentEnemy.enemyName);
+            if (d.viewingMap) ShowMapView();
+            else ShowBattleView();
+
+            if (endTurnButton != null)
+                endTurnButton.gameObject.SetActive(d.isPlayerTurn && !d.viewingMap);
+
+            if (actionHintText != null)
+            {
+                actionHintText.text = d.isPlayerTurn ? "出牌或结束回合" : "敌人行动中...";
+                actionHintText.color = d.isPlayerTurn ? Color.white : Color.gray;
+            }
+
+            var turnManager = TurnManager.Instance;
+            if (turnManager != null)
+                turnManager.RestoreBattleState(d.isPlayerTurn);
+
+            var handManager = HandManager.Instance;
+            if (handManager != null)
+            {
+                handManager.UpdatePileCountUI();
+                handManager.UpdateHandUI();
+            }
+
+            RefreshAllUI();
+
+            AddLog("=== 从存档继续战斗 ===");
+            AddLog($"遭遇: {currentEnemy.enemyName}");
+            AddLog($"玩家生命: {playerData.currentHealth}/{playerData.maxHealth} · 格挡: {playerBlock}");
+            AddLog($"敌人生命: {currentEnemy.currentHealth}/{currentEnemy.maxHealth}");
+            GameLogger.Log($"[存档] 已恢复战斗：{currentEnemy.enemyName} · {(d.isPlayerTurn ? "玩家回合" : "敌人回合")}");
+
+            if (!d.isPlayerTurn)
+            {
+                // 敌方回合中存档：继续执行存储的意图
+                StartCoroutine(ExecuteStoredEnemyIntentRoutine());
+            }
+            else
+            {
+                ShowStoredEnemyIntent();
+            }
+
+            return true;
         }
     }
 }

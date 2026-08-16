@@ -64,6 +64,12 @@ namespace MutationChess.Core
         private GameObject panelGo;
         private Action pendingOnChosen; // 面板确认后的回调（首页选择完成后进入主场景等）
 
+        // 冒险须知分页面板（难度面板内的覆盖层）
+        private GameObject guideGo;
+        private TMP_Text guideText;
+        private TMP_Text guidePageLabel;
+        private int guidePageIndex;
+
         /// <summary>难度已选定事件（UI/音效可监听）。</summary>
         public event Action<Difficulty> OnDifficultyChosen;
 
@@ -459,8 +465,8 @@ namespace MutationChess.Core
             RectTransform confirmRt = confirmGo.GetComponent<RectTransform>();
             confirmRt.anchorMin = confirmRt.anchorMax = new Vector2(0.5f, 0f);
             confirmRt.pivot = new Vector2(0.5f, 0f);
-            confirmRt.anchoredPosition = new Vector2(0f, 8f);
-            confirmRt.sizeDelta = new Vector2(360f, 60f);
+            confirmRt.anchoredPosition = new Vector2(105f, 8f);
+            confirmRt.sizeDelta = new Vector2(300f, 60f);
             state.confirmImg = confirmGo.GetComponent<Image>();
             state.confirmImg.color = new Color(0.24f, 0.21f, 0.16f, 1f); // 未选：暗灰
             state.confirmLabel = CreatePanelText(confirmGo.transform, "Label", font, 27, TextAlignmentOptions.Center, new Color(0.55f, 0.52f, 0.45f));
@@ -479,6 +485,25 @@ namespace MutationChess.Core
                 ChooseDifficulty(state.selected);
             });
             UiFeel.ApplyButton(state.confirmBtn);
+
+            // 冒险须知按钮（确认按钮左侧）：翻开游戏常识/隐藏效果分页
+            GameObject guideBtnGo = new GameObject("GuideButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            guideBtnGo.transform.SetParent(bottomGo.transform, false);
+            RectTransform guideBtnRt = guideBtnGo.GetComponent<RectTransform>();
+            guideBtnRt.anchorMin = guideBtnRt.anchorMax = new Vector2(0.5f, 0f);
+            guideBtnRt.pivot = new Vector2(0.5f, 0f);
+            guideBtnRt.anchoredPosition = new Vector2(-105f, 8f);
+            guideBtnRt.sizeDelta = new Vector2(240f, 60f);
+            Image guideBtnImg = guideBtnGo.GetComponent<Image>();
+            guideBtnImg.color = new Color(0.2f, 0.2f, 0.24f, 1f);
+            TMP_Text guideBtnLabel = CreatePanelText(guideBtnGo.transform, "Label", font, 24, TextAlignmentOptions.Center, new Color(0.8f, 0.82f, 0.85f));
+            StretchPanelFull(guideBtnLabel.rectTransform);
+            guideBtnLabel.text = "冒险须知";
+            Button guideBtn = guideBtnGo.GetComponent<Button>();
+            guideBtn.targetGraphic = guideBtnImg;
+            guideBtn.transition = Selectable.Transition.None;
+            guideBtn.onClick.AddListener(ShowGuide);
+            UiFeel.ApplyButton(guideBtn);
 
             // 滚轮初始定位：居中"普通"，刷新已选提示与确认按钮（须在底部栏建成后调用）
             if (wheel != null)
@@ -819,6 +844,172 @@ namespace MutationChess.Core
                 case Difficulty.Abyss: return "三咒开局，踏入即深渊";
                 default: return "";
             }
+        }
+
+        // ================= 冒险须知分页 =================
+
+        /// <summary>翻开冒险须知：懒加载构建覆盖页，分页展示游戏常识/隐藏效果（GameTips）。</summary>
+        private void ShowGuide()
+        {
+            if (panelGo == null) return;
+            if (guideGo == null) BuildGuidePage();
+            guidePageIndex = 0;
+            RefreshGuidePage();
+            guideGo.SetActive(true);
+            AudioManager.Instance?.PlayUIClick(0.3f);
+        }
+
+        private void HideGuide()
+        {
+            if (guideGo != null)
+                guideGo.SetActive(false);
+        }
+
+        private void BuildGuidePage()
+        {
+            TMP_FontAsset font = UiFonts.Load();
+
+            guideGo = new GameObject("GuidePage", typeof(RectTransform));
+            guideGo.transform.SetParent(panelGo.transform, false);
+            RectTransform guideRt = guideGo.GetComponent<RectTransform>();
+            guideRt.anchorMin = Vector2.zero;
+            guideRt.anchorMax = Vector2.one;
+            guideRt.offsetMin = Vector2.zero;
+            guideRt.offsetMax = Vector2.zero;
+
+            // 全屏暗底（盖住滚轮）
+            GameObject dim = new GameObject("Dim", typeof(RectTransform), typeof(Image));
+            dim.transform.SetParent(guideGo.transform, false);
+            RectTransform dimRt = dim.GetComponent<RectTransform>();
+            dimRt.anchorMin = Vector2.zero;
+            dimRt.anchorMax = Vector2.one;
+            dimRt.offsetMin = Vector2.zero;
+            dimRt.offsetMax = Vector2.zero;
+            dim.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.82f);
+
+            // 金边外框
+            GameObject border = new GameObject("GoldBorder", typeof(RectTransform), typeof(Image));
+            border.transform.SetParent(guideGo.transform, false);
+            RectTransform borderRt = border.GetComponent<RectTransform>();
+            borderRt.anchorMin = borderRt.anchorMax = new Vector2(0.5f, 0.5f);
+            borderRt.sizeDelta = new Vector2(1224f, 764f);
+            border.GetComponent<Image>().color = new Color(0.62f, 0.5f, 0.24f, 1f);
+
+            // 面板底板
+            GameObject frame = new GameObject("Frame", typeof(RectTransform), typeof(Image));
+            frame.transform.SetParent(guideGo.transform, false);
+            RectTransform frameRt = frame.GetComponent<RectTransform>();
+            frameRt.anchorMin = frameRt.anchorMax = new Vector2(0.5f, 0.5f);
+            frameRt.sizeDelta = new Vector2(1208f, 748f);
+            Image frameImg = frame.GetComponent<Image>();
+            Sprite innerBg = Resources.Load<Sprite>("InterfaceUI/获胜奖励面板底层内嵌背景");
+            if (innerBg != null)
+            {
+                frameImg.sprite = innerBg;
+                frameImg.color = Color.white;
+            }
+            else frameImg.color = new Color(0.08f, 0.075f, 0.1f, 0.99f);
+
+            // 标题
+            TMP_Text title = CreatePanelText(frame.transform, "Title", font, 40, TextAlignmentOptions.Center, new Color(0.92f, 0.8f, 0.42f));
+            title.fontStyle = FontStyles.Bold;
+            RectTransform titleRt = title.rectTransform;
+            titleRt.anchorMin = titleRt.anchorMax = new Vector2(0.5f, 1f);
+            titleRt.pivot = new Vector2(0.5f, 1f);
+            titleRt.anchoredPosition = new Vector2(0f, -28f);
+            titleRt.sizeDelta = new Vector2(700f, 52f);
+            title.text = "冒 险 须 知";
+
+            // 副标题
+            TMP_Text subtitle = CreatePanelText(frame.transform, "Subtitle", font, 19, TextAlignmentOptions.Center, new Color(0.6f, 0.58f, 0.52f));
+            RectTransform subRt = subtitle.rectTransform;
+            subRt.anchorMin = subRt.anchorMax = new Vector2(0.5f, 1f);
+            subRt.pivot = new Vector2(0.5f, 1f);
+            subRt.anchoredPosition = new Vector2(0f, -86f);
+            subRt.sizeDelta = new Vector2(900f, 28f);
+            subtitle.text = "深渊中的常识与隐藏效果 · 细读可少走弯路";
+
+            // 分页正文
+            guideText = CreatePanelText(frame.transform, "GuideText", font, 23, TextAlignmentOptions.TopLeft, new Color(0.9f, 0.88f, 0.8f));
+            RectTransform textRt = guideText.rectTransform;
+            textRt.anchorMin = textRt.anchorMax = new Vector2(0.5f, 1f);
+            textRt.pivot = new Vector2(0.5f, 1f);
+            textRt.anchoredPosition = new Vector2(0f, -132f);
+            textRt.sizeDelta = new Vector2(1020f, 440f);
+            guideText.lineSpacing = 14f;
+
+            // 页码
+            guidePageLabel = CreatePanelText(frame.transform, "PageLabel", font, 18, TextAlignmentOptions.Center, new Color(0.6f, 0.58f, 0.52f));
+            RectTransform pageRt = guidePageLabel.rectTransform;
+            pageRt.anchorMin = pageRt.anchorMax = new Vector2(0.5f, 0f);
+            pageRt.pivot = new Vector2(0.5f, 0f);
+            pageRt.anchoredPosition = new Vector2(0f, 116f);
+            pageRt.sizeDelta = new Vector2(300f, 30f);
+
+            // 上一页 / 下一页
+            CreateGuideNavButton(frame, font, "PrevButton", "◀ 上一页", new Vector2(-140f, 46f), () =>
+            {
+                guidePageIndex = Mathf.Max(0, guidePageIndex - 1);
+                RefreshGuidePage();
+            });
+            CreateGuideNavButton(frame, font, "NextButton", "下一页 ▶", new Vector2(140f, 46f), () =>
+            {
+                guidePageIndex = Mathf.Min(GameTips.PageCount - 1, guidePageIndex + 1);
+                RefreshGuidePage();
+            });
+
+            // 返回难度选择
+            GameObject backGo = new GameObject("BackButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            backGo.transform.SetParent(frame.transform, false);
+            RectTransform backRt = backGo.GetComponent<RectTransform>();
+            backRt.anchorMin = backRt.anchorMax = new Vector2(0.5f, 0f);
+            backRt.pivot = new Vector2(0.5f, 0f);
+            backRt.anchoredPosition = new Vector2(0f, 26f);
+            backRt.sizeDelta = new Vector2(320f, 58f);
+            Image backImg = backGo.GetComponent<Image>();
+            backImg.color = new Color(0.24f, 0.21f, 0.16f, 1f);
+            TMP_Text backLabel = CreatePanelText(backGo.transform, "Label", font, 26, TextAlignmentOptions.Center, new Color(0.93f, 0.86f, 0.66f));
+            StretchPanelFull(backLabel.rectTransform);
+            backLabel.text = "返回难度选择";
+            Button backBtn = backGo.GetComponent<Button>();
+            backBtn.targetGraphic = backImg;
+            backBtn.transition = Selectable.Transition.None;
+            backBtn.onClick.AddListener(HideGuide);
+            UiFeel.ApplyButton(backBtn);
+
+            UiFeel.AnimatePanelIn(frame);
+            guideGo.SetActive(false);
+            GameLogger.Log("[难度] 冒险须知页已构建");
+        }
+
+        private void CreateGuideNavButton(Transform parent, TMP_FontAsset font, string goName, string label, Vector2 pos, System.Action onClick)
+        {
+            GameObject go = new GameObject(goName, typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = new Vector2(240f, 54f);
+            Image img = go.GetComponent<Image>();
+            img.color = new Color(0.2f, 0.2f, 0.24f, 1f);
+            TMP_Text txt = CreatePanelText(go.transform, "Label", font, 23, TextAlignmentOptions.Center, new Color(0.8f, 0.82f, 0.85f));
+            StretchPanelFull(txt.rectTransform);
+            txt.text = label;
+            Button btn = go.GetComponent<Button>();
+            btn.targetGraphic = img;
+            btn.transition = Selectable.Transition.None;
+            btn.onClick.AddListener(() => onClick());
+            UiFeel.ApplyButton(btn);
+        }
+
+        private void RefreshGuidePage()
+        {
+            if (guideText == null) return;
+            guidePageIndex = Mathf.Clamp(guidePageIndex, 0, GameTips.PageCount - 1);
+            guideText.text = GameTips.GetPageText(guidePageIndex);
+            if (guidePageLabel != null)
+                guidePageLabel.text = $"{guidePageIndex + 1} / {GameTips.PageCount}";
         }
 
         private static TMP_Text CreatePanelText(Transform parent, string goName, TMP_FontAsset font, int fontSize, TextAlignmentOptions align, Color color)

@@ -9,14 +9,31 @@ namespace MutationChess.Core
     /// 存档服务（懒加载单例，运行时自动创建，无需场景接线）：
     /// 收集已注册的 ISaveable 状态，序列化为 JSON 写入
     /// Application.persistentDataPath/saves/slot{N}.json（1~3 号槽位）。
-    /// 当前阶段提供完整接口 + 自动存档（难度选定/楼层推进时写入槽位 1），
-    /// 读档入口 UI 待后续接入。
+    /// 三个存档位 + 以撒式存档页面（SaveSlotPanel）；ActiveSlot 记录当前活动槽位；
+    /// 退出游戏（Application.quitting）时若对局进行中则自动写入活动槽位，
+    /// 实现"保留上次退出时游戏内的时刻"（地图/战斗快照由各 ISaveable 提供）。
     /// </summary>
     public class SaveService : MonoBehaviour
     {
         public const int MaxSlots = 3;
+        private const string ActiveSlotKey = "ActiveSlot";
 
-        [Serializable] public class SaveSlotMeta { public int slot; public string difficulty; public int floor; public string savedAt; }
+        [Serializable]
+        public class SaveSlotMeta
+        {
+            public int slot;
+            public string difficulty;
+            public int floor;
+            public string savedAt;
+            public int hp;
+            public int maxHp;
+            public int gold;
+            public long playtimeSeconds;
+            public int codexCardsSeen;
+            public int codexRelicsSeen;
+            public int codexPotionsSeen;
+        }
+
         [Serializable] public class SaveEntry { public string key; public string json; }
         [Serializable] public class SaveFileData { public int version = 1; public int slot; public SaveSlotMeta meta; public List<SaveEntry> entries; }
 
@@ -43,6 +60,13 @@ namespace MutationChess.Core
         /// <summary>待读档槽位（跨场景静态标记：首页"继续游戏"→ 进入主场景后由 GameManager 消费）。0 表示无。</summary>
         private static int pendingLoadSlot = 0;
 
+        /// <summary>当前活动槽位（静态，跨场景存活；持久化到 PlayerPrefs 供首页刷新显示）。</summary>
+        private static int activeSlot = -1;
+
+        /// <summary>是否有一局进行中的游戏（GameManager 开新局/读档后置 true，失败/胜利回首页前置 false）。
+        /// 退出游戏时据此决定是否自动存档——保留"上次退出游戏内的时刻"。</summary>
+        private static bool runActive = false;
+
         public static string SaveDir => Path.Combine(Application.persistentDataPath, "saves");
         public static string SlotPath(int slot) => Path.Combine(SaveDir, $"slot{slot}.json");
 
@@ -62,6 +86,50 @@ namespace MutationChess.Core
             if (_instance == this)
                 _instance = null;
         }
+
+        void OnApplicationQuit()
+        {
+            // 对局进行中退出：把游戏内时刻写入活动槽位，下次"继续游戏"原样接续
+            if (!runActive) return;
+            if (savables.Count == 0) return;
+            try
+            {
+                SaveGame(GetActiveSlot());
+                GameLogger.Log($"[存档] 退出时已自动保存活动槽位 {GetActiveSlot()}");
+            }
+            catch (Exception e)
+            {
+                GameLogger.LogError($"[存档] 退出自动存档失败：{e.Message}");
+            }
+        }
+
+        // ================= 活动槽位 =================
+
+        /// <summary>获取活动槽位（1~MaxSlots；从未设置时读 PlayerPrefs，默认 1）。</summary>
+        public static int GetActiveSlot()
+        {
+            if (activeSlot < 1)
+                activeSlot = Mathf.Clamp(PlayerPrefs.GetInt(ActiveSlotKey, 1), 1, MaxSlots);
+            return activeSlot;
+        }
+
+        /// <summary>设置活动槽位并持久化（存档页面选择"新游戏/继续游戏"槽位时调用）。</summary>
+        public static void SetActiveSlot(int slot)
+        {
+            slot = Mathf.Clamp(slot, 1, MaxSlots);
+            activeSlot = slot;
+            PlayerPrefs.SetInt(ActiveSlotKey, slot);
+            PlayerPrefs.Save();
+            GameLogger.Log($"[存档] 活动槽位 → {slot}");
+        }
+
+        /// <summary>标记一局进行中/结束（GameManager 在新局开始与对局结束回首页时调用）。</summary>
+        public static void MarkRunActive(bool active)
+        {
+            runActive = active;
+        }
+
+        public static bool IsRunActive() => runActive;
 
         // ================= 注册 =================
 
@@ -110,7 +178,7 @@ namespace MutationChess.Core
             {
                 Directory.CreateDirectory(SaveDir);
                 File.WriteAllText(SlotPath(slot), JsonUtility.ToJson(data, true));
-                GameLogger.Log($"[存档] 已保存槽位 {slot}（{data.meta.difficulty} · 第 {data.meta.floor} 层）→ {SlotPath(slot)}");
+                GameLogger.Log($"[存档] 已保存槽位 {slot}（{data.meta.difficulty} · 第 {data.meta.floor} 层 · HP {data.meta.hp}/{data.meta.maxHp}）→ {SlotPath(slot)}");
                 return true;
             }
             catch (Exception e)
@@ -202,14 +270,31 @@ namespace MutationChess.Core
             return list;
         }
 
-        /// <summary>自动存档：写入默认槽位 1（难度选定/楼层推进等节点调用）。</summary>
-        public void AutoSave(int slot = 1)
+        /// <summary>读取单槽元数据（存档页面展示用；无存档返回 null）。</summary>
+        public SaveSlotMeta GetMeta(int slot)
+        {
+            if (!HasSave(slot)) return null;
+            try
+            {
+                SaveFileData d = JsonUtility.FromJson<SaveFileData>(File.ReadAllText(SlotPath(slot)));
+                return d?.meta;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>自动存档：写入活动槽位（难度选定/楼层推进/战斗结束等节点调用）。
+        /// 传入 1~MaxSlots 可显式指定槽位，0 或省略 = 活动槽位。</summary>
+        public void AutoSave(int slot = 0)
         {
             if (savables.Count == 0)
             {
                 GameLogger.LogWarning("[存档] 尚无注册的存档对象，跳过自动存档");
                 return;
             }
+            if (slot < 1) slot = GetActiveSlot();
             SaveGame(slot);
         }
 
@@ -258,13 +343,36 @@ namespace MutationChess.Core
             GameManager gm = FindObjectOfType<GameManager>();
             if (gm != null) floor = gm.GetCurrentFloor();
 
-            return new SaveSlotMeta
+            var meta = new SaveSlotMeta
             {
                 slot = slot,
                 difficulty = difficulty,
                 floor = floor,
                 savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
             };
+
+            // 对局内数值快照（存档页面卡片展示）
+            PlayerDataManager pdm = PlayerDataManager.Instance;
+            if (pdm != null && pdm.PlayerData != null)
+            {
+                meta.hp = Mathf.Max(0, pdm.PlayerData.currentHealth);
+                meta.maxHp = pdm.PlayerData.maxHealth;
+                meta.gold = pdm.PlayerData.gold;
+            }
+
+            if (gm != null)
+                meta.playtimeSeconds = gm.GetPlaytimeSeconds();
+
+            // 图鉴收集进度（以撒式全成就页面的基础数据）
+            CodexProgress codex = CodexProgress.Instance;
+            if (codex != null)
+            {
+                meta.codexCardsSeen = codex.SeenCount(CodexCategory.Card);
+                meta.codexRelicsSeen = codex.SeenCount(CodexCategory.Relic);
+                meta.codexPotionsSeen = codex.SeenCount(CodexCategory.Potion);
+            }
+
+            return meta;
         }
     }
 }
