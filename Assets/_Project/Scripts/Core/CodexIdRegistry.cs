@@ -70,8 +70,15 @@ namespace MutationChess.Core
         public static void ResetCache()
         {
             _loaded = false;
-            _cardsById = _relicsById = _potionsById = null;
-            _cardsByName = _relicsByName = _relicsByAssetId = _potionsByName = null;
+            // 链式赋值 a = b = c = null 要求类型可隐式转换，
+            // Dictionary<int, PotionDataAsset> 不能赋给 Dictionary<int, RelicDataAsset>（CS0029），必须分行。
+            _cardsById = null;
+            _relicsById = null;
+            _potionsById = null;
+            _cardsByName = null;
+            _relicsByName = null;
+            _relicsByAssetId = null;
+            _potionsByName = null;
         }
 
         private static void EnsureLoaded()
@@ -262,6 +269,7 @@ namespace MutationChess.Core
             if (relic != null && relic.codexId > 0) { category = CodexCategory.Relic; codexId = relic.codexId; return true; }
             var potion = FindPotionByName(name);
             if (potion != null && potion.codexId > 0) { category = CodexCategory.Potion; codexId = potion.codexId; return true; }
+            category = CodexCategory.Card; // 失败路径也必须给 out 参数赋值（CS0177）
             codexId = 0;
             return false;
         }
