@@ -1,5 +1,8 @@
-# 异变棋局（畸变骑士）Distortion Knight
+# Game Project Archive
 
-Unity 卡牌 Roguelike 游戏原型（开发中）。完整 Git 历史备份见 Releases（.bundle）。
+个人游戏开发项目归档仓库（开发中，内容暂不对外展示）。
+
+- 完整历史备份见 Releases（.bundle）
+- 当前开发使用 Godot 引擎
 
 Gitee: https://gitee.com/mengge237/distortion-knight-development
